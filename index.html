@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IRIS Pay | Електронно подписване на договор</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,600&family=Great+Vibes&family=Homemade+Apple&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- TOP HEADER / BRAND BAR -->
+  <header class="top-nav">
+    <div class="nav-container">
+      <div class="nav-left">
+        <img src="assets/iris-logo.svg" alt="IRIS Pay Logo" class="brand-logo">
+        <div class="brand-divider"></div>
+        <div class="portal-title">
+          <span class="portal-main">Портал за подписване на договори</span>
+          <span class="portal-sub">Айрис Солюшънс АД • Лицензирана институция от БНБ</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN 2-COLUMN WORKSPACE -->
+  <main class="main-layout">
+    
+    <!-- LEFT PANEL: Data Input Form (Minimalist, Professional, Monochrome) -->
+    <aside class="form-sidebar">
+      <div class="sidebar-header">
+        <h2>Попълване на реквизити</h2>
+        <p class="sidebar-sub">Данните се попълват в реално време на страниците на договора вдясно.</p>
+      </div>
+
+      <form id="merchantContractForm" onsubmit="return false;" novalidate>
+        
+        <!-- SECTION 1: Данни за фирмата Търговец -->
+        <div class="form-section-card">
+          <div class="card-title-row">
+            <span class="card-step-badge">1</span>
+            <h3>Данни за Търговеца (Юридическо лице)</h3>
+          </div>
+
+          <div class="input-group">
+            <label for="companyName">Наименование на фирмата <span class="req">*</span></label>
+            <input type="text" id="companyName" placeholder="напр. Търговец Тех ООД" required autocomplete="organization">
+          </div>
+
+          <div class="input-row">
+            <div class="input-group col-half">
+              <label for="companyEik">ЕИК / БУЛСТАТ <span class="req">*</span></label>
+              <input type="text" id="companyEik" placeholder="напр. 206123456" maxlength="13" required pattern="[0-9]{9,13}">
+            </div>
+            <div class="input-group col-half">
+              <label for="contractDate">Дата на договора <span class="req">*</span></label>
+              <input type="date" id="contractDate" required>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="companyAddress">Седалище и адрес на управление <span class="req">*</span></label>
+            <input type="text" id="companyAddress" placeholder="напр. гр. София, бул. Витоша 50, ет. 2, ап. 4" required>
+          </div>
+
+          <div class="input-group">
+            <label for="companyRepresentative">Представлявано от (Име на управител / пълномощник) <span class="req">*</span></label>
+            <input type="text" id="companyRepresentative" placeholder="напр. Иван Георгиев Иванов - Управител" required autocomplete="name">
+          </div>
+        </div>
+
+        <!-- SECTION 2: Банкова сметка за получаване на средства (Чл. 4) -->
+        <div class="form-section-card">
+          <div class="card-title-row">
+            <span class="card-step-badge">2</span>
+            <h3>Банкова сметка за преводи (Чл. 4)</h3>
+          </div>
+
+          <!-- Clean Native Dropdown for Bank Selection -->
+          <div class="input-group">
+            <label for="bankName">Обслужваща банка / Платежна институция <span class="req">*</span></label>
+            <select id="bankName" name="bankName" required class="form-select-styled">
+              <option value="" disabled selected>Изберете обслужваща банка...</option>
+              <option value="Revolut">Revolut</option>
+              <option value="УниКредит Булбанк">УниКредит Булбанк</option>
+              <option value="Банка ДСК">Банка ДСК</option>
+              <option value="Обединена Българска Банка">Обединена Българска Банка (ОББ)</option>
+              <option value="Пощенска банка">Пощенска банка (Юробанк)</option>
+              <option value="Централна Кооперативна Банка">Централна Кооперативна Банка (ЦКБ)</option>
+              <option value="Инвестбанк">Инвестбанк</option>
+              <option value="Алианц Банк България">Алианц Банк България</option>
+              <option value="ПроКредит Банк">ПроКредит Банк</option>
+              <option value="Търговска Банка Д">Търговска Банка Д</option>
+              <option value="Paysera">Paysera</option>
+              <option value="Българо-американска кредитна банка">Българо-американска кредитна банка (БАКБ)</option>
+              <option value="EasyPay">EasyPay</option>
+              <option value="Ebury">Ebury</option>
+              <option value="custom">Друга банка / платежна институция...</option>
+            </select>
+            <div id="customBankInputWrapper" style="display:none; margin-top:8px;">
+              <input type="text" id="customBankInput" placeholder="Въведете име на Вашата банка / институция...">
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="bankIban">IBAN сметка на Търговеца <span class="req">*</span></label>
+            <input type="text" id="bankIban" placeholder="BG00 UNCR 7000 1234 5678 90" maxlength="34" required style="font-family: monospace; letter-spacing: 1px;">
+          </div>
+
+          <div class="input-group">
+            <label for="merchantWebsite">Сайт (ако има)</label>
+            <input type="url" id="merchantWebsite" placeholder="https://www.example-store.bg">
+          </div>
+        </div>
+
+        <!-- SECTION 3: Данни за кореспонденция (Чл. 12) -->
+        <div class="form-section-card">
+          <div class="card-title-row">
+            <span class="card-step-badge">3</span>
+            <h3>Кореспонденция и контакт (Чл. 12)</h3>
+          </div>
+
+          <!-- Address with checkbox right at the label as requested -->
+          <div class="input-group">
+            <div class="label-with-inline-action">
+              <label for="contactAddress">Адрес за кореспонденция <span class="req">*</span></label>
+              <label class="inline-checkbox" for="sameAddressCheckbox">
+                <input type="checkbox" id="sameAddressCheckbox">
+                <span>Същият адрес като на фирмата по-горе</span>
+              </label>
+            </div>
+            <input type="text" id="contactAddress" placeholder="напр. гр. София, бул. България 102, ет. 4" required>
+          </div>
+
+          <div class="input-row">
+            <div class="input-group col-half">
+              <label for="contactEmail">E-mail за кореспонденция <span class="req">*</span></label>
+              <input type="email" id="contactEmail" placeholder="office@example.bg" required autocomplete="email">
+            </div>
+            <div class="input-group col-half">
+              <label for="contactPhone">Телефон за връзка <span class="req">*</span></label>
+              <input type="tel" id="contactPhone" placeholder="0888 123 456" required autocomplete="tel">
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 4: Електронен подпис -->
+        <div class="form-section-card" id="signatureSectionCard">
+          <div class="card-title-row">
+            <span class="card-step-badge">4</span>
+            <div>
+              <h3>Електронен подпис на Търговеца</h3>
+              <p class="section-subtext">Подписът ще се положи на Рамковия договор и на Приложение № 1</p>
+            </div>
+          </div>
+
+          <!-- Document sign status indicators -->
+          <div class="sign-status-row">
+            <div class="doc-sign-status-box" id="statusBoxContract">
+              <span class="status-icon pending">●</span>
+              <span class="status-doc-title">Договор:</span>
+              <span class="status-badge" id="badgeContract">Неподписан</span>
+            </div>
+            <div class="doc-sign-status-box" id="statusBoxAppendix">
+              <span class="status-icon pending">●</span>
+              <span class="status-doc-title">Приложение 1:</span>
+              <span class="status-badge" id="badgeAppendix">Неподписан</span>
+            </div>
+          </div>
+
+          <!-- Signature creation tabs -->
+          <div class="sig-mode-tabs">
+            <button type="button" class="sig-tab-btn active" data-mode="draw">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+              Рисуване
+            </button>
+            <button type="button" class="sig-tab-btn" data-mode="type">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+              С текст
+            </button>
+            <button type="button" class="sig-tab-btn" data-mode="upload">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Файл
+            </button>
+          </div>
+
+          <!-- TAB 1: Draw Signature Canvas -->
+          <div class="sig-tab-content active" id="sigContentDraw">
+            <div class="canvas-wrapper">
+              <canvas id="sigCanvas" width="450" height="140"></canvas>
+              <div class="canvas-watermark">Положете подпис тук с мишка или тъчпад</div>
+            </div>
+            <div class="canvas-actions">
+              <button type="button" class="btn-subtle" id="clearCanvasBtn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Изчисти
+              </button>
+            </div>
+          </div>
+
+          <!-- TAB 2: Type Signature -->
+          <div class="sig-tab-content" id="sigContentType">
+            <div class="input-group">
+              <label for="typedSigInput">Вашето име за визуализиране:</label>
+              <input type="text" id="typedSigInput" placeholder="Иван Георгиев Иванов">
+            </div>
+            <div class="font-preview-list">
+              <div class="font-card active" data-font="Homemade Apple">
+                <span class="font-name-label">Стил 1 (Ръкописен)</span>
+                <span class="font-sample style-script" id="sample1">Иван Георгиев</span>
+              </div>
+              <div class="font-card" data-font="Great Vibes">
+                <span class="font-name-label">Стил 2 (Калиграфски)</span>
+                <span class="font-sample style-vibes" id="sample2">Иван Георгиев</span>
+              </div>
+              <div class="font-card" data-font="Playfair Display">
+                <span class="font-name-label">Стил 3 (Класически)</span>
+                <span class="font-sample style-serif" id="sample3">Иван Георгиев</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 4: Upload Signature Image -->
+          <div class="sig-tab-content" id="sigContentUpload">
+            <div class="upload-dropzone" id="sigDropzone">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <p class="dropzone-text">Изберете изображение на подпис (PNG, JPG)</p>
+              <input type="file" id="sigFileInput" accept="image/png, image/jpeg" style="display:none;">
+              <button type="button" class="btn-subtle" onclick="document.getElementById('sigFileInput').click()">Изберете файл</button>
+            </div>
+            <div id="uploadPreviewWrapper" style="display:none; text-align:center; margin-top:10px;">
+              <img id="uploadPreviewImg" alt="Качен подпис" style="max-height:70px; border:1px solid #e2e8f0; padding:4px; border-radius:4px;">
+            </div>
+          </div>
+
+          <!-- Signature Apply Options -->
+          <div class="apply-signature-box">
+            <div class="checkbox-wrapper">
+              <input type="checkbox" id="signBothCheckbox" checked>
+              <label for="signBothCheckbox"><strong>Положи подписа едновременно на Договора и на Приложение 1</strong></label>
+            </div>
+            <div class="signature-buttons-row">
+              <button type="button" class="btn-primary-compact" id="applySignatureBtn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                Положи Електронен Подпис
+              </button>
+              <button type="button" class="btn-subtle" id="removeSignatureBtn" style="display:none;">
+                Премахни подпис
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 5: Потвърждение и Финално изпращане -->
+        <div class="form-section-card confirmation-card">
+          <div class="card-title-row">
+            <span class="card-step-badge">5</span>
+            <h3>Потвърждение и Изпращане</h3>
+          </div>
+
+          <div class="terms-notice-box">
+            <div class="notice-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#192b6c" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </div>
+            <div class="notice-text">
+              <strong>Общи условия на „Айрис Солюшънс“ АД:</strong>
+              <span>Можете да прочетете пълния им текст с бутона горе вдясно или <a href="#" id="viewTermsLink">кликнете тук</a>. Те са неразделна част от Договора.</span>
+            </div>
+          </div>
+
+          <div class="consent-checkbox-list">
+            <div class="checkbox-wrapper consent-item">
+              <input type="checkbox" id="agreeTermsCheckbox" required>
+              <label for="agreeTermsCheckbox">
+                Запознах се и съм съгласен в отношенията ни да се прилагат Общите условия на “Айрис Солюшънс“ АД относно използване на Продукт „Платежен терминал“.
+              </label>
+            </div>
+
+            <div class="checkbox-wrapper consent-item">
+              <input type="checkbox" id="confirmDataCheckbox" required>
+              <label for="confirmDataCheckbox">
+                Декларирам, че посочените данни са верни и актуални и съм оправомощен да представлявам посочения Търговец.
+              </label>
+            </div>
+          </div>
+
+          <!-- PRIMARY SUBMIT BUTTON -->
+          <div class="submit-action-wrapper">
+            <button type="submit" class="btn-submit-main" id="submitContractBtn">
+              <span class="submit-btn-text">Изпрати</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+            <p class="submit-footnote">След изпращане документите се проверяват от екипа на IRIS Pay и се подписват двустранно.</p>
+          </div>
+        </div>
+      </form>
+    </aside>
+
+    <!-- RIGHT PANEL: Distinct A4 Pages Continuous Scrolling View -->
+    <section class="document-panel">
+      <!-- Document Navigation Toolbar -->
+      <div class="doc-toolbar">
+        <div class="doc-view-switch">
+          <button type="button" class="doc-view-btn active" id="viewMainDocBtn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <span>Договор и Приложение 1 (Страница по страница)</span>
+          </button>
+          <button type="button" class="doc-view-btn" id="viewTermsBtn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <span>Общи условия (За прочит)</span>
+          </button>
+        </div>
+
+        <div class="doc-actions">
+          <button type="button" class="btn-action-icon" id="zoomOutBtn" title="Намали размер">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </button>
+          <span class="zoom-level" id="zoomLevelDisplay">100%</span>
+          <button type="button" class="btn-action-icon" id="zoomInBtn" title="Увеличи размер">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </button>
+          <button type="button" class="btn-print-doc" id="printDocBtn" title="Печат или запазване като PDF">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Печат / PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Viewport: Stack of Distinct Visual A4 Pages -->
+      <div class="doc-viewport" id="docViewport">
+        
+        <!-- MAIN VIEW: 8 DISTINCT A4 SHEETS (7 EXACT PAGES FOR CONTRACT + 1 DEDICATED SHEET FOR APPENDIX 1) -->
+        <div class="pages-stack" id="mainDocContainer">
+          
+          <!-- ===================================================================
+               СТРАНИЦА 1 ОТ 7: НАЧАЛО НА РАМКОВ ДОГОВОР, СТРАНИ И ПРЕАМБЮЛ
+               =================================================================== -->
+          <div class="doc-page-card" id="pageCard1">
+            <div class="page-top-tab">
+              <span class="page-tab-badge">СТРАНИЦА 1 ОТ 7 • РАМКОВ ДОГОВОР</span>
+            </div>
+            <div class="a4-sheet" id="docSheet1">
+              <div class="page-content-area">
+                <h1 class="exact-contract-title">
+                  РАМКОВ ДОГОВОР ЗА ИЗВЪРШВАНЕ НА ПЛАЩАНИЯ ЧРЕЗ УСЛУГА ПО ИНИЦИИРАНЕ НА ПЛАЩАНИЯ
+                </h1>
+
+                <p class="exact-p">Днес, <span class="live-field underlined" data-field="date">.........................</span> година, в гр. София, между:</p>
+
+                <p class="exact-p">1. <strong>„Айрис Солюшънс“ АД</strong>, регистрирано в ТРРЮЛНЦ към Агенцията по вписвания с ЕИК  208455895, със седалище, адрес на управление: гр. София, бул. Христо Смирненски 78, ет.4, представлявано от изп. директор Галя Димитрова Димитрова или чрез пълномощника си Димитър Йошков Христов, наричано по-долу за краткост „Доставчик“, от една страна,</p>
+                <p class="exact-p">и</p>
+                <p class="exact-p">2. <strong><span class="live-field underlined" data-field="companyName">.......................................................................</span></strong> регистрирано в ТРРЮЛНЦ към Агенцията по вписвания с ЕИК <span class="live-field underlined" data-field="companyEik">..................................</span>  със седалище, адрес на управление: гр. <span class="live-field underlined" data-field="companyAddress">.....................................................................................................................................................</span> представлявано от <span class="live-field underlined" data-field="companyRepresentative">...................................................................................................</span> наричано по-долу за краткост „Търговец“, от друга страна,</p>
+
+                <p class="exact-p">Заедно наричани Страните,</p>
+                <p class="exact-p">Като се взе предвид, че:</p>
+                <p class="exact-p">а) Доставчикът е лицензирана платежна институция, който предоставя платежни услуги по чл. 4, т. 7 и т. 8 от ЗПУПС (услуга по иницииране на плащания и услуга по предоставяне на информация за сметка), съгласно Решение № 316 от 17.09.2019г. на БНБ;</p>
+                <p class="exact-p">б) Търговецът предоставя набор от стоки/услуги, като се стреми това да става все по-лесно и достъпно за крайните клиенти;</p>
+                <p class="exact-p">в) Доставчикът предоставя софтуерно решение -  Платежен терминал, чрез които търговецът може да ползва услугите по буква „а“;</p>
+                <p class="exact-p">г) Търговецът желае да ползва услугите по буква „а“, за предоставяне на допълнителна възможност на Клиентите да заплащат предлаганите от Търговеца стоки/услуги, свързана с:</p>
+                <p class="exact-p indent-item"><strong>онлайн плащания (електронен магазин);</strong></p>
+                <p class="exact-p indent-item"><strong>плащания във физически обекти (чрез линк или QR код);</strong></p>
+                <p class="exact-p indent-item"><strong>плащания с мобилната апликация IRISPay</strong></p>
+                <p class="exact-p indent-item"><strong>плащания на фактури/задължения (отпечатани на хартия и съдържащи QR код);</strong></p>
+                <p class="exact-p">д) Страните желаят да уговорят взаимоотношенията си във връзка с гореизложеното,</p>
+              </div>
+
+              <div class="page-footer">
+                <span class="page-footer-left">Рамков договор за иницииране на плащания — IRIS Pay</span>
+                <span class="page-footer-right">Страница 1 от 7</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Page Break Divider 1 -> 2 -->
+          <div class="page-gap-divider">
+            <span class="gap-line"></span>
+            <span class="gap-badge">Край на Страница 1 • Начало на Страница 2</span>
+            <span class="gap-line"></span>
+          </div>
+
+          <!-- ===================================================================
+               СТРАНИЦА 2 ОТ 7: ДЕФИНИЦИИ, ПРЕДМЕТ, ПРЕДОСТАВЯНЕ НА УСЛУГИТЕ, СМЕТКА, ЧЛ. 5, ЧЛ. 6
+               =================================================================== -->
+          <div class="doc-page-card" id="pageCard2">
+            <div class="page-top-tab">
+              <span class="page-tab-badge">СТРАНИЦА 2 ОТ 7 • РАМКОВ ДОГОВОР</span>
+            </div>
+            <div class="a4-sheet" id="docSheet2">
+              <div class="page-content-area">
+                <p class="exact-p">Се сключи настоящия Договор за извършване на плащания чрез услуга по иницииране на плащания (Договора) относно следното:</p>
+
+                <h2 class="exact-chapter-title">ДЕФИНИЦИИ</h2>
+                <p class="exact-p"><strong>Чл. 1.</strong> За целите на тoзи Договор термините, изброени по-долу, ще имат следното значение, освен ако контекстът не налага друго тълкуване:</p>
+                <p class="exact-p">„Услуги“ означава Услуга по иницииране на плащане по смисъла на чл. 4, т. 7 от ЗПУПС ;</p>
+                <p class="exact-p">„Услугата по иницииране на плащане“ представлява електронна платежна услуга, при която при искане на Търговеца (при изрично съгласие на Клиента реализирано съгласно имплементираната процедурата на доставчика на платежни услуги по обслужване на сметки на Клиента) се инициира плащане (генерира и изпълнява платежно нареждане) от сметка на Клиента в банка/платежна институция към банкова/платежна сметка на Търговеца;</p>
+                <p class="exact-p"> „Продукти“ е  Платежен терминал;</p>
+                <p class="exact-p">Платежен терминал е софтуерно решение, предоставяно от Доставчика, чрез което Търговецът може да инициира плащаният към  своите Клиенти.</p>
+                <p class="exact-p"> „Клиент“ е всяко физическо или юридическо лице, което желае да заплаща посредством реализираната от  Продукта технология стоки/услуги на Търговеца.</p>
+                <p class="exact-p">(2) Освен ако от контекста не произтича друго, думите, използвани в единствено число означават и множественото число на тези думи, а думите, използвани в множествено число, означават същите думи и в единствено число.</p>
+
+                <h2 class="exact-chapter-title">ПРЕДМЕТ</h2>
+                <p class="exact-p"><strong>Чл. 2.</strong> (1) Настоящият Договор урежда предоставянето на Услугите посредством Продуктите.</p>
+                <p class="exact-p">(2) Извършването на плащания между Клиенти и Търговеца ще се извършва чрез Продуктите след успешна регистрация и идентификация на Търговеца и евентуално инсталиране на софтуер, предоставен от Доставчика, в зависимост от това дали се заплаща в онлайн/физически магазин или по документ/фактура.</p>
+                <p class="exact-p">(3) Доставчикът е платежен посредник, но не е страна в правоотношенията между Търговеца и неговите клиенти, отнасящи се до осъществяваната от Търговеца дейност. Доставчикът не носи отговорност за злоупотреби и вредоносни действия, извършени от Клиентите, както и за грешки или проблеми от страна на банките/платежните институции, обслужващи съответните сметки на Търговеца и/или Клиентите.</p>
+
+                <h2 class="exact-chapter-title">ПРЕДОСТАВЯНЕ НА УСЛУГИТЕ</h2>
+                <p class="exact-p"><strong>Чл. 3.</strong> Плащане чрез Услугата по иницииране на плащане е свързано с извършване на платежни операции към посочена от Търговеца сметка. Самата операция по прехвърляне на средства се осъществява от банката/платежната институция, обслужваща сметката на клиента и Доставчикът не носи отговорност за нейното изпълнение, доколкото е предоставил своевременно надлежно платежно нареждане към банката/платежната институция.</p>
+
+                <p class="exact-p"><strong>Чл. 4.</strong> Освен ако друго не е посочено в генерираното платежно нареждане, инициираните плащания се изпълняват незабавно (съгласно условията на съответната банка/платежен оператор, обслужващ сметката на Клиента). Плащанията, наредени от Клиенти към Търговеца, се изпълняват по следната сметка на Търговеца:</p>
+                <p class="exact-p">Банка/Платежна институция: <span class="live-field underlined" data-field="bankName">…........................................</span></p>
+                <p class="exact-p">IBAN: <span class="live-field underlined mono-font" data-field="bankIban">….........................................................................</span></p>
+                <p class="exact-p">Сайт(ако има): <span class="live-field underlined" data-field="merchantWebsite">........................................................</span></p>
+
+                <h2 class="exact-chapter-title">ПРАВА И ЗАДЪЛЖЕНИЯ НА СТРАНИТЕ</h2>
+                <p class="exact-p"><strong>Чл. 5.</strong> Доставчикът се задължава:</p>
+                <p class="exact-p indent-item">да предостави достъп до Продукта и свързаните системи и при необходимост да проведе инструктаж на служители на Търговеца, така че да обезпечи ползването на Услугите, съгласно уговореното към настоящия Договор;</p>
+                <p class="exact-p indent-item">Да поддържа своите системи и възможността за точно извършване на плащания чрез Услугата по иницииране на плащане през времетраенето на Договора;</p>
+                <p class="exact-p indent-item">Да осигури възможност за ползване на Продукта 24/7;</p>
+                <p class="exact-p indent-item">Да изпълнява заявените Услуги в предвидените нормативни или тук договорени срокове, ако последните са по-кратки от нормативните. За избягване на съмнение, Доставчикът не изпълнява самите парични преводи от/към сметката на Търговеца;</p>
+                <p class="exact-p indent-item">Да уведоми Търговеца за всяко постъпило оспорване на плащане (рекламация), заедно с причините за това и друга свързана информация. Уведомлението следва да бъде предоставено на Търговеца в първия възможен момент</p>
+                <p class="exact-p indent-item">Да поддържа в изправност Продуктите и възможността за ползване на Услугите;</p>
+                <p class="exact-p indent-item">При необходимост да предоставя инструкции за ползване и други указания за работа с Продуктите;</p>
+
+                <p class="exact-p mt-2"><strong>Чл. 6.</strong> Търговецът се задължава:</p>
+                <p class="exact-p indent-item">Да предостави необходимите данни за идентификация;</p>
+              </div>
+
+              <div class="page-footer">
+                <span class="page-footer-left">Рамков договор за иницииране на плащания — IRIS Pay</span>
+                <span class="page-footer-right">Страница 2 от 7</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Page Break Divider 2 -> 3 -->
+          <div class="page-gap-divider">
+            <span class="gap-line"></span>
+            <span class="gap-badge">Край на Страница 2 • Начало на Страница 3</span>
+            <span class="gap-line"></span>
+          </div>
+
+          <!-- ===================================================================
+               СТРАНИЦА 3 ОТ 7: ПРОДЪЛЖЕНИЕ НА ЧЛ. 6, ТАКСИ И КОМИСИОНИ (ЧЛ. 7)
+               =================================================================== -->
+          <div class="doc-page-card" id="pageCard3">
+            <div class="page-top-tab">
+              <span class="page-tab-badge">СТРАНИЦА 3 ОТ 7 • РАМКОВ ДОГОВОР</span>
+            </div>
+            <div class="a4-sheet" id="docSheet3">
+              <div class="page-content-area">
+                <p class="exact-p indent-item">Да извърши инсталация и/или други необходими за работата с Продуктите действия:</p>
+                <p class="exact-p indent-item">Да заплаща уговорените такси и комисиони съгласно Приложение № 1 към настоящия Договор;</p>
+                <p class="exact-p indent-item">Да приема плащания чрез Услугата за целия период на Договора в своя търговски обект или на своя сайт и/или платформа,</p>
+                <p class="exact-p indent-item">Да не начислява на Клиентите такси или комисиони при плащане чрез Услугата по иницииране на плащане;</p>
+                <p class="exact-p indent-item">Да инициира плащания добросъвестно, само срещу реално заявена/предоставена стока или услуга;</p>
+                <p class="exact-p indent-item">В случай на злоупотреби, неразрешени плащания, в предвидените от закона (и договора между Доставчика и  Търговеца) случаи или при уважена рекламация или отказ на Клиента, да възстанови заплатените от Клиента суми, освен ако последното съгласно ЗПУПС не е задължение на съответния Доставчик на платежни услуги, обслужващ сметката;</p>
+                <p class="exact-p indent-item">Да изпълнява указанията и инструкциите на Доставчика във връзка с работата с Продуктите;</p>
+                <p class="exact-p indent-item">Да предостави по подходящ начин на своите клиенти информация относно възможността за извършване на плащания чрез Продукта. Информацията по предходното изречение включва обявление на интернет страницата и в мобилното приложение, оперирано от Търговеца</p>
+                <p class="exact-p indent-item">При участие в програми за лоялност от Доставчика, да изпълнява условията на съответната програма и да изпълнява указанията на Доставчика във връзка с участието.</p>
+
+                <h2 class="exact-chapter-title">ТАКСИ И КОМИСИОНИ</h2>
+                <p class="exact-p"><strong>Чл. 7.</strong> (1) За ползването на Услугата, Доставчикът начислява такси и комисиони, съгласно Приложение № 1 към настоящия Договор.</p>
+                <p class="exact-p">(2) В случай че съответната банка/платежна институция, обслужваща сметката на Клиента или Търговеца, начислява такси за изпълнение на платежни нареждания, които се дължат от получателя на средствата, съответните такси ще бъдат начислени на Търговеца. За избягване на всякакво съмнение, посочените в настоящата алинея такси се дължат на съответната банка/платежна институция, а не на Доставчика.</p>
+
+                <h2 class="exact-chapter-title">ПРАВА ВЪРХУ ИНТЕЛЕКТУАЛНАТА СОБСТВЕНОСТ</h2>
+              </div>
+
+              <div class="page-footer">
+                <span class="page-footer-left">Рамков договор за иницииране на плащания — IRIS Pay</span>
+                <span class="page-footer-right">Страница 3 от 7</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Page Break Divider 3 -> 4 -->
+          <div class="page-gap-divider">
+            <span class="gap-line"></span>
+            <span class="gap-badge">Край на Страница 3 • Начало на Страница 4</span>
+            <span class="gap-line"></span>
+          </div>
+
+          <!-- ===================================================================
+               СТРАНИЦА 4 ОТ 7: ИНТЕЛЕКТУАЛНА СОБСТВЕНОСТ (ЧЛ. 8), КОНФИДЕНЦИАЛНОСТ (ЧЛ. 9.1, 9.2)
+               =================================================================== -->
+          <div class="doc-page-card" id="pageCard4">
+            <div class="page-top-tab">
+              <span class="page-tab-badge">СТРАНИЦА 4 ОТ 7 • РАМКОВ ДОГОВОР</span>
+            </div>
+            <div class="a4-sheet" id="docSheet4">
+              <div class="page-content-area">
+                <p class="exact-p"><strong>Чл. 8.</strong> (1) Страните се съгласяват, че с настоящото Споразумение не се създават или прехвърлят права върху интелектуалната собственост и/или лицензионни права върху активи и обекти на интелектуална собственост върху съществуващи към момента обекти, освен ако изрично не е посочено друго.</p>
+                <p class="exact-p">(2) За времетраенето на Договора, Търговецът получава ограничено, неизключително, непрехвърлимо право да използва Продуктите и софтуерните решения на Доставчика, свързани с предоставянето на Услугите. Доставчикът може да предостави задължителни инструкции за ползването на Продуктите и другите негови софтуерни продукти, до които има достъп Търговеца, както и да ограничи ползването им при виновно неизпълнение на задълженията на Търговеца по този договор. .</p>
+                <p class="exact-p">(3) За избягване на съмнение, Страните уточняват, че възнаграждението по смисъла на чл.36, ал.1 от ЗАПСП за предоставеното право на използване по предходната алинея е включено в таксите, дължими съгласно Приложение № 1 към този договор.</p>
+                <p class="exact-p">(4) Доставчикът се счита за създател и носител на авторските права върху Продукта и други създадени от него и посочени в Договора софтуерни продукти.</p>
+                <p class="exact-p">(5) Доставчикът има право да използва логото и наименованието на Търговеца и да го посочва като негов партньор на интернет страницата си, своите софтуерни продукти/платформи и кореспонденция, без да дължи възнаграждение за това.</p>
+
+                <h2 class="exact-chapter-title">КОНФИДЕНЦИАЛНОСТ</h2>
+                <p class="exact-p"><strong>Чл. 9.</strong> (1) Страните се съгласяват да пазят строго поверителни всички клаузи от настоящия Договор и всяка друга непублична (конфиденциална) информация, свързана с тяхната съвместна работа по изпълнението на Договора, обозначена изрично от съответната страна като такава. За конфиденциална информация се считат данни за Клиенти или за техните сметки и преводи.</p>
+                <p class="exact-p">(2) Никоя страна няма право да предоставя на трети лица информация, свързана с производствената и търговската дейност, както и всякаква друга информация, получена в пред договорния процес, при сключването или в хода на изпълнението на Договора, обозначена от разкриващата страна като търговска тайна.</p>
+              </div>
+
+              <div class="page-footer">
+                <span class="page-footer-left">Рамков договор за иницииране на плащания — IRIS Pay</span>
+                <span class="page-footer-right">Страница 4 от 7</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Page Break Divider 4 -> 5 -->
+          <div class="page-gap-divider">
+            <span class="gap-line"></span>
+            <span class="gap-badge">Край на Страница 4 • Начало на Страница 5</span>
+            <span class="gap-line"></span>
+          </div>
+
+          <!-- ===================================================================
+               СТРАНИЦА 5 ОТ 7: ЧЛ. 9.3, НЕУСТОЙКИ (ЧЛ. 10), КОМУНИКАЦИЯ (ЧЛ. 11, ЧЛ. 12)
+               =================================================================== -->
+          <div class="doc-page-card" id="pageCard5">
+            <div class="page-top-tab">
+              <span class="page-tab-badge">СТРАНИЦА 5 ОТ 7 • РАМКОВ ДОГОВОР</span>
+            </div>
+            <div class="a4-sheet" id="docSheet5">
+              <div class="page-content-area">
+                <p class="exact-p">(3) Всяко разпространение на конфиденциална информация към трети лица, което: не е надлежно оторизирано от разкриващата страна; не се налага с оглед изпълнението на настоящия Договор; и е извършено без да са предварително поети от третите лица ангажименти за опазване на конфиденциалността, идентични на тези по настоящия член, представлява нарушение на Договора и ще бъде санкционирано, съгласно приложимото законодателство в Република България. Изключение се прави само за представянето на информация пред компетентни държавни органи и институции, в кръга на правомощията им, по надлежно установения нормативен ред.</p>
+
+                <h2 class="exact-chapter-title">НЕУСТОЙКИ И ОБЕЗЩЕТЕНИЯ</h2>
+                <p class="exact-p"><strong>Чл. 10.</strong> (1) Освен ако не е уговорено друго, при забавено изпълнение на парично задължение, неизправната страна дължи на изправната неустойка в размер на 0,5% на ден върху стойността на забавеното изпълнение, но не повече от 10% от стойността на забавеното задължение.</p>
+                <p class="exact-p">(2) Изправната страна може да претендира обезщетение за нанесени вреди и пропуснати ползи по общия ред, в случай че превишават размера на уговорените в договора неустойки.</p>
+
+                <h2 class="exact-chapter-title">КОМУНИКАЦИЯ МЕЖДУ СТРАНИТЕ</h2>
+                <p class="exact-p"><strong>Чл. 11.</strong> Договорът се сключва на български език. Освен ако Страните не се договорят изрично друго, на български език ще се извършват всички уведомления и съобщения между Страните и ще се води цялостната им комуникация относно изпълнението, изменението или прекратяването на Договора.</p>
+
+                <p class="exact-p"><strong>Чл. 12.</strong> (1) Страните ще използват следните данни за кореспонденция:</p>
+                <p class="exact-p"><strong>За Доставчика:</strong><br>
+                Адрес: гр. София, бул. Христо Смирненски 78, ет.4<br>
+                E-mail: sales@irisbgsf.com<br>
+                Телефон: 0895 3535 94</p>
+                
+                <p class="exact-p"><strong>За Търговеца:</strong><br>
+                Адрес: <span class="live-field underlined" data-field="contactAddress">...................................................................................................</span><br>
+                E-mail: <span class="live-field underlined" data-field="contactEmail">................................................................................</span><br>
+                Телефон: <span class="live-field underlined" data-field="contactPhone">..........................................................</span></p>
+
+                <p class="exact-p">(2) В случай на електронна кореспонденция, информацията и документите се считат за получени когато те се получат в информационната система на получателя.</p>
+                <p class="exact-p">(3) В случай на промяна на данните за кореспонденция, съответната страна следва да уведоми надлежно за това другата. До уведомлението, за актуални се считат посочените данни за кореспонденция, като всички уведомления и съобщения до страната на стария ѝ адрес ще се считат за валидно връчени и получени.</p>
+              </div>
+
+              <div class="page-footer">
+                <span class="page-footer-left">Рамков договор за иницииране на плащания — IRIS Pay</span>
+                <span class="page-footer-right">Страница 5 от 7</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Page Break Divider 5 -> 6 -->
+          <div class="page-gap-divider">
+            <span class="gap-line"></span>
+            <span class="gap-badge">Край на Страница 5 • Начало на Страница 6</span>
+            <span class="gap-line"></span>
+          </div>
+
+          <!-- ===================================================================
+               СТРАНИЦА 6 ОТ 7: СРОК И ПРЕКРАТЯВАНЕ (ЧЛ. 13, ЧЛ. 14), ПОДДРЪЖКА (ЧЛ. 15.1)
+               =================================================================== -->
+          <div class="doc-page-card" id="pageCard6">
+            <div class="page-top-tab">
+              <span class="page-tab-badge">СТРАНИЦА 6 ОТ 7 • РАМКОВ ДОГОВОР</span>
+            </div>
+            <div class="a4-sheet" id="docSheet6">
+              <div class="page-content-area">
+                <h2 class="exact-chapter-title">СРОК НА ДОГОВОРА. ПРОМЕНИ И ПРЕКРАТЯВАНЕ</h2>
+                <p class="exact-p"><strong>Чл. 13.</strong> (1) Настоящият Договор влиза в сила от датата на сключването му от Страните и се сключва за срок от 24 месеца.</p>
+                <p class="exact-p">(2) Договорът може да бъде прекратен в следните хипотези:</p>
+                <p class="exact-p indent-item">по взаимно съгласие между страните;</p>
+                <p class="exact-p indent-item">едностранно, с 1-месечно предизвестие от страна на Търговеца или 2-месечно предизвестие от страна на Доставчика;</p>
+                <p class="exact-p indent-item">едностранно, без предизвестие, от изправната страна в случай на системно нарушение на Договора. Системно се счита трикратно нарушение на задължение по Договора, извършено в рамките на 12 календарни месеца;</p>
+                <p class="exact-p indent-item">незабавно, в случай че нормативна промяна, съдебно решение или друг акт не позволява на Доставчика да предоставя повече Услугата.</p>
+                <p class="exact-p">(3) В случай на неизпълнение на задължение по този Договор, изправната Страна може да го развали, като предостави подходящ срок на неизправната Страна да поправи поведението си. В случай че в този срок нарушението не е отстранено, се счита, че Договорът е развален.</p>
+                <p class="exact-p">(4) Страните не дължат обезщетения и неустойки при прекратяване или разваляне на Договора, освен ако прекратяването/развалянето е поради неизпълнение на поето задължение.</p>
+                <p class="exact-p">(5) След изтичане на срокът по т. 1 Договорът се трансформира в безсрочен.</p>
+
+                <p class="exact-p"><strong>Чл. 14.</strong> Настоящият Договор не въвежда задължение относно броя на извършените плащания чрез Услугата.</p>
+
+                <h2 class="exact-chapter-title">XI. ПОДДРЪЖКА</h2>
+                <p class="exact-p"><strong>Чл. 15</strong> Доставчикът осигурява на Търговеца   поддръжка на правилното функциониране на продукта „ Платежен терминал“ за срока и при условията на настоящия договор, като отстранява всеки проблем в тази връзка, както следва:</p>
+                <p class="exact-p">(1) В случай, че проблемът е възникнал преди 12.00 часа в работен ден – Айрис се задължава да го отстрани в рамките на следващият работен ден при работно време 9 00- 18.00 часа.</p>
+              </div>
+
+              <div class="page-footer">
+                <span class="page-footer-left">Рамков договор за иницииране на плащания — IRIS Pay</span>
+                <span class="page-footer-right">Страница 6 от 7</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Page Break Divider 6 -> 7 -->
+          <div class="page-gap-divider">
+            <span class="gap-line"></span>
+            <span class="gap-badge">Край на Страница 6 • Начало на Страница 7</span>
+            <span class="gap-line"></span>
+          </div>
+
+          <!-- ===================================================================
+               СТРАНИЦА 7 ОТ 7: ЧЛ. 15.2-15.4, ДОПЪЛНИТЕЛНИ РАЗПОРЕДБИ, ПОДПИСИ НА ТЪРГОВЕЦА (3 МЕСТА)
+               =================================================================== -->
+          <div class="doc-page-card" id="pageCard7">
+            <div class="page-top-tab">
+              <span class="page-tab-badge">СТРАНИЦА 7 ОТ 7 • РАМКОВ ДОГОВОР И ПОДПИСИ</span>
+            </div>
+            <div class="a4-sheet" id="docSheet7">
+              <div class="page-content-area">
+                <p class="exact-p">(2) В случай, че проблемът е възникнал след 12.00 часа в работен ден – Айрис се задължава да го отстрани не по-късно от края на деня следващ, работния ден след деня на възникване на проблема, при работно време 9 00- 18.00 часа.</p>
+                <p class="exact-p">(3) В случай че проблемът е възникнал в неработен ден - Айрис се задължава да го отстрани не по-късно от края втория  работен ден при работно време 9 00- 18.00 часа.</p>
+                <p class="exact-p">(4) За проблеми извън обхвата на контрол на Доставчикът, дружеството се задължава да уведоми съответната страна при подаден сигнал от Търговеца  в рамките на 2 часа. В случай, че сигналът е подаден след 16.30 часа до 10.00 часа на първият работен ден.</p>
+
+                <h2 class="exact-chapter-title">ДОПЪЛНИТЕЛНИ РАЗПОРЕДБИ</h2>
+                <p class="exact-p"><strong>Чл. 16.</strong> Всеки член, алинея или точка на Договора или всяка друга разпоредба, която е или стане невалидна, незаконна или неприложима, ще бъде отстранена и ще бъде разглеждана като такава само в степента на тази невалидност, незаконност или неприложимост, и няма да засяга и накърни останалите разпоредби.</p>
+                <p class="exact-p"><strong>Чл. 17.</strong> Настоящият Договор може да бъде поправян, изменян или допълван само по писмено съгласие на страните.</p>
+                <p class="exact-p"><strong>Чл. 18.</strong> Съдържанието на Договора не може да се тълкува като създаване или установяване на друго взаимоотношение между страните, различно от това между независими контрактори.</p>
+
+                <p class="exact-p"><strong>Чл. 19.</strong> (1) При подписването на Договора, Търговецът следва да получи екземпляр и да се съгласи по отношение на него да се прилагат:</p>
+                <p class="exact-p indent-item">Общи условия на “Айрис Солюшънс“ АД относно услуги по предоставяне на информация за сметка и иницииране на плащане.</p>
+                <p class="exact-p">(2) Доставчикът има право да променя Общите условия по ал. 1, като за това предварително изпраща чрез Продукта или каналите по чл. 12 уведомление до Търговеца. В случай че последния не се съгласи с изменените Общи условия, Доставчикът има право да прекрати едностранно договора, ако предоставянето на Услугите е невъзможно или съществено затруднено без приемането на актуализираните Общи условия от страна на Търговеца.</p>
+                <p class="exact-p">(3) В случай на несъответствие между уговореното в Договора и Общите условия по ал. 1, с предимство се прилагат клаузите на Договора.</p>
+
+                <p class="exact-p"><strong>Чл. 20.</strong> Настоящият Договор ще се управлява и тълкува съобразно българското право.</p>
+                <p class="exact-p"><strong>Чл. 21.</strong> (1) Във всеки случай на спор, предявяване на претенции, въпроси и различия, произтичащи или свързани с настоящия Договор, Страните ще използват разумни усилия за разрешаването на тези спорове, претенции, въпроси и различия. За постигането на тази цел, те ще се консултират и преговарят заедно, с добра воля и разбиране на общите интереси, за да достигнат до справедливо и безпристрастно решение, задоволяващо страните в срок от 7 (седем) работни дни от възникване на спора.</p>
+                <p class="exact-p">(2) В случай на невъзможност да се постигне съгласие, споровете се отнасят за разрешаване от компетентните български съдилища със седалище в гр. София.</p>
+
+                <p class="exact-p mt-2">Настоящият Договор се състави и подписа в два еднообразни екземпляра, по един за всяка една от страните.</p>
+                <p class="exact-p">Неразделна част към Договора са:<br>Приложение 1 – Такси и комисиони;</p>
+
+                <!-- Exact Signatures Block: 3 signature slots for Merchant, blank for IRIS -->
+                <div class="contract-exact-signatures mt-3">
+                  <!-- Row 1: Provider (left, blank) and Merchant slot 1 (right) -->
+                  <div class="exact-sig-grid-row">
+                    <div class="sig-half">
+                      <p class="sig-head-title"><strong>За Доставчика:</strong></p>
+                      <div class="iris-unsigned-box"></div>
+                      <div class="sig-underline-dots">....................................................................</div>
+                    </div>
+                    <div class="sig-half">
+                      <p class="sig-head-title"><strong>За Търговеца:</strong></p>
+                      <div class="merchant-sig-target" id="contractSigDisplay1" data-slot="c1">
+                        <div class="sig-underline-dots">....................................................................</div>
+                      </div>
+                      <div class="sig-rep-footer"><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></div>
+                    </div>
+                  </div>
+
+                  <!-- Row 2: Merchant slot 2 (right) -->
+                  <div class="exact-sig-grid-row mt-2">
+                    <div class="sig-half"></div>
+                    <div class="sig-half">
+                      <p class="sig-head-title"><strong>За Търговеца:</strong></p>
+                      <div class="merchant-sig-target" id="contractSigDisplay2" data-slot="c2">
+                        <div class="sig-underline-dots">....................................................................</div>
+                      </div>
+                      <div class="sig-rep-footer"><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></div>
+                    </div>
+                  </div>
+
+                  <!-- Terms Receipt Clause -->
+                  <div class="terms-receipt-banner mt-3">
+                    <p class="exact-p"><strong>* Получил съм екземпляр и съм съгласен в отношенията ни да се прилагат Общи условия на “Айрис Солюшънс“ АД относно използване на Продукт Платежен терминал.</strong></p>
+                  </div>
+
+                  <!-- Row 3: Merchant slot 3 (right) -->
+                  <div class="exact-sig-grid-row mt-2">
+                    <div class="sig-half"></div>
+                    <div class="sig-half">
+                      <p class="sig-head-title"><strong>За Търговеца:</strong></p>
+                      <div class="merchant-sig-target" id="contractSigDisplay3" data-slot="c3">
+                        <div class="sig-underline-dots">....................................................................</div>
+                      </div>
+                      <div class="sig-rep-footer"><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <div class="page-footer">
+                <span class="page-footer-left">Рамков договор за иницииране на плащания — IRIS Pay</span>
+                <span class="page-footer-right">Страница 7 от 7</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Page Break Divider 7 -> 8 (DEDICATED SEPARATION FOR APPENDIX 1) -->
+          <div class="page-gap-divider appendix-page-divider">
+            <span class="gap-line"></span>
+            <span class="gap-badge appendix-badge">● ПРИЛОЖЕНИЕ № 1 • ОТДЕЛНА СТРАНИЦА (СТРАНИЦА 8) ●</span>
+            <span class="gap-line"></span>
+          </div>
+
+          <!-- ===================================================================
+               СТРАНИЦА 8: ПРИЛОЖЕНИЕ 1 (ОТДЕЛНА САМОСТОЯТЕЛНА СТРАНИЦА ДОЛУ)
+               Съдържа оригинален оранжев цвят #ED7C31, центрирани заглавия и подпис
+               =================================================================== -->
+          <div class="doc-page-card appendix-page-card" id="pageCardAppendix">
+            <div class="page-top-tab">
+              <span class="page-tab-badge appendix-tab-badge">ПРИЛОЖЕНИЕ № 1 • ТАКСИ И КОМИСИОНИ</span>
+            </div>
+            <div class="a4-sheet appendix-a4-sheet" id="docSheetAppendix">
+              <div class="page-content-area">
+                
+                <div class="appendix-exact-head" style="text-align: center; margin-bottom: 24px;">
+                  <h2 class="exact-app-title" style="text-align: center; margin: 0 0 4px 0; font-family: 'Calibri', 'Inter', sans-serif; font-size: 16px; font-weight: bold;">Приложение 1</h2>
+                  <p class="exact-app-sub" style="text-align: center; margin: 4px 0; font-family: 'Calibri', 'Inter', sans-serif; font-size: 13.5px;">към</p>
+                  <h3 class="exact-app-contract-name" style="text-align: center; margin: 4px 0 24px 0; font-family: 'Calibri', 'Inter', sans-serif; font-size: 14.5px; font-weight: bold; line-height: 1.4;">Рамков договор за извършване на плащания чрез услуга по иницииране на плащания</h3>
+                </div>
+
+                <p class="exact-p app-p">Айрис Солюшънс АД  е дружество за иновативни финтех услуги. Компанията е лицензиран от БНБ доставчик на платежни услуги по чл. 4, т. 7 и 8 от ЗПУПС – услуги по иницииране на плащане и услуги по предоставяне на информация по сметка.</p>
+
+                <h3 class="exact-section-sub app-sub">УСЛУГИ И РЕШЕНИЯ</h3>
+                
+                <!-- TITLE WITH THE EXACT ORIGINAL ORANGE COLOR #ED7C31 -->
+                <h4 class="exact-section-sub-sub color-iris-orange">Платежни терминали IRISPay</h4>
+
+                <p class="exact-p app-p">Софтуерното приложение (IRISPay) е платежен терминал позволяващ на търговеца <strong>да инициира плащане</strong> към своите клиенти, като дружеството осигурява поддръжка и интеграция на банки и платежни институции регистрирани в България, Румъния и Гърция и други.</p>
+
+                <div class="app-fees-list">
+                  <p class="exact-p app-fee-item"><strong>1. Интеграционна такса – 0 EUR.</strong></p>
+                  <p class="exact-p app-fee-item"><strong>2. Месечна такса за поддръжка-  0 EUR.</strong></p>
+                  <p class="exact-p app-fee-item"><strong>3. Такса за иницииране на плащане –  0.49% от стойността на транзакцията,</strong> платими до 10-то число на месеца, следващ месеца на осъществяване.</p>
+                </div>
+
+                <!-- Appendix Signatures strictly unsigned by IRIS, signed for Merchant -->
+                <div class="exact-signatures-grid appendix-sig-grid mt-5">
+                  <div class="sig-side">
+                    <p><strong>За Доставчика</strong></p>
+                    <div class="unsigned-space">
+                      <div class="dotted-sig-line">....................................................................</div>
+                    </div>
+                  </div>
+                  <div class="sig-side">
+                    <p><strong>За Търговеца</strong></p>
+                    <div class="merchant-sig-target" id="appendixSigDisplay" data-slot="app">
+                      <div class="dotted-sig-line">....................................................................</div>
+                    </div>
+                    <div class="sig-rep-footer"><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Page Appendix Footer -->
+              <div class="page-footer">
+                <span class="page-footer-left">Приложение 1 към Рамков договор — IRIS Pay</span>
+                <span class="page-footer-right">Страница 1 от 1</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SECOND VIEW: TERMS AND CONDITIONS (PAGINATED READ-ONLY VIEW) -->
+        <div class="pages-stack terms-standalone-view" id="termsDocContainer" style="display:none;">
+          
+          <div class="terms-read-banner" style="max-width:820px; width:100%;">
+            <div class="terms-read-badge">ДОКУМЕНТ ЗА ЗАПОЗНАВАНЕ</div>
+            <p>Настоящите Общи условия уреждат използването на софтуерния продукт „Платежен терминал“. С подписването на Рамковия договор Търговецът потвърждава, че се е запознал и ги приема.</p>
+          </div>
+
+          <!-- TERMS PAGE 1 -->
+          <div class="doc-page-card">
+            <div class="page-top-tab"><span class="page-tab-badge">ОБЩИ УСЛОВИЯ • СТРАНИЦА 1 ОТ 5</span></div>
+            <div class="a4-sheet">
+              <div class="page-content-area">
+                <h1 class="exact-contract-title">
+                  ОБЩИ УСЛОВИЯ НА “АЙРИС СОЛЮШЪНС“ АД<br>ОТНОСНО ИЗПОЛЗВАНЕ НА ПРОДУКТ „ПЛАТЕЖЕН ТЕРМИНАЛ“
+                </h1>
+
+                <h2 class="exact-chapter-title">I. Определения</h2>
+                <p class="exact-p">Чл. 1. (1) За целите на тези Общи условия термините, изброени по-долу, ще имат следното значение, освен ако контекстът не налага друго тълкуване:</p>
+                <p class="exact-p">• „Доставчик“ е „Айрис Солюшънс“ АД, ЕИК 208455895, лицензиран за предоставяне на платежни услуги съгласно решение на БНБ № 316/17.09.2019г.;</p>
+                <p class="exact-p">• „Продукт“ или „Платежен терминал“ е софтуерно решение на Доставчика, което се инсталира и/или интегрира със системите на Търговеца, чрез което е възможна обмяна на информация между Търговеца и неговите клиенти и се приемат плащания (от сметка и/или банкова карта), с които се заплаща за стоки/услуги на Търговеца. Плащанията може да са свързани с:</p>
+                <p class="exact-p indent-item"> заплащане на стоки/услуги в онлайн магазин на Търговеца;</p>
+                <p class="exact-p indent-item"> заплащане на стоки/услуги във физически магазин на Търговеца;</p>
+                <p class="exact-p indent-item"> заплащане по фактури на Търговеца;</p>
+                <p class="exact-p">• „Общи условия“ означава настоящите Общи условия на „Айрис Солюшънс“ АД относно използване на продукт „Платежен терминал“;</p>
+                <p class="exact-p">• „Търговец“ е лице, осъществяващо стопанска дейност или предоставящо услуги по занятие, което предоставя стоки/услуги, чието заплащане е възможно посредством Продукта;</p>
+                <p class="exact-p">• „Трансакция“ е платежна операция, извършена чрез Продукта към сметка на Търговеца в банка/платежна институция.</p>
+                <p class="exact-p">• “Ползватели“ са Търговците, както и лица – техни клиенти, които използват продукт Платежен терминал на Доставчика.</p>
+                <p class="exact-p">(2) Освен ако от контекста не произтича друго, думите, използвани в единствено число означават и множественото число на тези думи, а думите, използвани в множествено число, означават същите думи и в единствено число.</p>
+                <p class="exact-p">Чл. 2. Общите условия се прилагат при ползване на Продукта. При ползването на Продукта, всеки Търговец следва да даде съгласие и да спазва Общите условия.</p>
+
+                <h2 class="exact-chapter-title">II. Условия към Търговците за достъп до функционалностите на Продукта</h2>
+                <p class="exact-p">Чл. 3. (1) Предварително условие за получаване на достъп до Продукта е Търговецът да сключи договор с Доставчика, уреждащ ползването на Продукта и да бъде одобрен от Доставчика.</p>
+                <p class="exact-p">(2) Одобрението по ал. 1 се предоставя при следните изпълнени условия:</p>
+                <p class="exact-p indent-item">1. Търговецът да е предоставил изискуемите от Доставчика регистрационни данни и данни за действителния си собственик;</p>
+              </div>
+              <div class="page-footer">
+                <span class="page-footer-left">Общи условия на „Айрис Солюшънс“ АД</span>
+                <span class="page-footer-right">Страница 1 от 5</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="page-gap-divider"><span class="gap-line"></span><span class="gap-badge">Страница 2 от 5</span><span class="gap-line"></span></div>
+
+          <!-- TERMS PAGE 2 -->
+          <div class="doc-page-card">
+            <div class="page-top-tab"><span class="page-tab-badge">ОБЩИ УСЛОВИЯ • СТРАНИЦА 2 ОТ 5</span></div>
+            <div class="a4-sheet">
+              <div class="page-content-area">
+                <p class="exact-p indent-item">2. Дейността на Търговеца да е свързана с предоставяне на стоки и/или услуги, разрешени от действащото законодателство. В случай че извършваната търговска дейност подлежи на лицензионен или разрешителен режим, Търговецът следва да предостави доказателства, че притежава съответните лицензи и/или разрешителни;</p>
+                <p class="exact-p indent-item">3. Търговецът да се ползва с добро име и да спазва разпоредбите на действащото законодателство, свързани с упражняване на дейността му;</p>
+                <p class="exact-p">Чл. 4. (1) След одобрение, Доставчикът предоставя софтуер (plug-in, app или др.) на Търговеца, който следва да бъде инсталиран и/или интегриран със системите на последния, за да може да се ползва Продукта.</p>
+                <p class="exact-p">(4) Правилното използване и пълната функционалност на Продукта може да изисква спазването и на други изисквания, посочени от Доставчика.</p>
+                <p class="exact-p">Чл. 5. Доставчикът следва да предостави на Търговеца подробни инструкции за работа с Продукта, съобразени с характера на очакваните плащания от клиенти (онлайн магазин, физически магазин и/или по фактури) преди Търговецът да започне работа с Продукта.</p>
+                <p class="exact-p">Чл. 6. В случай на съмнения или установени случаи на нарушения, свързани с предоставената от Търговеца информация или действия, както и с оглед ограничаване възможността от извършване на неправомерни действия, Доставчикът може едностранно да ограничи функционалността на Продукта, включително и размера на плащанията, допустими чрез Платежния терминал. Ограниченията могат да касаят броя на сметки на Търговеца, по които да се получават плащания, максималният размер на еднократна Трансакция, броят и размерът на Трансакциите от определено лице (клиент), видът на стоките/услугите, за които да се получават плащания и др, за което Търговеца бива уведомяван своевременно.</p>
+
+                <h2 class="exact-chapter-title">III. Използване на Продукта</h2>
+                <p class="exact-p">Чл. 7. Получаването на плащания чрез Продукта се осъществява по инициатива на Търговеца или на съответния клиент, като последният задължително следва да одобри Трансакцията. Конкретният начин за иницииране и осъществяване на Трансакции се уточнява от Доставчика в инструкциите по чл. 5 или друг подходящ начин.</p>
+                <p class="exact-p">Чл. 8. (1) Доставчикът уведомява по електронен път (чрез Продукта и/или по електронната поща) Търговеца за всяко успешно плащане чрез Платежния терминал.</p>
+                <p class="exact-p">(2) Чрез Продукта, Търговецът може да следи и да получава информация относно извършените Трансакции.</p>
+              </div>
+              <div class="page-footer">
+                <span class="page-footer-left">Общи условия на „Айрис Солюшънс“ АД</span>
+                <span class="page-footer-right">Страница 2 от 5</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="page-gap-divider"><span class="gap-line"></span><span class="gap-badge">Страница 3 от 5</span><span class="gap-line"></span></div>
+
+          <!-- TERMS PAGE 3 -->
+          <div class="doc-page-card">
+            <div class="page-top-tab"><span class="page-tab-badge">ОБЩИ УСЛОВИЯ • СТРАНИЦА 3 ОТ 5</span></div>
+            <div class="a4-sheet">
+              <div class="page-content-area">
+                <p class="exact-p">Чл. 9. (1) Търговецът може да получава рекламни материали, както и да съгласува с Доставчика такива, с оглед популяризирането на Продукта.</p>
+                <p class="exact-p">(2) Търговецът може да участва в маркетинг кампании, както и да съгласува с Доставчика самостоятелни такива, с оглед популяризирането на Продукта.</p>
+
+                <h2 class="exact-chapter-title">IV. Отговорност</h2>
+                <p class="exact-p">Чл. 10. (1) Доставчикът може да извършва проверки на Трансакциите с оглед установяване дали са налице неправомерни и/или съмнителни операции, както и в случай на направени рекламации от страна на Ползватели.</p>
+                <p class="exact-p">(2) В случай на рекламация, Доставчикът следва да изисква информация за случая от Търговеца, като му предостави подходящ срок за това, но не по-кратък от 3 работни дни.</p>
+                <p class="exact-p">(3) В случай на установена незаконосъобразна, неправомерна или съмнителна операция, както и в случай на уважена рекламация, Търговецът е длъжен да възстанови получената сума за своя сметка, както и да извърши други действия, посочени от Доставчика. Доставчикът може да изисква и други действия за поправяне на вредите, доколкото такива са допустими от закона и се налагат от естеството и характера на конкретния случай.</p>
+                <p class="exact-p">Чл. 11. (1) В случай на съмнения (до изясняване на случая) или при установени случаи на неправомерни действия, Доставчикът може едностранно да блокира изцяло или частично възможността на Търговеца да използва Платежния терминал, за което Търговеца бива уведомяван своевременно, без да дължи обезщетение за това.</p>
+                <p class="exact-p">(2) Информация за случаи по ал. 1 може да бъде предоставена и на компетентните органи.</p>
+                <p class="exact-p">Чл. 12. Доставчикът ще полага грижи да осигури възможност за приемане на Трансакции чрез Продукта непрекъснато (24 часа в денонощието, 7 дни в седмицата), като не отговаря в случай, че плащанията не се допуснат или се окажат невъзможни поради причина, за която отговаря съответната банка/платежна институция, обслужваща сметката.</p>
+
+                <h2 class="exact-chapter-title">V. Такси</h2>
+                <p class="exact-p">Чл. 13. За ползването на Продукта, Доставчикът начислява такси на Търговците, съгласно уговореното в индивидуалните им договори или в Тарифата на Доставчика.</p>
+                <p class="exact-p">Чл. 14. В случай че Търговецът ползва допълнителни услуги, възможно е да се дължат такси, съгласно Тарифата на Доставчика.</p>
+              </div>
+              <div class="page-footer">
+                <span class="page-footer-left">Общи условия на „Айрис Солюшънс“ АД</span>
+                <span class="page-footer-right">Страница 3 от 5</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="page-gap-divider"><span class="gap-line"></span><span class="gap-badge">Страница 4 от 5</span><span class="gap-line"></span></div>
+
+          <!-- TERMS PAGE 4 -->
+          <div class="doc-page-card">
+            <div class="page-top-tab"><span class="page-tab-badge">ОБЩИ УСЛОВИЯ • СТРАНИЦА 4 ОТ 5</span></div>
+            <div class="a4-sheet">
+              <div class="page-content-area">
+                <h2 class="exact-chapter-title">VI. Прекратяване и промяна на достъпа и функционалностите на Продукта</h2>
+                <p class="exact-p">Чл. 15. Доколкото не е предвидено друго в индивидуалния му договор, Търговецът може по всяко време да прекрати ползването на Продукта, както и да изключи своя сметка в определена банка/платежна институция от обхвата на Продукта.</p>
+                <p class="exact-p">Чл. 16. (1) Доставчикът ще положи усилия, но не поема ангажимент, за непрекъснато функциониране на Продукта, като си запазва правото да прекрати достъпа на Търговеца без предварително предизвестие. Доставчикът има право да внася промени във функционалностите на Продукта, включително да ги ограничава, да изключва достъпа до тях, без предварително предизвестие. Доставчикът ще положи всички разумни усилия да уведоми предварително Търговеца за планирани промени във функционалностите или прекратяване на достъпа до Продукта.</p>
+                <p class="exact-p">(2) Доставчикът следва да информира Търговеца и да му даде подробни инструкции в случаи на модификации и промени в Продукта, които изискват допълнителна инсталация, интеграция или промени в системите на Търговеца.</p>
+
+                <h2 class="exact-chapter-title">VII. Разни</h2>
+                <p class="exact-p">Чл. 17. (1) Ако Търговец забележи неизправност при ползване на Продукта, той може да се свърже с Доставчика, като използва посочените по-долу данни за кореспонденция:<br>
+                „Айрис Солюшънс“ АД<br>
+                ЕИК 208455895<br>
+                Адрес: гр. София, бул. Цариградско шосе 111Б, София Тех парк, сграда Инкубатор, ет.1<br>
+                Електронен адрес: sales@irisbgsf.com</p>
+                <p class="exact-p">(2) Доставчикът ще разгледа искането и ще уведоми засегнатите Ползватели електронно за своето решение в 7-дневен срок. В случай че срокът не може да бъде спазен и/или се налага допълнителна информация, Доставчикът ще уведоми електронно за това засегнатите Ползватели.</p>
+              </div>
+              <div class="page-footer">
+                <span class="page-footer-left">Общи условия на „Айрис Солюшънс“ АД</span>
+                <span class="page-footer-right">Страница 4 от 5</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="page-gap-divider"><span class="gap-line"></span><span class="gap-badge">Страница 5 от 5</span><span class="gap-line"></span></div>
+
+          <!-- TERMS PAGE 5 -->
+          <div class="doc-page-card">
+            <div class="page-top-tab"><span class="page-tab-badge">ОБЩИ УСЛОВИЯ • СТРАНИЦА 5 ОТ 5</span></div>
+            <div class="a4-sheet">
+              <div class="page-content-area">
+                <p class="exact-p">Чл. 18. Доставчикът се задължава да осигури съдействие на Търговеца при въпроси, възникнали проблеми и неизправности на посочените в чл. 16 данни за кореспонденция.</p>
+                <p class="exact-p">Чл. 19. (1) Доставчикът има право да променя настоящите Общи условия, за това предварително изпраща чрез Продукта уведомление до Търговеца. Известие за промяната на Общите условия се поставя и на интернет страницата на Доставчика.</p>
+                <p class="exact-p">(2) Промените в Общите условия имат действия спрямо съответния Търговец само ако последният ги приеме. В случай че Търговецът не приеме съответни изменения на Общите условия, Доставчикът може частично или изцяло да ограничи ползването на Продукта.</p>
+                <p class="exact-p">(3) В случай, че Титулярът не приема промяната в Общите условия, той има право да прекрати рамковия договор, по всяко време преди датата им на влизане в сила, без да носи отговорност за разноски и обезщетения.</p>
+                <p class="exact-p">Чл. 20. В случай че разпоредба на настоящите Общи условия бъде обявена от съда или друга сходна институция за недействителна, незаконна или неприложима, независимо от това, всички други разпоредби на Общите условия запазват напълно силата и действието си.</p>
+                <p class="exact-p">Чл. 21. За неуредените с настоящите Общи условия случаи се прилага действащото право на Република България.</p>
+
+                <p class="exact-p mt-4 text-muted">Настоящите Общи условия са приети и са влезли в сила на 20.01.2020 г.<br>Последно изменение: 08.11.2024 г.</p>
+              </div>
+              <div class="page-footer">
+                <span class="page-footer-left">Общи условия на „Айрис Солюшънс“ АД</span>
+                <span class="page-footer-right">Страница 5 от 5</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- SUCCESS MODAL (Exact Wording Requested) -->
+  <div class="modal-overlay" id="successModalOverlay" style="display:none;">
+    <div class="modal-container">
+      <div class="modal-header-icon">
+        <div class="success-icon-circle">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+      </div>
+
+      <div class="modal-body-content">
+        <!-- EXACT REQUESTED USER MESSAGE -->
+        <h2 class="success-main-headline">
+          Успешно изпращане. Екипът на IRIS Pay проверява документите и ще ви извести щом бъдат подписани.
+        </h2>
+        
+        <p class="success-subtext">
+          Вашите документи са регистрирани с цифров входящ номер и електронен времеви печат.
+        </p>
+
+        <div class="submission-summary-box">
+          <div class="summary-item">
+            <span class="sum-label">Входящ номер:</span>
+            <span class="sum-value mono" id="modalRefNumber">#IRIS-SIGN-2026-7842</span>
+          </div>
+          <div class="summary-item">
+            <span class="sum-label">Търговец:</span>
+            <span class="sum-value" id="modalCompanyName">Търговец ООД</span>
+          </div>
+          <div class="summary-item">
+            <span class="sum-label">ЕИК:</span>
+            <span class="sum-value" id="modalCompanyEik">206123456</span>
+          </div>
+          <div class="summary-item">
+            <span class="sum-label">Статус на подпис:</span>
+            <span class="sum-value text-verified">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+              Електронно валидиран от Търговеца
+            </span>
+          </div>
+          <div class="summary-item">
+            <span class="sum-label">Дата и час:</span>
+            <span class="sum-value" id="modalTimestamp">13.10.2026 г. 13:05</span>
+          </div>
+        </div>
+
+        <div class="modal-actions-row">
+          <button type="button" class="btn-primary-modal" id="modalDownloadPdfBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Печат / Свали копие (PDF)
+          </button>
+          <button type="button" class="btn-subtle-modal" id="modalCloseBtn">
+            Затвори и преглед
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
