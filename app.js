@@ -521,7 +521,10 @@ document.addEventListener('DOMContentLoaded', () => {
       updateTypedFontSamples(compData.rep);
     }
 
-    // Show inline verification banner right above the inputs
+    // Show inline verification banner right above the inputs, hide redundant hint
+    if (eikFeedbackMsg) {
+      eikFeedbackMsg.style.display = 'none';
+    }
     if (companyVerifyBanner) {
       companyVerifyBanner.style.display = 'flex';
       companyVerifyBanner.classList.remove('is-verified');
@@ -533,18 +536,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Verification button actions directly on the data fields: [✓ Да] and [✕ Не]
+  // Clicking either button completely hides the verification UI leaving only the clean data fields
   if (btnVerifyDataYes) {
     btnVerifyDataYes.addEventListener('click', () => {
       isCompanyDataVerified = true;
-      btnVerifyDataYes.classList.add('active');
-      if (btnVerifyDataNo) btnVerifyDataNo.classList.remove('active');
-      if (companyVerifyBanner) companyVerifyBanner.classList.add('is-verified');
+      if (companyVerifyBanner) companyVerifyBanner.style.display = 'none';
+      if (eikFeedbackMsg) eikFeedbackMsg.style.display = 'none';
       if (companyInputsWrapper) companyInputsWrapper.classList.add('is-verified');
 
-      if (eikFeedbackMsg) {
-        eikFeedbackMsg.textContent = '✓ Данните за фирмата са потвърдени и успешно синхронизирани с договора.';
-        eikFeedbackMsg.className = 'field-hint-msg success';
-      }
       showToast('Данните за фирмата са потвърдени!', 'success');
       checkStep1Progress();
     });
@@ -552,18 +551,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnVerifyDataNo) {
     btnVerifyDataNo.addEventListener('click', () => {
-      isCompanyDataVerified = true; // User acknowledged and can edit
-      btnVerifyDataNo.classList.add('active');
-      if (btnVerifyDataYes) btnVerifyDataYes.classList.remove('active');
-      if (companyVerifyBanner) companyVerifyBanner.classList.remove('is-verified');
+      isCompanyDataVerified = true; // User acknowledged and can edit freely
+      if (companyVerifyBanner) companyVerifyBanner.style.display = 'none';
+      if (eikFeedbackMsg) eikFeedbackMsg.style.display = 'none';
       if (companyInputsWrapper) companyInputsWrapper.classList.remove('is-verified');
       if (companyNameInput) companyNameInput.focus();
 
-      if (eikFeedbackMsg) {
-        eikFeedbackMsg.textContent = '✎ Можете да нанесете желаните корекции директно в полетата по-долу.';
-        eikFeedbackMsg.className = 'field-hint-msg';
-      }
-      showToast('Можете да редактирате полетата директно.', 'info');
+      showToast('Можете да нанесете корекции директно в полетата по-долу.', 'info');
+      checkStep1Progress();
     });
   }
 
@@ -580,6 +575,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (val.length < 9) {
         companyEikInput.classList.remove('is-invalid');
         if (eikFeedbackMsg) {
+          eikFeedbackMsg.style.display = 'block';
           eikFeedbackMsg.textContent = 'Въведете 9 цифри за проверка в Търговския регистър';
           eikFeedbackMsg.className = 'field-hint-msg';
         }
@@ -592,6 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!isValid) {
         companyEikInput.classList.add('is-invalid');
         if (eikFeedbackMsg) {
+          eikFeedbackMsg.style.display = 'block';
           eikFeedbackMsg.textContent = '⚠ Невалидна контролна цифра на ЕИК по БУЛСТАТ.';
           eikFeedbackMsg.className = 'field-hint-msg error';
         }
@@ -602,7 +599,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       companyEikInput.classList.remove('is-invalid');
       if (eikFeedbackMsg) {
-        eikFeedbackMsg.textContent = '⟳ Извличане на официални данни от Търговския регистър...';
+        eikFeedbackMsg.style.display = 'block';
+        eikFeedbackMsg.textContent = '⟳ Извличане на данни от Търговския регистър...';
         eikFeedbackMsg.className = 'field-hint-msg';
       }
 
@@ -611,16 +609,12 @@ document.addEventListener('DOMContentLoaded', () => {
           const compData = await fetchRegistryData(val);
           if (compData) {
             showCompanyPreview(compData, val);
-
-            if (eikFeedbackMsg) {
-              eikFeedbackMsg.textContent = '✓ Данните за фирмата са извлечени от Търговския регистър. Моля, потвърдете с (✓) или направете редакция в полетата.';
-              eikFeedbackMsg.className = 'field-hint-msg success';
-            }
             showToast('Данните за фирмата бяха изтеглени успешно от Търговския регистър!', 'success');
             checkStep1Progress();
           }
         } catch (err) {
           if (eikFeedbackMsg) {
+            eikFeedbackMsg.style.display = 'block';
             eikFeedbackMsg.textContent = '⚠ Неуспешно автоматично свързване с Търговския регистър. Моля, въведете данните ръчно.';
             eikFeedbackMsg.className = 'field-hint-msg error';
           }
@@ -962,7 +956,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const step3 = document.getElementById('stepIndicator3');
     if (step3) step3.classList.add('completed');
 
-    showToast('Електронният подпис е положен успешно точно над пунктирата!', 'success');
+    showToast('Договорът и приложението са успешно подписани', 'success');
   }
 
   function removeSignature() {
@@ -1112,11 +1106,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(container);
 
     try {
-      const compEik = (document.getElementById('companyEik')?.value || '').trim();
-      const safeEik = compEik ? compEik.replace(/[^0-9a-zA-Z]/g, '') : 'Signed';
+      const compName = (document.getElementById('companyName')?.value || '').trim();
+      const cleanCompName = compName ? compName.replace(/["'„“«»<>:\/\\|?*]/g, '').trim() : 'Търговец';
+      const pdfFilename = `Договор (${cleanCompName}).pdf`;
       const opt = {
         margin: [0, 0, 0, 0],
-        filename: `Podpisan_Dogovor_IRIS_Pay_${safeEik}.pdf`,
+        filename: pdfFilename,
         image: { type: 'jpeg', quality: 0.92 },
         html2canvas: {
           scale: 1.5,
@@ -1136,7 +1131,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const pdfDataUri = await html2pdf().set(opt).from(container).outputPdf('datauristring');
       if (pdfDataUri && typeof pdfDataUri === 'string') {
-        return pdfDataUri.replace(/^data:application\/pdf;base64,/, '').trim();
+        const base64Marker = ';base64,';
+        const markerIdx = pdfDataUri.indexOf(base64Marker);
+        let rawBase64 = markerIdx !== -1
+          ? pdfDataUri.substring(markerIdx + base64Marker.length).trim()
+          : pdfDataUri.replace(/^data:[^;]*;base64,/, '').trim();
+        
+        // Ensure starting at the PDF magic base64 bytes 'JVBERi' (%PDF-)
+        const pdfMagicIdx = rawBase64.indexOf('JVBERi');
+        if (pdfMagicIdx !== -1 && pdfMagicIdx < 80) {
+          rawBase64 = rawBase64.substring(pdfMagicIdx).trim();
+        }
+        return rawBase64.replace(/[\r\n\s"']+$/, '');
       }
       return null;
     } catch (err) {
@@ -1255,9 +1261,21 @@ document.addEventListener('DOMContentLoaded', () => {
       const compRep = (document.getElementById('companyRepresentative')?.value || '').trim();
       const cDate = contractDateInput ? contractDateInput.value : '';
 
+      // Format date strictly as DD.MM.YYYY (day, month, year)
+      let formattedDateStr = '';
+      if (cDate && /^\d{4}-\d{2}-\d{2}$/.test(cDate)) {
+        const [y, m, d] = cDate.split('-');
+        formattedDateStr = `${d}.${m}.${y} г.`;
+      } else if (cDate) {
+        formattedDateStr = cDate;
+      } else {
+        const dNow = new Date();
+        formattedDateStr = `${String(dNow.getDate()).padStart(2, '0')}.${String(dNow.getMonth() + 1).padStart(2, '0')}.${dNow.getFullYear()} г.`;
+      }
+
       const randomRef = Math.floor(1000 + Math.random() * 9000);
       const now = new Date();
-      const timeStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()} г. ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const timeStr = `${formattedDateStr} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       const refNumber = `#IRIS-SIGN-2026-${randomRef}`;
 
       // Show sending feedback on submit button
@@ -1290,18 +1308,20 @@ document.addEventListener('DOMContentLoaded', () => {
       if (modalEikEl) modalEikEl.textContent = compEik;
       if (modalRepEl) modalRepEl.textContent = compRep;
       if (modalEmailEl) modalEmailEl.textContent = emailVal;
+      const cleanCompName = compName ? compName.replace(/["'„“«»]/g, '').trim() : 'Търговец';
+      const emailSubject = `Подписан договор (${cleanCompName})`;
       if (modalPhoneEl) modalPhoneEl.textContent = phoneVal;
-      if (modalSubjectEl) modalSubjectEl.textContent = 'Подписан договор IRIS Pay';
+      if (modalSubjectEl) modalSubjectEl.textContent = emailSubject;
       if (modalTimeEl) modalTimeEl.textContent = timeStr;
 
-      // Asynchronous API call to /api/send-contract
+      // Asynchronous API call to /api/send-contract with DD.MM.YYYY formatted date
       const emailPayload = {
         companyName: compName,
         companyEik: compEik,
         companyRepresentative: compRep,
         contactEmail: emailVal,
         contactPhone: phoneVal,
-        contractDate: cDate,
+        contractDate: formattedDateStr,
         pdfBase64: pdfBase64
       };
 

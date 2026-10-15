@@ -66,15 +66,16 @@
           <!-- Инлайн лента за проверка (показва се над самите данни при извличане от Търговския регистър) -->
           <div id="companyVerifyBanner" class="company-verify-banner" style="display: none;">
             <div class="verify-prompt-left">
-              <span class="verify-question">Верни ли са данните?</span>
+              <span class="verify-icon">✓</span>
+              <span class="verify-question">Данните за фирмата са извлечени. Верни ли са?</span>
             </div>
             <div class="verify-actions">
               <button type="button" class="btn-verify-action btn-verify-yes" id="btnVerifyDataYes" title="Потвърди верността на данните">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                 <span>Да</span>
               </button>
               <button type="button" class="btn-verify-action btn-verify-no" id="btnVerifyDataNo" title="Коригирай данните">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 <span>Не</span>
               </button>
             </div>
@@ -1000,7 +1001,7 @@
           </div>
           <div class="summary-item">
             <span class="sum-label">Тема на имейл:</span>
-            <span class="sum-value mono" id="modalEmailSubject" style="font-size:12px;">Подписан договор IRIS Pay</span>
+            <span class="sum-value mono" id="modalEmailSubject" style="font-size:12px;">Подписан договор (фирма)</span>
           </div>
           <div class="summary-item">
             <span class="sum-label">Статус на подпис:</span>

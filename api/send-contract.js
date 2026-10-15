@@ -3,9 +3,32 @@
  * Endpoint: /api/send-contract
  * Recipient: sales@irisbgsf.com
  * Subject: Подписан договор IRIS Pay
- * Content: ЕИК, Фирма, Представляващ, Имейл за контакт, Телефон, Дата
+ * Content: ЕИК, Фирма, Представляващ, Имейл за контакт, Телефон, Дата (ДД.ММ.ГГГГ)
  * Attachment: Един комбиниран PDF файл (договор + приложение)
  */
+
+function formatBulgarianDate(dStr) {
+  if (!dStr || dStr === '—') {
+    const now = new Date();
+    const d = String(now.getDate()).padStart(2, '0');
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const y = now.getFullYear();
+    return `${d}.${m}.${y} г.`;
+  }
+  // If ISO format YYYY-MM-DD -> DD.MM.YYYY г.
+  const isoMatch = String(dStr).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (isoMatch) {
+    const [, y, m, d] = isoMatch;
+    return `${d.padStart(2, '0')}.${m.padStart(2, '0')}.${y} г.`;
+  }
+  // If already DD.MM.YYYY
+  const dmyMatch = String(dStr).match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+  if (dmyMatch) {
+    const [, d, m, y] = dmyMatch;
+    return `${d.padStart(2, '0')}.${m.padStart(2, '0')}.${y} г.`;
+  }
+  return String(dStr);
+}
 
 export default async function handler(req, res) {
   // Set CORS headers
@@ -29,21 +52,25 @@ export default async function handler(req, res) {
       companyRepresentative = '—',
       contactEmail = '—',
       contactPhone = '—',
-      contractDate = new Date().toISOString().split('T')[0],
+      contractDate = '',
       pdfBase64 = null
     } = data || {};
 
     const targetEmail = 'sales@irisbgsf.com';
-    const emailSubject = 'Подписан договор IRIS Pay';
+    const cleanCompName = (companyName && companyName !== '—')
+      ? String(companyName).replace(/["'„“«»]/g, '').trim()
+      : 'Търговец';
+    const emailSubject = `Подписан договор (${cleanCompName})`;
+    const displayDate = formatBulgarianDate(contractDate);
 
-    // Plain text content - ONLY the 6 requested fields
+    // Plain text content - ONLY the 6 requested fields with day, month, year date
     const textBody = `
 ЕИК: ${companyEik}
 Фирма: ${companyName}
 Представляващ: ${companyRepresentative}
 Имейл за контакт: ${contactEmail}
 Телефон: ${contactPhone}
-Дата: ${contractDate}
+Дата: ${displayDate}
 `.trim();
 
     // HTML email content - Clean and concise with ONLY the 6 requested fields
@@ -68,7 +95,7 @@ export default async function handler(req, res) {
 <body>
   <div class="card">
     <div class="header">
-      <h1>Подписан договор IRIS Pay</h1>
+      <h1>${emailSubject}</h1>
     </div>
     <div class="content">
       <table class="info-table">
@@ -94,7 +121,7 @@ export default async function handler(req, res) {
         </tr>
         <tr>
           <td class="label">Дата:</td>
-          <td class="val">${contractDate}</td>
+          <td class="val">${displayDate}</td>
         </tr>
       </table>
     </div>
@@ -106,12 +133,36 @@ export default async function handler(req, res) {
     // Prepare PDF attachment (Single combined PDF)
     const attachments = [];
     if (pdfBase64) {
-      const cleanBase64 = String(pdfBase64).replace(/^data:application\/pdf;base64,/, '').trim();
-      if (cleanBase64) {
-        const safeEik = (companyEik && companyEik !== '—') ? companyEik.replace(/[^0-9a-zA-Z]/g, '') : 'Signed';
+      let rawBase64 = String(pdfBase64).trim();
+
+      // 1. Strip data URI prefix regardless of parameters (filename=..., charset=..., etc.)
+      const base64Marker = ';base64,';
+      const markerIdx = rawBase64.indexOf(base64Marker);
+      if (markerIdx !== -1) {
+        rawBase64 = rawBase64.substring(markerIdx + base64Marker.length).trim();
+      } else {
+        rawBase64 = rawBase64.replace(/^data:[^;]*;base64,/, '').trim();
+      }
+
+      // 2. Ensure it starts at the PDF magic base64 header 'JVBERi' (%PDF-)
+      const pdfMagicIdx = rawBase64.indexOf('JVBERi');
+      if (pdfMagicIdx !== -1 && pdfMagicIdx < 80) {
+        rawBase64 = rawBase64.substring(pdfMagicIdx).trim();
+      }
+
+      // 3. Remove any trailing quotes or invalid whitespace
+      rawBase64 = rawBase64.replace(/[\r\n\s"']+$/, '');
+
+      if (rawBase64.length > 50) {
+        const cleanCompName = (companyName && companyName !== '—')
+          ? String(companyName).replace(/["'„“«»<>:\/\\|?*]/g, '').trim()
+          : 'Търговец';
+        const pdfFilename = `Договор (${cleanCompName}).pdf`;
+
         attachments.push({
-          filename: `Podpisan_Dogovor_IRIS_Pay_${safeEik}.pdf`,
-          content: cleanBase64
+          filename: pdfFilename,
+          content: rawBase64,
+          contentType: 'application/pdf'
         });
       }
     }
@@ -213,7 +264,7 @@ export default async function handler(req, res) {
         companyRepresentative,
         contactEmail,
         contactPhone,
-        contractDate
+        contractDate: displayDate
       },
       hasAttachment: attachments.length > 0,
       message: `Договорът е изпратен към ${targetEmail}.`
