@@ -1718,41 +1718,29 @@ input.is-invalid, select.is-invalid {
   font-weight: 500;
 }
 
-/* Standout Company Data Preview Card */
-.company-preview-card {
-  background: #ffffff;
-  border: 2px solid #3b82f6;
-  border-radius: 8px;
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.12), 0 1px 3px rgba(0, 0, 0, 0.05);
-  margin: 10px 0 14px 0;
-  overflow: hidden;
-  transition: all 0.25s ease;
-}
-
-.company-preview-card.verified {
-  border-color: #16a34a;
-  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.14);
-}
-
-.company-preview-card.editing-mode {
-  border-color: #d97706;
-}
-
-.preview-header-bar {
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 10px 14px;
+/* Inline Verification Bar right above company input fields */
+.company-verify-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  flex-wrap: wrap;
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 10px 0 12px 0;
+  transition: all 0.2s ease;
 }
 
-.preview-verify-prompt {
+.company-verify-banner.is-verified {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.verify-prompt-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .verify-question {
@@ -1764,7 +1752,7 @@ input.is-invalid, select.is-invalid {
 .verify-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .btn-verify-action {
@@ -1772,12 +1760,12 @@ input.is-invalid, select.is-invalid {
   align-items: center;
   gap: 5px;
   padding: 5px 12px;
-  border-radius: 6px;
+  border-radius: 5px;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .btn-verify-yes {
@@ -1788,7 +1776,6 @@ input.is-invalid, select.is-invalid {
 
 .btn-verify-yes:hover {
   background: #15803d;
-  transform: translateY(-1px);
 }
 
 .btn-verify-yes.active {
@@ -1805,7 +1792,6 @@ input.is-invalid, select.is-invalid {
 .btn-verify-no:hover {
   background: #fef2f2;
   border-color: #dc2626;
-  transform: translateY(-1px);
 }
 
 .btn-verify-no.active {
@@ -1813,62 +1799,15 @@ input.is-invalid, select.is-invalid {
   border-color: #dc2626;
 }
 
-.preview-status-badge {
-  font-size: 11px;
-  font-weight: 700;
-  color: #475569;
-  background: #e2e8f0;
-  padding: 3px 9px;
-  border-radius: 12px;
-  white-space: nowrap;
-}
-
-.preview-status-badge.success {
-  background: #dcfce7;
-  color: #15803d;
-}
-
-.preview-status-badge.editing {
-  background: #fef3c7;
-  color: #b45309;
-}
-
-.preview-body-content {
-  padding: 12px 14px;
+.company-inputs-box {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  background: #ffffff;
+  gap: 12px;
+  transition: all 0.2s ease;
 }
 
-.preview-field-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.preview-label {
-  font-size: 10.5px;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.preview-val {
-  font-size: 13.5px;
-  color: #0f172a;
-  line-height: 1.45;
-}
-
-.preview-val.highlight {
-  font-weight: 700;
-  color: #1e3a8a;
-  font-size: 14px;
-}
-
-.company-inputs-collapsible {
-  transition: all 0.3s ease;
+.company-inputs-box.is-verified input {
+  background-color: #f8fafc;
 }
 
 /* ==========================================================================

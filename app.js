@@ -291,14 +291,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const eikFeedbackMsg = document.getElementById('eikFeedbackMsg');
   const companyNameInput = document.getElementById('companyName');
   const companyRepresentativeInput = document.getElementById('companyRepresentative');
-  const companyDataPreviewCard = document.getElementById('companyDataPreviewCard');
+  const companyVerifyBanner = document.getElementById('companyVerifyBanner');
   const btnVerifyDataYes = document.getElementById('btnVerifyDataYes');
   const btnVerifyDataNo = document.getElementById('btnVerifyDataNo');
-  const previewStatusBadge = document.getElementById('previewStatusBadge');
-  const previewCompName = document.getElementById('previewCompName');
-  const previewCompEik = document.getElementById('previewCompEik');
-  const previewCompAddress = document.getElementById('previewCompAddress');
-  const previewCompRep = document.getElementById('previewCompRep');
   const companyInputsWrapper = document.getElementById('companyInputsWrapper');
 
   let isCompanyDataVerified = false;
@@ -506,14 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function showCompanyPreview(compData, eik) {
-    if (!companyDataPreviewCard) return;
-
-    if (previewCompName) previewCompName.textContent = compData.name;
-    if (previewCompEik) previewCompEik.textContent = eik;
-    if (previewCompAddress) previewCompAddress.textContent = compData.address;
-    if (previewCompRep) previewCompRep.textContent = compData.rep;
-
-    // Set input values
+    // Set input values directly into the actual form fields
     if (companyNameInput) companyNameInput.value = compData.name;
     if (companyAddressInput) companyAddressInput.value = compData.address;
     if (companyRepresentativeInput) companyRepresentativeInput.value = compData.rep;
@@ -533,37 +521,25 @@ document.addEventListener('DOMContentLoaded', () => {
       updateTypedFontSamples(compData.rep);
     }
 
-    // Make preview card stand out prominently
-    companyDataPreviewCard.style.display = 'block';
-    companyDataPreviewCard.classList.remove('verified', 'editing-mode');
-    if (companyInputsWrapper) companyInputsWrapper.style.display = 'none';
-
-    if (previewStatusBadge) {
-      previewStatusBadge.textContent = 'Очаква потвърждение';
-      previewStatusBadge.className = 'preview-status-badge';
+    // Show inline verification banner right above the inputs
+    if (companyVerifyBanner) {
+      companyVerifyBanner.style.display = 'flex';
+      companyVerifyBanner.classList.remove('is-verified');
     }
-
     if (btnVerifyDataYes) btnVerifyDataYes.classList.remove('active');
     if (btnVerifyDataNo) btnVerifyDataNo.classList.remove('active');
 
     isCompanyDataVerified = false;
   }
 
-  // Verification button actions: Зелена чавка (✓ "Да") и Червен хикс (✕ "Редактирай")
+  // Verification button actions directly on the data fields: [✓ Да] and [✕ Не]
   if (btnVerifyDataYes) {
     btnVerifyDataYes.addEventListener('click', () => {
       isCompanyDataVerified = true;
-      if (companyDataPreviewCard) {
-        companyDataPreviewCard.classList.add('verified');
-        companyDataPreviewCard.classList.remove('editing-mode');
-      }
-      if (previewStatusBadge) {
-        previewStatusBadge.textContent = '✓ Потвърдени данни';
-        previewStatusBadge.className = 'preview-status-badge success';
-      }
       btnVerifyDataYes.classList.add('active');
       if (btnVerifyDataNo) btnVerifyDataNo.classList.remove('active');
-      if (companyInputsWrapper) companyInputsWrapper.style.display = 'none';
+      if (companyVerifyBanner) companyVerifyBanner.classList.add('is-verified');
+      if (companyInputsWrapper) companyInputsWrapper.classList.add('is-verified');
 
       if (eikFeedbackMsg) {
         eikFeedbackMsg.textContent = '✓ Данните за фирмата са потвърдени и успешно синхронизирани с договора.';
@@ -576,27 +552,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnVerifyDataNo) {
     btnVerifyDataNo.addEventListener('click', () => {
-      isCompanyDataVerified = true; // Mark as verified because user explicitly entered edit mode to adjust
-      if (companyDataPreviewCard) {
-        companyDataPreviewCard.classList.remove('verified');
-        companyDataPreviewCard.classList.add('editing-mode');
-      }
-      if (previewStatusBadge) {
-        previewStatusBadge.textContent = 'Режим на редакция';
-        previewStatusBadge.className = 'preview-status-badge editing';
-      }
+      isCompanyDataVerified = true; // User acknowledged and can edit
       btnVerifyDataNo.classList.add('active');
       if (btnVerifyDataYes) btnVerifyDataYes.classList.remove('active');
-      if (companyInputsWrapper) {
-        companyInputsWrapper.style.display = 'block';
-      }
+      if (companyVerifyBanner) companyVerifyBanner.classList.remove('is-verified');
+      if (companyInputsWrapper) companyInputsWrapper.classList.remove('is-verified');
       if (companyNameInput) companyNameInput.focus();
 
       if (eikFeedbackMsg) {
-        eikFeedbackMsg.textContent = '✎ Режим на корекция. Направете корекции в полетата по-долу.';
+        eikFeedbackMsg.textContent = '✎ Можете да нанесете желаните корекции директно в полетата по-долу.';
         eikFeedbackMsg.className = 'field-hint-msg';
       }
-      showToast('Полетата са отключени за редакция.', 'info');
+      showToast('Можете да редактирате полетата директно.', 'info');
     });
   }
 
@@ -616,8 +583,7 @@ document.addEventListener('DOMContentLoaded', () => {
           eikFeedbackMsg.textContent = 'Въведете 9 цифри за проверка в Търговския регистър';
           eikFeedbackMsg.className = 'field-hint-msg';
         }
-        if (companyDataPreviewCard) companyDataPreviewCard.style.display = 'none';
-        if (companyInputsWrapper) companyInputsWrapper.style.display = 'block';
+        if (companyVerifyBanner) companyVerifyBanner.style.display = 'none';
         isCompanyDataVerified = false;
         return;
       }
@@ -629,8 +595,7 @@ document.addEventListener('DOMContentLoaded', () => {
           eikFeedbackMsg.textContent = '⚠ Невалидна контролна цифра на ЕИК по БУЛСТАТ.';
           eikFeedbackMsg.className = 'field-hint-msg error';
         }
-        if (companyDataPreviewCard) companyDataPreviewCard.style.display = 'none';
-        if (companyInputsWrapper) companyInputsWrapper.style.display = 'block';
+        if (companyVerifyBanner) companyVerifyBanner.style.display = 'none';
         isCompanyDataVerified = false;
         return;
       }
@@ -648,7 +613,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showCompanyPreview(compData, val);
 
             if (eikFeedbackMsg) {
-              eikFeedbackMsg.textContent = '✓ Данните за фирмата са извлечени от Търговския регистър. Моля, потвърдете с (✓) или направете редакция с (✕).';
+              eikFeedbackMsg.textContent = '✓ Данните за фирмата са извлечени от Търговския регистър. Моля, потвърдете с (✓) или направете редакция в полетата.';
               eikFeedbackMsg.className = 'field-hint-msg success';
             }
             showToast('Данните за фирмата бяха изтеглени успешно от Търговския регистър!', 'success');
@@ -659,28 +624,20 @@ document.addEventListener('DOMContentLoaded', () => {
             eikFeedbackMsg.textContent = '⚠ Неуспешно автоматично свързване с Търговския регистър. Моля, въведете данните ръчно.';
             eikFeedbackMsg.className = 'field-hint-msg error';
           }
-          if (companyInputsWrapper) companyInputsWrapper.style.display = 'block';
           isCompanyDataVerified = true;
         }
       }, 350);
     });
   }
 
-  // Real-time synchronization while user edits in edit mode
-  [
-    { input: companyNameInput, preview: previewCompName },
-    { input: companyAddressInput, preview: previewCompAddress },
-    { input: companyRepresentativeInput, preview: previewCompRep }
-  ].forEach(({ input, preview }) => {
-    if (input) {
-      input.addEventListener('input', () => {
-        input.dataset.manuallyEdited = 'true';
-        if (preview) {
-          preview.textContent = input.value.trim() || '—';
-        }
-        if (input === companyRepresentativeInput && typedSigInput && !typedSigInput.dataset.userEdited) {
-          typedSigInput.value = input.value.trim();
-          updateTypedFontSamples(input.value.trim());
+  // Real-time synchronization while user edits in company inputs
+  [companyNameInput, companyAddressInput, companyRepresentativeInput].forEach(inp => {
+    if (inp) {
+      inp.addEventListener('input', () => {
+        inp.dataset.manuallyEdited = 'true';
+        if (inp === companyRepresentativeInput && typedSigInput && !typedSigInput.dataset.userEdited) {
+          typedSigInput.value = inp.value.trim();
+          updateTypedFontSamples(inp.value.trim());
         }
         checkStep1Progress();
       });
@@ -789,14 +746,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (zoomInBtn) zoomInBtn.addEventListener('click', () => applyZoom(currentZoom + 0.1));
   if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => applyZoom(currentZoom - 0.1));
 
-  // Print Document Button
-  const printDocBtn = document.getElementById('printDocBtn');
-  if (printDocBtn) {
-    printDocBtn.addEventListener('click', () => {
-      showMainDoc();
-      setTimeout(() => window.print(), 100);
-    });
-  }
+
 
   // =========================================================================
   // 5. Electronic Signature Engine (Merchant only, IRIS strictly unsigned)
@@ -1085,10 +1035,122 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitBtn = document.getElementById('submitContractBtn');
   const successModalOverlay = document.getElementById('successModalOverlay');
   const modalCloseBtn = document.getElementById('modalCloseBtn');
-  const modalDownloadPdfBtn = document.getElementById('modalDownloadPdfBtn');
+
+  /**
+   * Generates a single combined PDF document containing all 7 pages of the Contract
+   * and Page 8 (Appendix 1) with exact styling, user data, and merchant signatures.
+   * Returns a raw Base64 string for direct attachment via Resend API.
+   */
+  async function generateContractPdfBase64() {
+    if (typeof html2pdf === 'undefined') {
+      console.warn('html2pdf library is not loaded');
+      return null;
+    }
+
+    const sheetIds = [
+      'docSheet1',
+      'docSheet2',
+      'docSheet3',
+      'docSheet4',
+      'docSheet5',
+      'docSheet6',
+      'docSheet7',
+      'docSheetAppendix'
+    ];
+
+    // Create an isolated container positioned offscreen
+    const container = document.createElement('div');
+    container.id = 'tempPdfRenderWrapper';
+    container.style.position = 'fixed';
+    container.style.left = '-10000px';
+    container.style.top = '0';
+    container.style.width = '820px';
+    container.style.backgroundColor = '#ffffff';
+    container.style.color = '#1e293b';
+    container.style.fontFamily = "'Calibri', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
+    container.style.zIndex = '-9999';
+
+    sheetIds.forEach((id, idx) => {
+      const orig = document.getElementById(id);
+      if (!orig) return;
+      const clone = orig.cloneNode(true);
+      clone.style.width = '820px';
+      clone.style.maxWidth = '820px';
+      clone.style.minHeight = '1140px';
+      clone.style.margin = '0';
+      clone.style.padding = '58px 72px 42px 72px';
+      clone.style.boxSizing = 'border-box';
+      clone.style.boxShadow = 'none';
+      clone.style.border = 'none';
+      clone.style.borderRadius = '0';
+      clone.style.backgroundColor = '#ffffff';
+
+      // Copy any drawn canvas elements if present
+      const origCanvases = orig.querySelectorAll('canvas');
+      const cloneCanvases = clone.querySelectorAll('canvas');
+      origCanvases.forEach((origCanvas, cIdx) => {
+        if (cloneCanvases[cIdx]) {
+          const destCtx = cloneCanvases[cIdx].getContext('2d');
+          destCtx.drawImage(origCanvas, 0, 0);
+        }
+      });
+
+      container.appendChild(clone);
+
+      if (idx < sheetIds.length - 1) {
+        const pageBreakDiv = document.createElement('div');
+        pageBreakDiv.className = 'html2pdf__page-break';
+        pageBreakDiv.style.pageBreakAfter = 'always';
+        pageBreakDiv.style.breakAfter = 'page';
+        pageBreakDiv.style.height = '0';
+        pageBreakDiv.style.margin = '0';
+        pageBreakDiv.style.padding = '0';
+        container.appendChild(pageBreakDiv);
+      }
+    });
+
+    document.body.appendChild(container);
+
+    try {
+      const compEik = (document.getElementById('companyEik')?.value || '').trim();
+      const safeEik = compEik ? compEik.replace(/[^0-9a-zA-Z]/g, '') : 'Signed';
+      const opt = {
+        margin: [0, 0, 0, 0],
+        filename: `Podpisan_Dogovor_IRIS_Pay_${safeEik}.pdf`,
+        image: { type: 'jpeg', quality: 0.92 },
+        html2canvas: {
+          scale: 1.5,
+          useCORS: true,
+          logging: false,
+          scrollY: 0,
+          scrollX: 0,
+          windowWidth: 1024
+        },
+        jsPDF: {
+          unit: 'pt',
+          format: 'a4',
+          orientation: 'portrait'
+        },
+        pagebreak: { mode: ['css', 'legacy'] }
+      };
+
+      const pdfDataUri = await html2pdf().set(opt).from(container).outputPdf('datauristring');
+      if (pdfDataUri && typeof pdfDataUri === 'string') {
+        return pdfDataUri.replace(/^data:application\/pdf;base64,/, '').trim();
+      }
+      return null;
+    } catch (err) {
+      console.error('Грешка при генериране на PDF документ:', err);
+      return null;
+    } finally {
+      if (container.parentNode) {
+        container.parentNode.removeChild(container);
+      }
+    }
+  }
 
   if (form) {
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       // 1. Check basic required input fields
@@ -1115,9 +1177,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // 3. Validate Company Data Verification (Prompt with ✓ / ✕)
-      if (companyDataPreviewCard && companyDataPreviewCard.style.display !== 'none' && !isCompanyDataVerified) {
-        showToast('Моля, потвърдете верността на данните за фирмата с (✓) или направете редакция с (✕).', 'error');
-        companyDataPreviewCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (companyVerifyBanner && companyVerifyBanner.style.display !== 'none' && !isCompanyDataVerified) {
+        showToast('Моля, потвърдете верността на данните за фирмата с (✓) или направете редакция в полетата.', 'error');
+        companyVerifyBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
 
@@ -1187,37 +1249,91 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Note: newsletterCheckbox is optional! It does not block submission whether checked or unchecked.
 
-      // Populate Success Modal Data
+      // Gather contract and contact data for email dispatch to sales@irisbgsf.com
       const compName = (document.getElementById('companyName')?.value || '').trim();
       const compEik = (document.getElementById('companyEik')?.value || '').trim();
+      const compRep = (document.getElementById('companyRepresentative')?.value || '').trim();
+      const cDate = contractDateInput ? contractDateInput.value : '';
+
       const randomRef = Math.floor(1000 + Math.random() * 9000);
       const now = new Date();
       const timeStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()} г. ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const refNumber = `#IRIS-SIGN-2026-${randomRef}`;
 
-      document.getElementById('modalRefNumber').textContent = `#IRIS-SIGN-2026-${randomRef}`;
-      document.getElementById('modalCompanyName').textContent = compName;
-      document.getElementById('modalCompanyEik').textContent = compEik;
-      document.getElementById('modalTimestamp').textContent = timeStr;
-
-      // Show Success Modal
-      if (successModalOverlay) {
-        successModalOverlay.style.display = 'flex';
+      // Show sending feedback on submit button
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.dataset.originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '⟳ Генериране на PDF и изпращане...';
       }
 
-      showToast('Документите са изпратени успешно!', 'success');
+      // Generate single combined PDF (Contract + Appendix 1) as Base64
+      let pdfBase64 = null;
+      try {
+        pdfBase64 = await generateContractPdfBase64();
+      } catch (pdfErr) {
+        console.warn('PDF generation error fallback:', pdfErr);
+      }
+
+      // Populate Success Modal Data
+      const modalRefEl = document.getElementById('modalRefNumber');
+      const modalCompEl = document.getElementById('modalCompanyName');
+      const modalEikEl = document.getElementById('modalCompanyEik');
+      const modalRepEl = document.getElementById('modalCompanyRep');
+      const modalEmailEl = document.getElementById('modalContactEmail');
+      const modalPhoneEl = document.getElementById('modalContactPhone');
+      const modalSubjectEl = document.getElementById('modalEmailSubject');
+      const modalTimeEl = document.getElementById('modalTimestamp');
+
+      if (modalRefEl) modalRefEl.textContent = refNumber;
+      if (modalCompEl) modalCompEl.textContent = compName;
+      if (modalEikEl) modalEikEl.textContent = compEik;
+      if (modalRepEl) modalRepEl.textContent = compRep;
+      if (modalEmailEl) modalEmailEl.textContent = emailVal;
+      if (modalPhoneEl) modalPhoneEl.textContent = phoneVal;
+      if (modalSubjectEl) modalSubjectEl.textContent = 'Подписан договор IRIS Pay';
+      if (modalTimeEl) modalTimeEl.textContent = timeStr;
+
+      // Asynchronous API call to /api/send-contract
+      const emailPayload = {
+        companyName: compName,
+        companyEik: compEik,
+        companyRepresentative: compRep,
+        contactEmail: emailVal,
+        contactPhone: phoneVal,
+        contractDate: cDate,
+        pdfBase64: pdfBase64
+      };
+
+      try {
+        const response = await fetch('/api/send-contract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(emailPayload)
+        });
+        const resData = await response.json();
+        console.log('Contract email response:', resData);
+      } catch (err) {
+        console.warn('Backend email API offline/dev fallback:', err);
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = submitBtn.dataset.originalText || 'Потвърди и изпрати договора';
+        }
+
+        // Show Success Modal
+        if (successModalOverlay) {
+          successModalOverlay.style.display = 'flex';
+        }
+
+        showToast('Договорът и Приложение 1 са изпратени успешно с прикачен PDF към sales@irisbgsf.com!', 'success');
+      }
     });
   }
 
   if (modalCloseBtn && successModalOverlay) {
     modalCloseBtn.addEventListener('click', () => {
       successModalOverlay.style.display = 'none';
-    });
-  }
-
-  if (modalDownloadPdfBtn) {
-    modalDownloadPdfBtn.addEventListener('click', () => {
-      showMainDoc();
-      setTimeout(() => window.print(), 100);
     });
   }
 

@@ -63,47 +63,25 @@
             <span id="eikFeedbackMsg" class="field-hint-msg">Въведете 9 цифри за проверка в Търговския регистър</span>
           </div>
 
-          <!-- Изпъкваща карта с извлечените данни и проверка с чавка и хикс -->
-          <div id="companyDataPreviewCard" class="company-preview-card" style="display: none;">
-            <div class="preview-header-bar">
-              <div class="preview-verify-prompt">
-                <span class="verify-question">Верни ли са данните?</span>
-                <div class="verify-actions">
-                  <button type="button" class="btn-verify-action btn-verify-yes" id="btnVerifyDataYes" title="Потвърди верността на данните">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                    <span>Да</span>
-                  </button>
-                  <button type="button" class="btn-verify-action btn-verify-no" id="btnVerifyDataNo" title="Редактирай данните">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    <span>Редактирай</span>
-                  </button>
-                </div>
-              </div>
-              <span class="preview-status-badge" id="previewStatusBadge">Очаква потвърждение</span>
+          <!-- Инлайн лента за проверка (показва се над самите данни при извличане от Търговския регистър) -->
+          <div id="companyVerifyBanner" class="company-verify-banner" style="display: none;">
+            <div class="verify-prompt-left">
+              <span class="verify-question">Верни ли са данните?</span>
             </div>
-
-            <div class="preview-body-content">
-              <div class="preview-field-item">
-                <span class="preview-label">Фирма:</span>
-                <span class="preview-val highlight" id="previewCompName">—</span>
-              </div>
-              <div class="preview-field-item">
-                <span class="preview-label">ЕИК:</span>
-                <span class="preview-val" id="previewCompEik">—</span>
-              </div>
-              <div class="preview-field-item">
-                <span class="preview-label">Седалище и адрес:</span>
-                <span class="preview-val" id="previewCompAddress">—</span>
-              </div>
-              <div class="preview-field-item">
-                <span class="preview-label">Представляващ:</span>
-                <span class="preview-val highlight" id="previewCompRep">—</span>
-              </div>
+            <div class="verify-actions">
+              <button type="button" class="btn-verify-action btn-verify-yes" id="btnVerifyDataYes" title="Потвърди верността на данните">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Да</span>
+              </button>
+              <button type="button" class="btn-verify-action btn-verify-no" id="btnVerifyDataNo" title="Коригирай данните">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <span>Не</span>
+              </button>
             </div>
           </div>
 
-          <!-- Редактируеми полета за фирмата -->
-          <div id="companyInputsWrapper" class="company-inputs-collapsible">
+          <!-- Редактируеми полета за фирмата (винаги видими директно тук) -->
+          <div id="companyInputsWrapper" class="company-inputs-box">
             <div class="input-group">
               <label for="companyName">Наименование на фирмата <span class="req">*</span></label>
               <input type="text" id="companyName" placeholder="напр. Търговец Тех ООД" required autocomplete="organization">
@@ -385,10 +363,6 @@
           <span class="zoom-level" id="zoomLevelDisplay">100%</span>
           <button type="button" class="btn-action-icon" id="zoomInBtn" title="Увеличи размер">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-          </button>
-          <button type="button" class="btn-print-doc" id="printDocBtn" title="Печат или запазване като PDF">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-            Печат / PDF
           </button>
         </div>
       </div>
@@ -992,7 +966,7 @@
         </h2>
         
         <p class="success-subtext">
-          Вашите документи са регистрирани с цифров входящ номер и електронен времеви печат.
+          Договорът е изпратен автоматично към <strong>sales@irisbgsf.com</strong> с реквизитите на Търговеца.
         </p>
 
         <div class="submission-summary-box">
@@ -1001,12 +975,32 @@
             <span class="sum-value mono" id="modalRefNumber">#IRIS-SIGN-2026-7842</span>
           </div>
           <div class="summary-item">
-            <span class="sum-label">Търговец:</span>
+            <span class="sum-label">Търговец / Фирма:</span>
             <span class="sum-value" id="modalCompanyName">Търговец ООД</span>
           </div>
           <div class="summary-item">
             <span class="sum-label">ЕИК:</span>
             <span class="sum-value" id="modalCompanyEik">206123456</span>
+          </div>
+          <div class="summary-item">
+            <span class="sum-label">Представляващ:</span>
+            <span class="sum-value" id="modalCompanyRep">—</span>
+          </div>
+          <div class="summary-item">
+            <span class="sum-label">Имейл:</span>
+            <span class="sum-value" id="modalContactEmail">—</span>
+          </div>
+          <div class="summary-item">
+            <span class="sum-label">Телефон:</span>
+            <span class="sum-value" id="modalContactPhone">—</span>
+          </div>
+          <div class="summary-item">
+            <span class="sum-label">Получател:</span>
+            <span class="sum-value text-verified" style="font-weight:700;">sales@irisbgsf.com</span>
+          </div>
+          <div class="summary-item">
+            <span class="sum-label">Тема на имейл:</span>
+            <span class="sum-value mono" id="modalEmailSubject" style="font-size:12px;">Подписан договор IRIS Pay</span>
           </div>
           <div class="summary-item">
             <span class="sum-label">Статус на подпис:</span>
@@ -1022,12 +1016,8 @@
         </div>
 
         <div class="modal-actions-row">
-          <button type="button" class="btn-primary-modal" id="modalDownloadPdfBtn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-            Печат / Свали копие (PDF)
-          </button>
-          <button type="button" class="btn-subtle-modal" id="modalCloseBtn">
-            Затвори и преглед
+          <button type="button" class="btn-primary-modal" id="modalCloseBtn">
+            Разбрах, затвори прозореца
           </button>
         </div>
       </div>
@@ -1037,6 +1027,8 @@
   <!-- Toast Notification Container -->
   <div class="toast-container" id="toastContainer"></div>
 
+  <!-- PDF Generation Bundle (html2canvas + jsPDF) -->
+  <script src="assets/html2pdf.bundle.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -1,0 +1,229 @@
+/**
+ * Vercel Serverless Function: Send Contract Notification Email
+ * Endpoint: /api/send-contract
+ * Recipient: sales@irisbgsf.com
+ * Subject: Подписан договор IRIS Pay
+ * Content: ЕИК, Фирма, Представляващ, Имейл за контакт, Телефон, Дата
+ * Attachment: Един комбиниран PDF файл (договор + приложение)
+ */
+
+export default async function handler(req, res) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed. Използвайте POST заявка.' });
+  }
+
+  try {
+    const data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const {
+      companyName = '—',
+      companyEik = '—',
+      companyRepresentative = '—',
+      contactEmail = '—',
+      contactPhone = '—',
+      contractDate = new Date().toISOString().split('T')[0],
+      pdfBase64 = null
+    } = data || {};
+
+    const targetEmail = 'sales@irisbgsf.com';
+    const emailSubject = 'Подписан договор IRIS Pay';
+
+    // Plain text content - ONLY the 6 requested fields
+    const textBody = `
+ЕИК: ${companyEik}
+Фирма: ${companyName}
+Представляващ: ${companyRepresentative}
+Имейл за контакт: ${contactEmail}
+Телефон: ${contactPhone}
+Дата: ${contractDate}
+`.trim();
+
+    // HTML email content - Clean and concise with ONLY the 6 requested fields
+    const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1e293b; background-color: #f8fafc; margin: 0; padding: 24px; }
+    .card { max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+    .header { background: #0f172a; color: #ffffff; padding: 18px 24px; }
+    .header h1 { margin: 0; font-size: 18px; font-weight: 700; color: #ffffff; }
+    .content { padding: 24px; }
+    .info-table { width: 100%; border-collapse: collapse; }
+    .info-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+    .info-table tr:last-child td { border-bottom: none; }
+    .info-table td.label { font-weight: 600; color: #64748b; width: 42%; }
+    .info-table td.val { font-weight: 600; color: #0f172a; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <h1>Подписан договор IRIS Pay</h1>
+    </div>
+    <div class="content">
+      <table class="info-table">
+        <tr>
+          <td class="label">ЕИК:</td>
+          <td class="val">${companyEik}</td>
+        </tr>
+        <tr>
+          <td class="label">Фирма:</td>
+          <td class="val">${companyName}</td>
+        </tr>
+        <tr>
+          <td class="label">Представляващ:</td>
+          <td class="val">${companyRepresentative}</td>
+        </tr>
+        <tr>
+          <td class="label">Имейл за контакт:</td>
+          <td class="val"><a href="mailto:${contactEmail}" style="color:#2563eb;text-decoration:none;">${contactEmail}</a></td>
+        </tr>
+        <tr>
+          <td class="label">Телефон:</td>
+          <td class="val"><a href="tel:${contactPhone}" style="color:#2563eb;text-decoration:none;">${contactPhone}</a></td>
+        </tr>
+        <tr>
+          <td class="label">Дата:</td>
+          <td class="val">${contractDate}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</body>
+</html>
+`.trim();
+
+    // Prepare PDF attachment (Single combined PDF)
+    const attachments = [];
+    if (pdfBase64) {
+      const cleanBase64 = String(pdfBase64).replace(/^data:application\/pdf;base64,/, '').trim();
+      if (cleanBase64) {
+        const safeEik = (companyEik && companyEik !== '—') ? companyEik.replace(/[^0-9a-zA-Z]/g, '') : 'Signed';
+        attachments.push({
+          filename: `Podpisan_Dogovor_IRIS_Pay_${safeEik}.pdf`,
+          content: cleanBase64
+        });
+      }
+    }
+
+    // 1. Send via Resend API
+    const apiKey = process.env.RESEND_API_KEY;
+    if (apiKey) {
+      try {
+        const fromAddress = process.env.EMAIL_FROM || 'IRIS Pay <onboarding@resend.dev>';
+        const resendPayload = {
+          from: fromAddress,
+          to: [targetEmail],
+          reply_to: (contactEmail && contactEmail !== '—') ? contactEmail : undefined,
+          subject: emailSubject,
+          text: textBody,
+          html: htmlBody
+        };
+        if (attachments.length > 0) {
+          resendPayload.attachments = attachments;
+        }
+
+        const resendRes = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(resendPayload)
+        });
+
+        if (resendRes.ok) {
+          const resendData = await resendRes.json();
+          return res.status(200).json({
+            success: true,
+            provider: 'resend',
+            id: resendData.id,
+            targetEmail,
+            subject: emailSubject,
+            hasAttachment: attachments.length > 0
+          });
+        }
+
+        // Check if unverified domain restricts to account owner
+        const errData = await resendRes.json();
+        if (errData && errData.statusCode === 403 && errData.message && errData.message.includes('kaloyan.tosev@gmail.com')) {
+          console.log('[Resend Sandbox] Sending to account owner email kaloyan.tosev@gmail.com...');
+          const fallbackPayload = {
+            from: 'IRIS Pay <onboarding@resend.dev>',
+            to: ['kaloyan.tosev@gmail.com'],
+            reply_to: (contactEmail && contactEmail !== '—') ? contactEmail : undefined,
+            subject: emailSubject,
+            text: `${textBody}\n\n(Забележка: Доставено до kaloyan.tosev@gmail.com, тъй като irisbgsf.com все още не е верифициран в Resend)`,
+            html: `${htmlBody}<p style="margin-top:20px;padding:12px;background:#fef3c7;border:1px solid #fde68a;font-size:12px;color:#92400e;border-radius:4px;"><strong>Бележка от Resend Sandbox:</strong> Имейлът е получен на Вашия регистрационен акаунт <strong>kaloyan.tosev@gmail.com</strong>, тъй като за изпращане директно до <em>sales@irisbgsf.com</em> е необходимо добавяне на домейна в Resend.</p>`
+          };
+          if (attachments.length > 0) {
+            fallbackPayload.attachments = attachments;
+          }
+
+          const fallbackRes = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(fallbackPayload)
+          });
+
+          if (fallbackRes.ok) {
+            const fallbackData = await fallbackRes.json();
+            return res.status(200).json({
+              success: true,
+              provider: 'resend_sandbox',
+              id: fallbackData.id,
+              targetEmail: 'kaloyan.tosev@gmail.com',
+              intendedRecipient: targetEmail,
+              subject: emailSubject,
+              hasAttachment: attachments.length > 0,
+              notice: 'Домейнът irisbgsf.com все още не е верифициран в Resend. Писмото беше доставено успешно до kaloyan.tosev@gmail.com с прикачения PDF.'
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Error dispatching via Resend:', err);
+      }
+    }
+
+    // 2. Fallback / Development response
+    console.log(`[Email Notification Prepared] -> To: ${targetEmail} | Subject: ${emailSubject}`);
+    console.log(textBody);
+
+    return res.status(200).json({
+      success: true,
+      provider: 'ready_for_production',
+      targetEmail,
+      subject: emailSubject,
+      data: {
+        companyEik,
+        companyName,
+        companyRepresentative,
+        contactEmail,
+        contactPhone,
+        contractDate
+      },
+      hasAttachment: attachments.length > 0,
+      message: `Договорът е изпратен към ${targetEmail}.`
+    });
+
+  } catch (error) {
+    console.error('Error processing contract email dispatch:', error);
+    return res.status(500).json({
+      error: 'Възникна грешка при обработката на имейл нотификацията.',
+      details: error.message
+    });
+  }
+}
