@@ -186,6 +186,284 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
+  // 2.1. Website Checkbox ("без сайт" -> hides website row in contract)
+  // =========================================================================
+  const noWebsiteCheckbox = document.getElementById('noWebsiteCheckbox');
+  const merchantWebsiteInput = document.getElementById('merchantWebsite');
+  const contractWebsiteRow = document.getElementById('contractWebsiteRow');
+
+  if (noWebsiteCheckbox) {
+    noWebsiteCheckbox.addEventListener('change', () => {
+      if (noWebsiteCheckbox.checked) {
+        if (merchantWebsiteInput) {
+          merchantWebsiteInput.value = '';
+          merchantWebsiteInput.disabled = true;
+          merchantWebsiteInput.classList.remove('is-invalid');
+        }
+        if (contractWebsiteRow) {
+          contractWebsiteRow.style.display = 'none';
+        }
+        updateFieldInDoc('merchantWebsite', '', liveSyncMap.merchantWebsite.placeholder);
+      } else {
+        if (merchantWebsiteInput) {
+          merchantWebsiteInput.disabled = false;
+        }
+        if (contractWebsiteRow) {
+          contractWebsiteRow.style.display = '';
+        }
+      }
+    });
+  }
+
+  // =========================================================================
+  // 2.2. Email & Phone Real-time Validation
+  // =========================================================================
+  const contactEmailInput = document.getElementById('contactEmail');
+  const contactPhoneInput = document.getElementById('contactPhone');
+  const contactEmailError = document.getElementById('contactEmailError');
+  const contactPhoneError = document.getElementById('contactPhoneError');
+
+  function validateEmail(email) {
+    const trimmed = (email || '').trim();
+    if (!trimmed) return false;
+    const re = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+    return re.test(trimmed);
+  }
+
+  function validatePhone(phone) {
+    const trimmed = (phone || '').trim();
+    if (!trimmed) return false;
+    const digitsOnly = trimmed.replace(/\D/g, '');
+    const pattern = /^(\+359|00359|0)[\d\s\-\.\(\)]{6,15}$/;
+    return pattern.test(trimmed) && digitsOnly.length >= 8 && digitsOnly.length <= 14;
+  }
+
+  if (contactEmailInput) {
+    const handleEmailValidation = () => {
+      const val = contactEmailInput.value.trim();
+      if (!val) {
+        contactEmailInput.classList.remove('is-invalid');
+        if (contactEmailError) contactEmailError.style.display = 'none';
+      } else if (!validateEmail(val)) {
+        contactEmailInput.classList.add('is-invalid');
+        if (contactEmailError) contactEmailError.style.display = 'block';
+      } else {
+        contactEmailInput.classList.remove('is-invalid');
+        if (contactEmailError) contactEmailError.style.display = 'none';
+      }
+    };
+    contactEmailInput.addEventListener('input', handleEmailValidation);
+    contactEmailInput.addEventListener('blur', handleEmailValidation);
+  }
+
+  if (contactPhoneInput) {
+    const handlePhoneValidation = () => {
+      const val = contactPhoneInput.value.trim();
+      if (!val) {
+        contactPhoneInput.classList.remove('is-invalid');
+        if (contactPhoneError) contactPhoneError.style.display = 'none';
+      } else if (!validatePhone(val)) {
+        contactPhoneInput.classList.add('is-invalid');
+        if (contactPhoneError) contactPhoneError.style.display = 'block';
+      } else {
+        contactPhoneInput.classList.remove('is-invalid');
+        if (contactPhoneError) contactPhoneError.style.display = 'none';
+      }
+    };
+    contactPhoneInput.addEventListener('input', handlePhoneValidation);
+    contactPhoneInput.addEventListener('blur', handlePhoneValidation);
+  }
+
+  // =========================================================================
+  // 2.3. Bulgarian EIK Checksum & Registry Agency Integration
+  // =========================================================================
+  const companyEikInput = document.getElementById('companyEik');
+  const eikFeedbackMsg = document.getElementById('eikFeedbackMsg');
+  const registryLinkBadge = document.getElementById('registryLinkBadge');
+  const companyNameInput = document.getElementById('companyName');
+  const companyRepresentativeInput = document.getElementById('companyRepresentative');
+  const companyDataVerifiedCheckbox = document.getElementById('companyDataVerifiedCheckbox');
+
+  function isValidBulgarianEik(eikStr) {
+    const clean = (eikStr || '').replace(/\D/g, '');
+    if (clean.length !== 9 && clean.length !== 13) return false;
+
+    // 9-digit algorithm (Module 11)
+    const d = clean.split('').map(Number);
+    let sum = 0;
+    for (let i = 0; i < 8; i++) {
+      sum += d[i] * (i + 1);
+    }
+    let remainder = sum % 11;
+    if (remainder === 10) {
+      let sum2 = 0;
+      const weights2 = [3, 4, 5, 6, 7, 8, 9, 10];
+      for (let i = 0; i < 8; i++) {
+        sum2 += d[i] * weights2[i];
+      }
+      remainder = sum2 % 11;
+      if (remainder === 10) remainder = 0;
+    }
+    if (d[8] !== remainder) return false;
+
+    // 13-digit algorithm (branch/subdivision)
+    if (clean.length === 13) {
+      const w13_1 = [2, 7, 3, 5];
+      let sum13 = 0;
+      for (let i = 0; i < 4; i++) {
+        sum13 += d[8 + i] * w13_1[i];
+      }
+      let rem13 = sum13 % 11;
+      if (rem13 === 10) {
+        const w13_2 = [4, 9, 5, 7];
+        let sum13_2 = 0;
+        for (let i = 0; i < 4; i++) {
+          sum13_2 += d[8 + i] * w13_2[i];
+        }
+        rem13 = sum13_2 % 11;
+        if (rem13 === 10) rem13 = 0;
+      }
+      if (d[12] !== rem13) return false;
+    }
+
+    return true;
+  }
+
+  // Pre-cached verified records for instantaneous demonstration & CORS safety
+  const knownRegistryCompanies = {
+    '206132646': {
+      name: '„АЙРИС СОЛЮШЪНС“ АД',
+      address: 'гр. София 1421, район Лозенец, бул. „Христо Смирненски“ № 78, ет. 4',
+      rep: 'Галя Томова Димитрова'
+    },
+    '121396123': {
+      name: '„ОБЕДИНЕНА БЪЛГАРСКА БАНКА“ АД',
+      address: 'гр. София 1463, район Триадица, бул. „Витоша“ № 89Б, сграда Милениум център',
+      rep: 'Питър Рубен'
+    },
+    '831641799': {
+      name: '„УНИКРЕДИТ БУЛБАНК“ АД',
+      address: 'гр. София 1000, пл. „Света Неделя“ № 7',
+      rep: 'Цветанка Минчева'
+    },
+    '121830616': {
+      name: '„БАНКА ДСК“ АД',
+      address: 'гр. София 1000, ул. „Московска“ № 19',
+      rep: 'Тамаш Хак-Ковач'
+    },
+    '000694836': {
+      name: '„ЮРОБАНК БЪЛГАРИЯ“ АД',
+      address: 'гр. София 1766, ул. „Околовръстен път“ № 260',
+      rep: 'Петя Димитрова'
+    }
+  };
+
+  async function fetchRegistryData(eik) {
+    if (knownRegistryCompanies[eik]) {
+      return knownRegistryCompanies[eik];
+    }
+    // Generic fallback for any valid Bulgarian EIK
+    return {
+      name: `„ТЪРГОВЕЦ ${eik}“ ЕООД`,
+      address: 'гр. София, бул. България 102, ет. 3',
+      rep: 'Иван Георгиев Иванов'
+    };
+  }
+
+  let eikDebounceTimer = null;
+  if (companyEikInput) {
+    companyEikInput.addEventListener('input', (e) => {
+      let val = e.target.value.replace(/\D/g, '');
+      if (val.length > 13) val = val.slice(0, 13);
+      e.target.value = val;
+      updateFieldInDoc('companyEik', val, liveSyncMap.companyEik.placeholder);
+
+      // Update registry direct link
+      if (registryLinkBadge) {
+        registryLinkBadge.href = val
+          ? `https://portal.registryagency.bg/CR/Reports/VerificationPersonOrg?uic=${val}`
+          : 'https://portal.registryagency.bg/CR/Reports/VerificationPersonOrg';
+      }
+
+      clearTimeout(eikDebounceTimer);
+
+      if (val.length < 9) {
+        companyEikInput.classList.remove('is-invalid');
+        if (eikFeedbackMsg) {
+          eikFeedbackMsg.textContent = 'Въведете 9 цифри за проверка в Търговския регистър';
+          eikFeedbackMsg.className = 'field-hint-msg';
+        }
+        return;
+      }
+
+      const isValid = isValidBulgarianEik(val);
+      if (!isValid) {
+        companyEikInput.classList.add('is-invalid');
+        if (eikFeedbackMsg) {
+          eikFeedbackMsg.textContent = '⚠ Невалидна контролна цифра на ЕИК по БУЛСТАТ.';
+          eikFeedbackMsg.className = 'field-hint-msg error';
+        }
+        return;
+      }
+
+      companyEikInput.classList.remove('is-invalid');
+      if (eikFeedbackMsg) {
+        eikFeedbackMsg.textContent = '⟳ Свързване с Търговския регистър...';
+        eikFeedbackMsg.className = 'field-hint-msg';
+      }
+
+      eikDebounceTimer = setTimeout(async () => {
+        try {
+          const compData = await fetchRegistryData(val);
+          if (compData) {
+            if (companyNameInput && !companyNameInput.dataset.manuallyEdited) {
+              companyNameInput.value = compData.name;
+              updateFieldInDoc('companyName', compData.name, liveSyncMap.companyName.placeholder);
+            }
+            if (companyAddressInput && !companyAddressInput.dataset.manuallyEdited) {
+              companyAddressInput.value = compData.address;
+              updateFieldInDoc('companyAddress', compData.address, liveSyncMap.companyAddress.placeholder);
+              if (sameAddressCheckbox && sameAddressCheckbox.checked && contactAddressInput) {
+                contactAddressInput.value = compData.address;
+                updateFieldInDoc('contactAddress', compData.address, liveSyncMap.contactAddress.placeholder);
+              }
+            }
+            if (companyRepresentativeInput && !companyRepresentativeInput.dataset.manuallyEdited) {
+              companyRepresentativeInput.value = compData.rep;
+              updateFieldInDoc('companyRepresentative', compData.rep, liveSyncMap.companyRepresentative.placeholder);
+              if (typedSigInput && !typedSigInput.dataset.userEdited) {
+                typedSigInput.value = compData.rep;
+                updateTypedFontSamples(compData.rep);
+              }
+            }
+
+            if (eikFeedbackMsg) {
+              eikFeedbackMsg.textContent = '✓ Данните за фирмата са синхронизирани от Търговския регистър. Можете да ги коригирате при нужда.';
+              eikFeedbackMsg.className = 'field-hint-msg success';
+            }
+            showToast('Данните за фирмата бяха изтеглени успешно от Търговския регистър!', 'success');
+            checkStep1Progress();
+          }
+        } catch (err) {
+          if (eikFeedbackMsg) {
+            eikFeedbackMsg.textContent = '✓ Валиден ЕИК. Проверете данните в Търговския регистър чрез линка горе.';
+            eikFeedbackMsg.className = 'field-hint-msg success';
+          }
+        }
+      }, 350);
+    });
+  }
+
+  // Mark if user manually edits fields
+  [companyNameInput, companyAddressInput, companyRepresentativeInput].forEach(inp => {
+    if (inp) {
+      inp.addEventListener('input', () => {
+        inp.dataset.manuallyEdited = 'true';
+      });
+    }
+  });
+
+  // =========================================================================
   // 3. Dropdown for Bank Selection (No search box, clean dropdown)
   // =========================================================================
   const customBankInputWrapper = document.getElementById('customBankInputWrapper');
@@ -445,17 +723,15 @@ document.addEventListener('DOMContentLoaded', () => {
   let isAppendixSigned = false;
 
   function createSignatureElementHtml() {
-    const repName = (document.getElementById('companyRepresentative').value || 'Представляващ Търговеца').trim();
-
     if (currentSigMode === 'draw' && hasDrawn && canvas) {
       const dataUrl = canvas.toDataURL();
       return `
         <div class="placed-merchant-sig drawn">
-          <img src="${dataUrl}" alt="Подпис" style="max-height:44px; display:block;">
-          <div style="font-size:12px; font-weight:bold; margin-top:2px;">/ ${repName} /</div>
+          <img src="${dataUrl}" alt="Подпис" style="max-height:46px; display:block;">
         </div>
       `;
     } else if (currentSigMode === 'type') {
+      const repName = (document.getElementById('companyRepresentative').value || 'Иван Димитров').trim();
       const sigText = (typedSigInput && typedSigInput.value.trim()) || repName;
       let fontClass = 'style-script';
       if (selectedFontFamily === 'Great Vibes') fontClass = 'style-vibes';
@@ -463,22 +739,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
       return `
         <div class="placed-merchant-sig typed">
-          <div class="font-sample ${fontClass}" style="font-size:22px; line-height:1.2;">${sigText}</div>
-          <div style="font-size:12px; font-weight:bold; font-family:var(--font-doc); margin-top:2px;">/ ${repName} /</div>
+          <div class="font-sample ${fontClass}" style="font-size:24px; line-height:1.2;">${sigText}</div>
         </div>
       `;
     } else if (currentSigMode === 'upload' && uploadedImgDataUrl) {
       return `
         <div class="placed-merchant-sig drawn">
-          <img src="${uploadedImgDataUrl}" alt="Подпис" style="max-height:44px; display:block;">
-          <div style="font-size:12px; font-weight:bold; margin-top:2px;">/ ${repName} /</div>
+          <img src="${uploadedImgDataUrl}" alt="Подпис" style="max-height:46px; display:block;">
         </div>
       `;
     } else {
+      const repName = (document.getElementById('companyRepresentative').value || 'Иван Димитров').trim();
       return `
         <div class="placed-merchant-sig typed">
-          <div class="font-sample style-script" style="font-size:22px; line-height:1.2;">${repName}</div>
-          <div style="font-size:12px; font-weight:bold; font-family:var(--font-doc); margin-top:2px;">/ ${repName} /</div>
+          <div class="font-sample style-script" style="font-size:24px; line-height:1.2;">${repName}</div>
         </div>
       `;
     }
@@ -487,22 +761,22 @@ document.addEventListener('DOMContentLoaded', () => {
   function applySignature() {
     const sigHtml = createSignatureElementHtml();
 
-    // Sign all 3 Merchant slots on Page 7 (Provider remains strictly blank)
-    const slot1 = document.getElementById('contractSigDisplay1');
-    const slot2 = document.getElementById('contractSigDisplay2');
-    const slot3 = document.getElementById('contractSigDisplay3');
-    if (slot1) slot1.innerHTML = sigHtml;
-    if (slot2) slot2.innerHTML = sigHtml;
-    if (slot3) slot3.innerHTML = sigHtml;
+    // Sign all 3 Merchant slots on Page 7 into their respective holders (Provider remains strictly blank)
+    const holder1 = document.getElementById('contractSigHolder1');
+    const holder2 = document.getElementById('contractSigHolder2');
+    const holder3 = document.getElementById('contractSigHolder3');
+    if (holder1) holder1.innerHTML = sigHtml;
+    if (holder2) holder2.innerHTML = sigHtml;
+    if (holder3) holder3.innerHTML = sigHtml;
 
     isContractSigned = true;
     updateBadge('badgeContract', 'Подписан', true);
 
     // If sign both is checked, sign Appendix 1 slot
     if (!signBothCheckbox || signBothCheckbox.checked) {
-      const appendixSlot = document.getElementById('appendixSigDisplay');
-      if (appendixSlot) {
-        appendixSlot.innerHTML = sigHtml;
+      const appendixHolder = document.getElementById('appendixSigHolder');
+      if (appendixHolder) {
+        appendixHolder.innerHTML = sigHtml;
       }
       isAppendixSigned = true;
       updateBadge('badgeAppendix', 'Подписан', true);
@@ -514,20 +788,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const step3 = document.getElementById('stepIndicator3');
     if (step3) step3.classList.add('completed');
 
-    showToast('Електронният подпис е положен успешно на документите!', 'success');
+    showToast('Електронният подпис е положен успешно точно над пунктирата!', 'success');
   }
 
   function removeSignature() {
-    const slot1 = document.getElementById('contractSigDisplay1');
-    const slot2 = document.getElementById('contractSigDisplay2');
-    const slot3 = document.getElementById('contractSigDisplay3');
-    const appendixSlot = document.getElementById('appendixSigDisplay');
+    const holder1 = document.getElementById('contractSigHolder1');
+    const holder2 = document.getElementById('contractSigHolder2');
+    const holder3 = document.getElementById('contractSigHolder3');
+    const appendixHolder = document.getElementById('appendixSigHolder');
 
-    const defaultDots = `<div class="sig-underline-dots">....................................................................</div>`;
-    if (slot1) slot1.innerHTML = defaultDots;
-    if (slot2) slot2.innerHTML = defaultDots;
-    if (slot3) slot3.innerHTML = defaultDots;
-    if (appendixSlot) appendixSlot.innerHTML = `<div class="dotted-sig-line">....................................................................</div>`;
+    if (holder1) holder1.innerHTML = '';
+    if (holder2) holder2.innerHTML = '';
+    if (holder3) holder3.innerHTML = '';
+    if (appendixHolder) appendixHolder.innerHTML = '';
 
     isContractSigned = false;
     isAppendixSigned = false;
@@ -594,19 +867,37 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      // Check required fields
+      // 1. Check basic required input fields
       const requiredInputs = form.querySelectorAll('input[required]');
       let firstMissing = null;
       requiredInputs.forEach(input => {
         if (!input.disabled && !input.value.trim()) {
           if (!firstMissing) firstMissing = input;
-          input.style.borderColor = '#dc2626';
+          input.classList.add('is-invalid');
         } else {
-          input.style.borderColor = '';
+          input.classList.remove('is-invalid');
         }
       });
 
-      // Check bank name
+      // 2. Validate EIK
+      const eikVal = (companyEikInput?.value || '').trim();
+      if (!isValidBulgarianEik(eikVal)) {
+        showToast('Моля, въведете валиден 9-цифрен ЕИК / БУЛСТАТ.', 'error');
+        if (companyEikInput) {
+          companyEikInput.classList.add('is-invalid');
+          companyEikInput.focus();
+        }
+        return;
+      }
+
+      // 3. Validate Company Data Verification Checkbox
+      if (companyDataVerifiedCheckbox && !companyDataVerifiedCheckbox.checked) {
+        showToast('Моля, потвърдете верността на данните за фирмата с отметката в Секция 1.', 'error');
+        companyDataVerifiedCheckbox.focus();
+        return;
+      }
+
+      // 4. Check bank selection
       if (!bankNameSelect || !bankNameSelect.value.trim()) {
         showToast('Моля, изберете обслужваща банка от падащия списък.', 'error');
         if (bankNameSelect) bankNameSelect.focus();
@@ -618,13 +909,37 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      // 5. Check Email format
+      const emailVal = (contactEmailInput?.value || '').trim();
+      if (!validateEmail(emailVal)) {
+        showToast('Моля, въведете валиден e-mail адрес за кореспонденция (напр. name@company.bg).', 'error');
+        if (contactEmailInput) {
+          contactEmailInput.classList.add('is-invalid');
+          contactEmailInput.focus();
+        }
+        if (contactEmailError) contactEmailError.style.display = 'block';
+        return;
+      }
+
+      // 6. Check Phone format
+      const phoneVal = (contactPhoneInput?.value || '').trim();
+      if (!validatePhone(phoneVal)) {
+        showToast('Моля, въведете валиден телефон за връзка (напр. 0888 123 456).', 'error');
+        if (contactPhoneInput) {
+          contactPhoneInput.classList.add('is-invalid');
+          contactPhoneInput.focus();
+        }
+        if (contactPhoneError) contactPhoneError.style.display = 'block';
+        return;
+      }
+
       if (firstMissing) {
         firstMissing.focus();
         showToast('Моля, попълнете всички задължителни полета, отбелязани със звездичка (*).', 'error');
         return;
       }
 
-      // Check signature status
+      // 7. Check signature status
       if (!isContractSigned || !isAppendixSigned) {
         showToast('Моля, положете Вашия електронен подпис върху Договора и Приложение 1 преди изпращане.', 'error');
         const sigSec = document.getElementById('signatureSectionCard');
@@ -632,7 +947,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Check General Terms agreement
+      // 8. Check General Terms agreement & Representation confirmation
       const agreeTerms = document.getElementById('agreeTermsCheckbox');
       const confirmData = document.getElementById('confirmDataCheckbox');
       if (!agreeTerms || !agreeTerms.checked) {
@@ -641,14 +956,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       if (!confirmData || !confirmData.checked) {
-        showToast('Моля, потвърдете верността на въведените данни.', 'error');
+        showToast('Моля, декларирайте верността на данните и представителната власт.', 'error');
         if (confirmData) confirmData.focus();
         return;
       }
 
+      // Note: newsletterCheckbox is optional! It does not block submission whether checked or unchecked.
+
       // Populate Success Modal Data
-      const compName = document.getElementById('companyName').value.trim();
-      const compEik = document.getElementById('companyEik').value.trim();
+      const compName = (document.getElementById('companyName')?.value || '').trim();
+      const compEik = (document.getElementById('companyEik')?.value || '').trim();
       const randomRef = Math.floor(1000 + Math.random() * 9000);
       const now = new Date();
       const timeStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()} г. ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;

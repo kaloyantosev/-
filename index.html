@@ -44,20 +44,29 @@
             <h3>Данни за Търговеца (Юридическо лице)</h3>
           </div>
 
-          <div class="input-group">
-            <label for="companyName">Наименование на фирмата <span class="req">*</span></label>
-            <input type="text" id="companyName" placeholder="напр. Търговец Тех ООД" required autocomplete="organization">
-          </div>
-
+          <!-- ЕИК най-отгоре в ляво и дата в дясно -->
           <div class="input-row">
             <div class="input-group col-half">
-              <label for="companyEik">ЕИК / БУЛСТАТ <span class="req">*</span></label>
-              <input type="text" id="companyEik" placeholder="напр. 206123456" maxlength="13" required pattern="[0-9]{9,13}">
+              <div class="label-with-inline-action">
+                <label for="companyEik">ЕИК / БУЛСТАТ <span class="req">*</span></label>
+                <a href="https://portal.registryagency.bg/CR/Reports/VerificationPersonOrg" target="_blank" class="registry-link-badge" id="registryLinkBadge" title="Отвори справка в Търговския регистър">
+                  Търговски регистър ↗
+                </a>
+              </div>
+              <div class="eik-field-container">
+                <input type="text" id="companyEik" placeholder="напр. 206132646" maxlength="13" required pattern="[0-9]{9,13}" autocomplete="off">
+              </div>
+              <span id="eikFeedbackMsg" class="field-hint-msg">Въведете 9 цифри за проверка в Търговския регистър</span>
             </div>
             <div class="input-group col-half">
               <label for="contractDate">Дата на договора <span class="req">*</span></label>
               <input type="date" id="contractDate" required>
             </div>
+          </div>
+
+          <div class="input-group">
+            <label for="companyName">Наименование на фирмата <span class="req">*</span></label>
+            <input type="text" id="companyName" placeholder="напр. Търговец Тех ООД" required autocomplete="organization">
           </div>
 
           <div class="input-group">
@@ -68,6 +77,13 @@
           <div class="input-group">
             <label for="companyRepresentative">Представлявано от (Име на управител / пълномощник) <span class="req">*</span></label>
             <input type="text" id="companyRepresentative" placeholder="напр. Иван Георгиев Иванов - Управител" required autocomplete="name">
+          </div>
+
+          <div class="checkbox-wrapper verified-data-item" style="margin-top: 10px; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+            <input type="checkbox" id="companyDataVerifiedCheckbox" required>
+            <label for="companyDataVerifiedCheckbox">
+              <strong>Данните за фирмата са верни и актуални</strong> <span class="req">*</span>
+            </label>
           </div>
         </div>
 
@@ -109,8 +125,14 @@
             <input type="text" id="bankIban" placeholder="BG00 UNCR 7000 1234 5678 90" maxlength="34" required style="font-family: monospace; letter-spacing: 1px;">
           </div>
 
-          <div class="input-group">
-            <label for="merchantWebsite">Сайт (ако има)</label>
+          <div class="input-group" id="merchantWebsiteGroup">
+            <div class="label-with-inline-action">
+              <label for="merchantWebsite">Сайт</label>
+              <label class="inline-checkbox" for="noWebsiteCheckbox">
+                <input type="checkbox" id="noWebsiteCheckbox">
+                <span>без сайт</span>
+              </label>
+            </div>
             <input type="url" id="merchantWebsite" placeholder="https://www.example-store.bg">
           </div>
         </div>
@@ -138,10 +160,12 @@
             <div class="input-group col-half">
               <label for="contactEmail">E-mail за кореспонденция <span class="req">*</span></label>
               <input type="email" id="contactEmail" placeholder="office@example.bg" required autocomplete="email">
+              <span class="field-error-msg" id="contactEmailError" style="display:none;">Невалиден формат на имейл адрес (напр. name@company.bg)</span>
             </div>
             <div class="input-group col-half">
               <label for="contactPhone">Телефон за връзка <span class="req">*</span></label>
               <input type="tel" id="contactPhone" placeholder="0888 123 456" required autocomplete="tel">
+              <span class="field-error-msg" id="contactPhoneError" style="display:none;">Невалиден формат на телефонен номер (напр. 0888 123 456 или +359 888 123 456)</span>
             </div>
           </div>
         </div>
@@ -281,7 +305,14 @@
             <div class="checkbox-wrapper consent-item">
               <input type="checkbox" id="confirmDataCheckbox" required>
               <label for="confirmDataCheckbox">
-                Декларирам, че посочените данни са верни и актуални и съм оправомощен да представлявам посочения Търговец.
+                Декларирам, че посочените данни са верни и актуални и съм оправомощен да представлявам посочения Търговец. <span class="req">*</span>
+              </label>
+            </div>
+
+            <div class="checkbox-wrapper consent-item">
+              <input type="checkbox" id="newsletterCheckbox">
+              <label for="newsletterCheckbox">
+                Искам да получавам newsletter
               </label>
             </div>
           </div>
@@ -343,6 +374,9 @@
             </div>
             <div class="a4-sheet" id="docSheet1">
               <div class="page-content-area">
+                <div class="contract-doc-header">
+                  <img src="assets/iris-logo.svg" alt="IRIS Solutions" class="contract-header-logo">
+                </div>
                 <h1 class="exact-contract-title">
                   РАМКОВ ДОГОВОР ЗА ИЗВЪРШВАНЕ НА ПЛАЩАНИЯ ЧРЕЗ УСЛУГА ПО ИНИЦИИРАНЕ НА ПЛАЩАНИЯ
                 </h1>
@@ -367,7 +401,6 @@
               </div>
 
               <div class="page-footer">
-                <span class="page-footer-left">Рамков договор за иницииране на плащания — IRIS Pay</span>
                 <span class="page-footer-right">Страница 1 от 7</span>
               </div>
             </div>
@@ -411,7 +444,7 @@
                 <p class="exact-p"><strong>Чл. 4.</strong> Освен ако друго не е посочено в генерираното платежно нареждане, инициираните плащания се изпълняват незабавно (съгласно условията на съответната банка/платежен оператор, обслужващ сметката на Клиента). Плащанията, наредени от Клиенти към Търговеца, се изпълняват по следната сметка на Търговеца:</p>
                 <p class="exact-p">Банка/Платежна институция: <span class="live-field underlined" data-field="bankName">…........................................</span></p>
                 <p class="exact-p">IBAN: <span class="live-field underlined mono-font" data-field="bankIban">….........................................................................</span></p>
-                <p class="exact-p">Сайт(ако има): <span class="live-field underlined" data-field="merchantWebsite">........................................................</span></p>
+                <p class="exact-p" id="contractWebsiteRow">Сайт: <span class="live-field underlined" data-field="merchantWebsite">........................................................</span></p>
 
                 <h2 class="exact-chapter-title">ПРАВА И ЗАДЪЛЖЕНИЯ НА СТРАНИТЕ</h2>
                 <p class="exact-p"><strong>Чл. 5.</strong> Доставчикът се задължава:</p>
@@ -428,7 +461,6 @@
               </div>
 
               <div class="page-footer">
-                <span class="page-footer-left">Рамков договор за иницииране на плащания — IRIS Pay</span>
                 <span class="page-footer-right">Страница 2 от 7</span>
               </div>
             </div>
@@ -468,7 +500,6 @@
               </div>
 
               <div class="page-footer">
-                <span class="page-footer-left">Рамков договор за иницииране на плащания — IRIS Pay</span>
                 <span class="page-footer-right">Страница 3 от 7</span>
               </div>
             </div>
@@ -502,7 +533,6 @@
               </div>
 
               <div class="page-footer">
-                <span class="page-footer-left">Рамков договор за иницииране на плащания — IRIS Pay</span>
                 <span class="page-footer-right">Страница 4 от 7</span>
               </div>
             </div>
@@ -549,7 +579,6 @@
               </div>
 
               <div class="page-footer">
-                <span class="page-footer-left">Рамков договор за иницииране на плащания — IRIS Pay</span>
                 <span class="page-footer-right">Страница 5 от 7</span>
               </div>
             </div>
@@ -590,7 +619,6 @@
               </div>
 
               <div class="page-footer">
-                <span class="page-footer-left">Рамков договор за иницииране на плащания — IRIS Pay</span>
                 <span class="page-footer-right">Страница 6 от 7</span>
               </div>
             </div>
@@ -645,6 +673,7 @@
                     <div class="sig-half">
                       <p class="sig-head-title"><strong>За Търговеца:</strong></p>
                       <div class="merchant-sig-target" id="contractSigDisplay1" data-slot="c1">
+                        <div class="sig-placed-holder" id="contractSigHolder1"></div>
                         <div class="sig-underline-dots">....................................................................</div>
                       </div>
                       <div class="sig-rep-footer"><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></div>
@@ -657,6 +686,7 @@
                     <div class="sig-half">
                       <p class="sig-head-title"><strong>За Търговеца:</strong></p>
                       <div class="merchant-sig-target" id="contractSigDisplay2" data-slot="c2">
+                        <div class="sig-placed-holder" id="contractSigHolder2"></div>
                         <div class="sig-underline-dots">....................................................................</div>
                       </div>
                       <div class="sig-rep-footer"><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></div>
@@ -674,6 +704,7 @@
                     <div class="sig-half">
                       <p class="sig-head-title"><strong>За Търговеца:</strong></p>
                       <div class="merchant-sig-target" id="contractSigDisplay3" data-slot="c3">
+                        <div class="sig-placed-holder" id="contractSigHolder3"></div>
                         <div class="sig-underline-dots">....................................................................</div>
                       </div>
                       <div class="sig-rep-footer"><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></div>
@@ -684,7 +715,6 @@
               </div>
 
               <div class="page-footer">
-                <span class="page-footer-left">Рамков договор за иницииране на плащания — IRIS Pay</span>
                 <span class="page-footer-right">Страница 7 от 7</span>
               </div>
             </div>
@@ -716,10 +746,10 @@
 
                 <p class="exact-p app-p">Айрис Солюшънс АД  е дружество за иновативни финтех услуги. Компанията е лицензиран от БНБ доставчик на платежни услуги по чл. 4, т. 7 и 8 от ЗПУПС – услуги по иницииране на плащане и услуги по предоставяне на информация по сметка.</p>
 
-                <h3 class="exact-section-sub app-sub">УСЛУГИ И РЕШЕНИЯ</h3>
+                <h3 class="exact-section-sub app-sub" style="text-align: center;">УСЛУГИ И РЕШЕНИЯ</h3>
                 
                 <!-- TITLE WITH THE EXACT ORIGINAL ORANGE COLOR #ED7C31 -->
-                <h4 class="exact-section-sub-sub color-iris-orange">Платежни терминали IRISPay</h4>
+                <h4 class="exact-section-sub-sub color-iris-orange" style="text-align: center;">Платежни терминали IRISPay</h4>
 
                 <p class="exact-p app-p">Софтуерното приложение (IRISPay) е платежен терминал позволяващ на търговеца <strong>да инициира плащане</strong> към своите клиенти, като дружеството осигурява поддръжка и интеграция на банки и платежни институции регистрирани в България, Румъния и Гърция и други.</p>
 
@@ -740,6 +770,7 @@
                   <div class="sig-side">
                     <p><strong>За Търговеца</strong></p>
                     <div class="merchant-sig-target" id="appendixSigDisplay" data-slot="app">
+                      <div class="sig-placed-holder" id="appendixSigHolder"></div>
                       <div class="dotted-sig-line">....................................................................</div>
                     </div>
                     <div class="sig-rep-footer"><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></div>
