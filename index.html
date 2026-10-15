@@ -31,7 +31,7 @@
     <!-- LEFT PANEL: Data Input Form (Minimalist, Professional, Monochrome) -->
     <aside class="form-sidebar">
       <div class="sidebar-header">
-        <h2>Попълване на реквизити</h2>
+        <h2>Договор IRIS Pay</h2>
         <p class="sidebar-sub">Данните се попълват в реално време на страниците на договора вдясно.</p>
       </div>
 
@@ -47,16 +47,10 @@
           <!-- ЕИК най-отгоре в ляво и дата в дясно -->
           <div class="input-row">
             <div class="input-group col-half">
-              <div class="label-with-inline-action">
-                <label for="companyEik">ЕИК / БУЛСТАТ <span class="req">*</span></label>
-                <a href="https://portal.registryagency.bg/CR/Reports/VerificationPersonOrg" target="_blank" class="registry-link-badge" id="registryLinkBadge" title="Отвори справка в Търговския регистър">
-                  Търговски регистър ↗
-                </a>
-              </div>
+              <label for="companyEik">ЕИК / БУЛСТАТ <span class="req">*</span></label>
               <div class="eik-field-container">
-                <input type="text" id="companyEik" placeholder="напр. 206132646" maxlength="13" required pattern="[0-9]{9,13}" autocomplete="off">
+                <input type="text" id="companyEik" placeholder="напр. 208455895" maxlength="13" required pattern="[0-9]{9,13}" autocomplete="off">
               </div>
-              <span id="eikFeedbackMsg" class="field-hint-msg">Въведете 9 цифри за проверка в Търговския регистър</span>
             </div>
             <div class="input-group col-half">
               <label for="contractDate">Дата на договора <span class="req">*</span></label>
@@ -64,26 +58,66 @@
             </div>
           </div>
 
-          <div class="input-group">
-            <label for="companyName">Наименование на фирмата <span class="req">*</span></label>
-            <input type="text" id="companyName" placeholder="напр. Търговец Тех ООД" required autocomplete="organization">
+          <!-- Съобщение за статус по целия ред -->
+          <div class="eik-fullwidth-feedback-row">
+            <span id="eikFeedbackMsg" class="field-hint-msg">Въведете 9 цифри за проверка в Търговския регистър</span>
           </div>
 
-          <div class="input-group">
-            <label for="companyAddress">Седалище и адрес на управление <span class="req">*</span></label>
-            <input type="text" id="companyAddress" placeholder="напр. гр. София, бул. Витоша 50, ет. 2, ап. 4" required>
+          <!-- Изпъкваща карта с извлечените данни и проверка с чавка и хикс -->
+          <div id="companyDataPreviewCard" class="company-preview-card" style="display: none;">
+            <div class="preview-header-bar">
+              <div class="preview-verify-prompt">
+                <span class="verify-question">Верни ли са данните?</span>
+                <div class="verify-actions">
+                  <button type="button" class="btn-verify-action btn-verify-yes" id="btnVerifyDataYes" title="Потвърди верността на данните">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>Да</span>
+                  </button>
+                  <button type="button" class="btn-verify-action btn-verify-no" id="btnVerifyDataNo" title="Редактирай данните">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    <span>Редактирай</span>
+                  </button>
+                </div>
+              </div>
+              <span class="preview-status-badge" id="previewStatusBadge">Очаква потвърждение</span>
+            </div>
+
+            <div class="preview-body-content">
+              <div class="preview-field-item">
+                <span class="preview-label">Фирма:</span>
+                <span class="preview-val highlight" id="previewCompName">—</span>
+              </div>
+              <div class="preview-field-item">
+                <span class="preview-label">ЕИК:</span>
+                <span class="preview-val" id="previewCompEik">—</span>
+              </div>
+              <div class="preview-field-item">
+                <span class="preview-label">Седалище и адрес:</span>
+                <span class="preview-val" id="previewCompAddress">—</span>
+              </div>
+              <div class="preview-field-item">
+                <span class="preview-label">Представляващ:</span>
+                <span class="preview-val highlight" id="previewCompRep">—</span>
+              </div>
+            </div>
           </div>
 
-          <div class="input-group">
-            <label for="companyRepresentative">Представлявано от (Име на управител / пълномощник) <span class="req">*</span></label>
-            <input type="text" id="companyRepresentative" placeholder="напр. Иван Георгиев Иванов - Управител" required autocomplete="name">
-          </div>
+          <!-- Редактируеми полета за фирмата -->
+          <div id="companyInputsWrapper" class="company-inputs-collapsible">
+            <div class="input-group">
+              <label for="companyName">Наименование на фирмата <span class="req">*</span></label>
+              <input type="text" id="companyName" placeholder="напр. Търговец Тех ООД" required autocomplete="organization">
+            </div>
 
-          <div class="checkbox-wrapper verified-data-item" style="margin-top: 10px; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
-            <input type="checkbox" id="companyDataVerifiedCheckbox" required>
-            <label for="companyDataVerifiedCheckbox">
-              <strong>Данните за фирмата са верни и актуални</strong> <span class="req">*</span>
-            </label>
+            <div class="input-group">
+              <label for="companyAddress">Седалище и адрес на управление <span class="req">*</span></label>
+              <input type="text" id="companyAddress" placeholder="напр. гр. София, бул. Витоша 50, ет. 2, ап. 4" required>
+            </div>
+
+            <div class="input-group">
+              <label for="companyRepresentative">Представлявано от (Име на управител / пълномощник) <span class="req">*</span></label>
+              <input type="text" id="companyRepresentative" placeholder="напр. Иван Георгиев Иванов - Управител" required autocomplete="name">
+            </div>
           </div>
         </div>
 
@@ -150,7 +184,7 @@
               <label for="contactAddress">Адрес за кореспонденция <span class="req">*</span></label>
               <label class="inline-checkbox" for="sameAddressCheckbox">
                 <input type="checkbox" id="sameAddressCheckbox">
-                <span>Същият адрес като на фирмата по-горе</span>
+                <span>същия адрес като на фирмата</span>
               </label>
             </div>
             <input type="text" id="contactAddress" placeholder="напр. гр. София, бул. България 102, ет. 4" required>
@@ -312,7 +346,7 @@
             <div class="checkbox-wrapper consent-item">
               <input type="checkbox" id="newsletterCheckbox">
               <label for="newsletterCheckbox">
-                Искам да получавам newsletter
+                Желая да получавам информационен бюлетин и актуални новини
               </label>
             </div>
           </div>
@@ -385,7 +419,7 @@
 
                 <p class="exact-p">1. <strong>„Айрис Солюшънс“ АД</strong>, регистрирано в ТРРЮЛНЦ към Агенцията по вписвания с ЕИК  208455895, със седалище, адрес на управление: гр. София, бул. Христо Смирненски 78, ет.4, представлявано от изп. директор Галя Димитрова Димитрова или чрез пълномощника си Димитър Йошков Христов, наричано по-долу за краткост „Доставчик“, от една страна,</p>
                 <p class="exact-p">и</p>
-                <p class="exact-p">2. <strong><span class="live-field underlined" data-field="companyName">.......................................................................</span></strong> регистрирано в ТРРЮЛНЦ към Агенцията по вписвания с ЕИК <span class="live-field underlined" data-field="companyEik">..................................</span>  със седалище, адрес на управление: гр. <span class="live-field underlined" data-field="companyAddress">.....................................................................................................................................................</span> представлявано от <span class="live-field underlined" data-field="companyRepresentative">...................................................................................................</span> наричано по-долу за краткост „Търговец“, от друга страна,</p>
+                <p class="exact-p">2. <strong><span class="live-field underlined" data-field="companyName">.......................................................................</span></strong> регистрирано в ТРРЮЛНЦ към Агенцията по вписвания с ЕИК <span class="live-field underlined" data-field="companyEik">..................................</span>  със седалище, адрес на управление: <span class="live-field underlined" data-field="companyAddress">.....................................................................................................................................................</span> представлявано от <span class="live-field underlined" data-field="companyRepresentative">...................................................................................................</span> наричано по-долу за краткост „Търговец“, от друга страна,</p>
 
                 <p class="exact-p">Заедно наричани Страните,</p>
                 <p class="exact-p">Като се взе предвид, че:</p>
@@ -781,7 +815,6 @@
 
               <!-- Page Appendix Footer -->
               <div class="page-footer">
-                <span class="page-footer-left">Приложение 1 към Рамков договор — IRIS Pay</span>
                 <span class="page-footer-right">Страница 1 от 1</span>
               </div>
             </div>

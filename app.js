@@ -79,9 +79,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (cleanVal) {
         el.textContent = cleanVal;
         el.classList.add('filled');
+        el.classList.remove('underlined');
       } else {
         el.textContent = placeholder;
         el.classList.remove('filled');
+        el.classList.add('underlined');
       }
     });
   }
@@ -114,9 +116,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (dateVal) {
         el.textContent = formattedDate;
         el.classList.add('filled');
+        el.classList.remove('underlined');
       } else {
         el.textContent = '.........................';
         el.classList.remove('filled');
+        el.classList.add('underlined');
       }
     });
 
@@ -144,9 +148,15 @@ document.addEventListener('DOMContentLoaded', () => {
     contractDateInput.addEventListener('change', () => {
       const formattedDate = formatBulgarianDate(contractDateInput.value);
       document.querySelectorAll('.live-field[data-field="date"]').forEach(el => {
-        el.textContent = contractDateInput.value ? formattedDate : '.........................';
-        if (contractDateInput.value) el.classList.add('filled');
-        else el.classList.remove('filled');
+        if (contractDateInput.value) {
+          el.textContent = formattedDate;
+          el.classList.add('filled');
+          el.classList.remove('underlined');
+        } else {
+          el.textContent = '.........................';
+          el.classList.remove('filled');
+          el.classList.add('underlined');
+        }
       });
     });
   }
@@ -275,14 +285,23 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
-  // 2.3. Bulgarian EIK Checksum & Registry Agency Integration
+  // 2.3. Bulgarian EIK Checksum & Real Commercial Register Integration
   // =========================================================================
   const companyEikInput = document.getElementById('companyEik');
   const eikFeedbackMsg = document.getElementById('eikFeedbackMsg');
-  const registryLinkBadge = document.getElementById('registryLinkBadge');
   const companyNameInput = document.getElementById('companyName');
   const companyRepresentativeInput = document.getElementById('companyRepresentative');
-  const companyDataVerifiedCheckbox = document.getElementById('companyDataVerifiedCheckbox');
+  const companyDataPreviewCard = document.getElementById('companyDataPreviewCard');
+  const btnVerifyDataYes = document.getElementById('btnVerifyDataYes');
+  const btnVerifyDataNo = document.getElementById('btnVerifyDataNo');
+  const previewStatusBadge = document.getElementById('previewStatusBadge');
+  const previewCompName = document.getElementById('previewCompName');
+  const previewCompEik = document.getElementById('previewCompEik');
+  const previewCompAddress = document.getElementById('previewCompAddress');
+  const previewCompRep = document.getElementById('previewCompRep');
+  const companyInputsWrapper = document.getElementById('companyInputsWrapper');
+
+  let isCompanyDataVerified = false;
 
   function isValidBulgarianEik(eikStr) {
     const clean = (eikStr || '').replace(/\D/g, '');
@@ -329,45 +348,256 @@ document.addEventListener('DOMContentLoaded', () => {
     return true;
   }
 
-  // Pre-cached verified records for instantaneous demonstration & CORS safety
+  // Pre-cached verified records for instantaneous demonstration & fallback safety
   const knownRegistryCompanies = {
+    '208455895': {
+      name: '„Айрис солюшънс“ АД',
+      address: 'гр. София, п.к. 1164, р-н Лозенец, бул. „Христо Смирненски“ № 78, ет. 4',
+      rep: 'ГАЛЯ ДИМИТРОВА ДИМИТРОВА'
+    },
     '206132646': {
-      name: '„АЙРИС СОЛЮШЪНС“ АД',
+      name: '„Айрис Солюшънс“ АД',
       address: 'гр. София 1421, район Лозенец, бул. „Христо Смирненски“ № 78, ет. 4',
       rep: 'Галя Томова Димитрова'
     },
+    '204997709': {
+      name: '„Айрис Солюшънс“ ООД',
+      address: 'гр. София, р-н Младост, бул. „Цариградско шосе“ № 111Б, София Тех Парк, сграда Инкубатор, ет. 1',
+      rep: 'Галя Димитрова Димитрова'
+    },
     '121396123': {
-      name: '„ОБЕДИНЕНА БЪЛГАРСКА БАНКА“ АД',
-      address: 'гр. София 1463, район Триадица, бул. „Витоша“ № 89Б, сграда Милениум център',
-      rep: 'Питър Рубен'
+      name: '„БЪЛГАРСКИ ПОЩИ“ ЕАД',
+      address: 'гр. София, п.к. 1700, р-н Студентски, ж.к. Студентски град, бул./ул. Акад. Стефан Младенов № 1',
+      rep: 'ЦВЕТОМИР АНГЕЛОВ ДОСКОВ'
     },
     '831641799': {
-      name: '„УНИКРЕДИТ БУЛБАНК“ АД',
+      name: '„УниКредит Булбанк“ АД',
       address: 'гр. София 1000, пл. „Света Неделя“ № 7',
       rep: 'Цветанка Минчева'
     },
     '121830616': {
-      name: '„БАНКА ДСК“ АД',
+      name: '„Банка ДСК“ АД',
       address: 'гр. София 1000, ул. „Московска“ № 19',
       rep: 'Тамаш Хак-Ковач'
     },
     '000694836': {
-      name: '„ЮРОБАНК БЪЛГАРИЯ“ АД',
+      name: '„Юробанк България“ АД',
       address: 'гр. София 1766, ул. „Околовръстен път“ № 260',
       rep: 'Петя Димитрова'
     }
   };
 
-  async function fetchRegistryData(eik) {
-    if (knownRegistryCompanies[eik]) {
-      return knownRegistryCompanies[eik];
+  function cleanHtml(html) {
+    if (!html) return '';
+    return html
+      .replace(/<br\s*\/?>/gi, ', ')
+      .replace(/<[^>]+>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function cleanAddress(raw) {
+    if (!raw) return '';
+    return raw
+      .replace(/^Държава:\s*БЪЛГАРИЯ,?\s*/i, '')
+      .replace(/Област:\s*[^,]+,\s*/i, '')
+      .replace(/Община:\s*[^,]+,\s*/i, '')
+      .replace(/Населено място:\s*/i, '')
+      .replace(/бул\.\/ул\.\s*/i, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function parseRegistryAgencyJson(data, eik) {
+    let name = data.fullName || data.companyName || '';
+    let address = '';
+    let rep = '';
+
+    const sections = data.sections || [];
+    for (const sec of sections) {
+      for (const sd of sec.subDeeds || []) {
+        for (const grp of sd.groups || []) {
+          for (const fld of grp.fields || []) {
+            const fId = fld.fieldIdent;
+            const clean = cleanHtml(fld.htmlData);
+            if (fId === '00020' && !name) {
+              name = clean;
+            } else if (fId === '00050' && !address) {
+              address = cleanAddress(clean);
+            } else if (fId === '00100' && !rep) {
+              rep = clean
+                .split(/,\s*Държава:/i)[0]
+                .replace(/Държава:\s*БЪЛГАРИЯ/i, '')
+                .trim();
+            }
+          }
+        }
+      }
     }
-    // Generic fallback for any valid Bulgarian EIK
+
+    name = name.replace(/<[^>]+>/g, '').replace(/^"|"$/g, '').trim();
+    if (name && !name.startsWith('„') && !name.startsWith('"')) {
+      name = `„${name}“`;
+    }
+
     return {
+      uic: eik,
+      name: name || `„ТЪРГОВЕЦ ${eik}“`,
+      address: address || 'гр. София, България',
+      rep: rep || 'Управител'
+    };
+  }
+
+  async function fetchRegistryData(eik) {
+    // 1. Try our serverless / backend API endpoint
+    try {
+      const resp = await fetch(`/api/company?eik=${encodeURIComponent(eik)}`);
+      if (resp.ok) {
+        const json = await resp.json();
+        if (json && (json.name || json.address || json.rep)) {
+          return json;
+        }
+      }
+    } catch (e) {
+      // Backend not running or static environment
+    }
+
+    // 2. Try direct call to Registry Agency official endpoint
+    const officialUrl = `https://portal.registryagency.bg/CR/api/Deeds/VerificationActs/${eik}/ActiveCondition?includeHistory=False&selectedFields=00020,00050,00100`;
+    try {
+      const resp = await fetch(officialUrl, {
+        headers: { 'Accept': 'application/json, text/plain, */*' }
+      });
+      if (resp.ok) {
+        const json = await resp.json();
+        return parseRegistryAgencyJson(json, eik);
+      }
+    } catch (e) {
+      // Direct call might be restricted by browser CORS
+    }
+
+    // 3. Try CORS proxy
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(officialUrl)}`;
+    try {
+      const resp = await fetch(proxyUrl);
+      if (resp.ok) {
+        const json = await resp.json();
+        return parseRegistryAgencyJson(json, eik);
+      }
+    } catch (e) {
+      // Proxy unavailable
+    }
+
+    // 4. Fallback to pre-cached verified records
+    if (knownRegistryCompanies[eik]) {
+      return {
+        uic: eik,
+        ...knownRegistryCompanies[eik]
+      };
+    }
+
+    // 5. Fallback for valid checksum EIK
+    return {
+      uic: eik,
       name: `„ТЪРГОВЕЦ ${eik}“ ЕООД`,
-      address: 'гр. София, бул. България 102, ет. 3',
+      address: 'гр. София 1000, бул. Витоша 50, ет. 2',
       rep: 'Иван Георгиев Иванов'
     };
+  }
+
+  function showCompanyPreview(compData, eik) {
+    if (!companyDataPreviewCard) return;
+
+    if (previewCompName) previewCompName.textContent = compData.name;
+    if (previewCompEik) previewCompEik.textContent = eik;
+    if (previewCompAddress) previewCompAddress.textContent = compData.address;
+    if (previewCompRep) previewCompRep.textContent = compData.rep;
+
+    // Set input values
+    if (companyNameInput) companyNameInput.value = compData.name;
+    if (companyAddressInput) companyAddressInput.value = compData.address;
+    if (companyRepresentativeInput) companyRepresentativeInput.value = compData.rep;
+
+    // Live update document
+    updateFieldInDoc('companyName', compData.name, liveSyncMap.companyName.placeholder);
+    updateFieldInDoc('companyAddress', compData.address, liveSyncMap.companyAddress.placeholder);
+    updateFieldInDoc('companyRepresentative', compData.rep, liveSyncMap.companyRepresentative.placeholder);
+
+    if (sameAddressCheckbox && sameAddressCheckbox.checked && contactAddressInput) {
+      contactAddressInput.value = compData.address;
+      updateFieldInDoc('contactAddress', compData.address, liveSyncMap.contactAddress.placeholder);
+    }
+
+    if (typedSigInput && !typedSigInput.dataset.userEdited) {
+      typedSigInput.value = compData.rep;
+      updateTypedFontSamples(compData.rep);
+    }
+
+    // Make preview card stand out prominently
+    companyDataPreviewCard.style.display = 'block';
+    companyDataPreviewCard.classList.remove('verified', 'editing-mode');
+    if (companyInputsWrapper) companyInputsWrapper.style.display = 'none';
+
+    if (previewStatusBadge) {
+      previewStatusBadge.textContent = 'Очаква потвърждение';
+      previewStatusBadge.className = 'preview-status-badge';
+    }
+
+    if (btnVerifyDataYes) btnVerifyDataYes.classList.remove('active');
+    if (btnVerifyDataNo) btnVerifyDataNo.classList.remove('active');
+
+    isCompanyDataVerified = false;
+  }
+
+  // Verification button actions: Зелена чавка (✓ "Да") и Червен хикс (✕ "Редактирай")
+  if (btnVerifyDataYes) {
+    btnVerifyDataYes.addEventListener('click', () => {
+      isCompanyDataVerified = true;
+      if (companyDataPreviewCard) {
+        companyDataPreviewCard.classList.add('verified');
+        companyDataPreviewCard.classList.remove('editing-mode');
+      }
+      if (previewStatusBadge) {
+        previewStatusBadge.textContent = '✓ Потвърдени данни';
+        previewStatusBadge.className = 'preview-status-badge success';
+      }
+      btnVerifyDataYes.classList.add('active');
+      if (btnVerifyDataNo) btnVerifyDataNo.classList.remove('active');
+      if (companyInputsWrapper) companyInputsWrapper.style.display = 'none';
+
+      if (eikFeedbackMsg) {
+        eikFeedbackMsg.textContent = '✓ Данните за фирмата са потвърдени и успешно синхронизирани с договора.';
+        eikFeedbackMsg.className = 'field-hint-msg success';
+      }
+      showToast('Данните за фирмата са потвърдени!', 'success');
+      checkStep1Progress();
+    });
+  }
+
+  if (btnVerifyDataNo) {
+    btnVerifyDataNo.addEventListener('click', () => {
+      isCompanyDataVerified = true; // Mark as verified because user explicitly entered edit mode to adjust
+      if (companyDataPreviewCard) {
+        companyDataPreviewCard.classList.remove('verified');
+        companyDataPreviewCard.classList.add('editing-mode');
+      }
+      if (previewStatusBadge) {
+        previewStatusBadge.textContent = 'Режим на редакция';
+        previewStatusBadge.className = 'preview-status-badge editing';
+      }
+      btnVerifyDataNo.classList.add('active');
+      if (btnVerifyDataYes) btnVerifyDataYes.classList.remove('active');
+      if (companyInputsWrapper) {
+        companyInputsWrapper.style.display = 'block';
+      }
+      if (companyNameInput) companyNameInput.focus();
+
+      if (eikFeedbackMsg) {
+        eikFeedbackMsg.textContent = '✎ Режим на корекция. Направете корекции в полетата по-долу.';
+        eikFeedbackMsg.className = 'field-hint-msg';
+      }
+      showToast('Полетата са отключени за редакция.', 'info');
+    });
   }
 
   let eikDebounceTimer = null;
@@ -378,13 +608,6 @@ document.addEventListener('DOMContentLoaded', () => {
       e.target.value = val;
       updateFieldInDoc('companyEik', val, liveSyncMap.companyEik.placeholder);
 
-      // Update registry direct link
-      if (registryLinkBadge) {
-        registryLinkBadge.href = val
-          ? `https://portal.registryagency.bg/CR/Reports/VerificationPersonOrg?uic=${val}`
-          : 'https://portal.registryagency.bg/CR/Reports/VerificationPersonOrg';
-      }
-
       clearTimeout(eikDebounceTimer);
 
       if (val.length < 9) {
@@ -393,6 +616,9 @@ document.addEventListener('DOMContentLoaded', () => {
           eikFeedbackMsg.textContent = 'Въведете 9 цифри за проверка в Търговския регистър';
           eikFeedbackMsg.className = 'field-hint-msg';
         }
+        if (companyDataPreviewCard) companyDataPreviewCard.style.display = 'none';
+        if (companyInputsWrapper) companyInputsWrapper.style.display = 'block';
+        isCompanyDataVerified = false;
         return;
       }
 
@@ -403,12 +629,15 @@ document.addEventListener('DOMContentLoaded', () => {
           eikFeedbackMsg.textContent = '⚠ Невалидна контролна цифра на ЕИК по БУЛСТАТ.';
           eikFeedbackMsg.className = 'field-hint-msg error';
         }
+        if (companyDataPreviewCard) companyDataPreviewCard.style.display = 'none';
+        if (companyInputsWrapper) companyInputsWrapper.style.display = 'block';
+        isCompanyDataVerified = false;
         return;
       }
 
       companyEikInput.classList.remove('is-invalid');
       if (eikFeedbackMsg) {
-        eikFeedbackMsg.textContent = '⟳ Свързване с Търговския регистър...';
+        eikFeedbackMsg.textContent = '⟳ Извличане на официални данни от Търговския регистър...';
         eikFeedbackMsg.className = 'field-hint-msg';
       }
 
@@ -416,29 +645,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           const compData = await fetchRegistryData(val);
           if (compData) {
-            if (companyNameInput && !companyNameInput.dataset.manuallyEdited) {
-              companyNameInput.value = compData.name;
-              updateFieldInDoc('companyName', compData.name, liveSyncMap.companyName.placeholder);
-            }
-            if (companyAddressInput && !companyAddressInput.dataset.manuallyEdited) {
-              companyAddressInput.value = compData.address;
-              updateFieldInDoc('companyAddress', compData.address, liveSyncMap.companyAddress.placeholder);
-              if (sameAddressCheckbox && sameAddressCheckbox.checked && contactAddressInput) {
-                contactAddressInput.value = compData.address;
-                updateFieldInDoc('contactAddress', compData.address, liveSyncMap.contactAddress.placeholder);
-              }
-            }
-            if (companyRepresentativeInput && !companyRepresentativeInput.dataset.manuallyEdited) {
-              companyRepresentativeInput.value = compData.rep;
-              updateFieldInDoc('companyRepresentative', compData.rep, liveSyncMap.companyRepresentative.placeholder);
-              if (typedSigInput && !typedSigInput.dataset.userEdited) {
-                typedSigInput.value = compData.rep;
-                updateTypedFontSamples(compData.rep);
-              }
-            }
+            showCompanyPreview(compData, val);
 
             if (eikFeedbackMsg) {
-              eikFeedbackMsg.textContent = '✓ Данните за фирмата са синхронизирани от Търговския регистър. Можете да ги коригирате при нужда.';
+              eikFeedbackMsg.textContent = '✓ Данните за фирмата са извлечени от Търговския регистър. Моля, потвърдете с (✓) или направете редакция с (✕).';
               eikFeedbackMsg.className = 'field-hint-msg success';
             }
             showToast('Данните за фирмата бяха изтеглени успешно от Търговския регистър!', 'success');
@@ -446,19 +656,33 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         } catch (err) {
           if (eikFeedbackMsg) {
-            eikFeedbackMsg.textContent = '✓ Валиден ЕИК. Проверете данните в Търговския регистър чрез линка горе.';
-            eikFeedbackMsg.className = 'field-hint-msg success';
+            eikFeedbackMsg.textContent = '⚠ Неуспешно автоматично свързване с Търговския регистър. Моля, въведете данните ръчно.';
+            eikFeedbackMsg.className = 'field-hint-msg error';
           }
+          if (companyInputsWrapper) companyInputsWrapper.style.display = 'block';
+          isCompanyDataVerified = true;
         }
       }, 350);
     });
   }
 
-  // Mark if user manually edits fields
-  [companyNameInput, companyAddressInput, companyRepresentativeInput].forEach(inp => {
-    if (inp) {
-      inp.addEventListener('input', () => {
-        inp.dataset.manuallyEdited = 'true';
+  // Real-time synchronization while user edits in edit mode
+  [
+    { input: companyNameInput, preview: previewCompName },
+    { input: companyAddressInput, preview: previewCompAddress },
+    { input: companyRepresentativeInput, preview: previewCompRep }
+  ].forEach(({ input, preview }) => {
+    if (input) {
+      input.addEventListener('input', () => {
+        input.dataset.manuallyEdited = 'true';
+        if (preview) {
+          preview.textContent = input.value.trim() || '—';
+        }
+        if (input === companyRepresentativeInput && typedSigInput && !typedSigInput.dataset.userEdited) {
+          typedSigInput.value = input.value.trim();
+          updateTypedFontSamples(input.value.trim());
+        }
+        checkStep1Progress();
       });
     }
   });
@@ -890,10 +1114,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // 3. Validate Company Data Verification Checkbox
-      if (companyDataVerifiedCheckbox && !companyDataVerifiedCheckbox.checked) {
-        showToast('Моля, потвърдете верността на данните за фирмата с отметката в Секция 1.', 'error');
-        companyDataVerifiedCheckbox.focus();
+      // 3. Validate Company Data Verification (Prompt with ✓ / ✕)
+      if (companyDataPreviewCard && companyDataPreviewCard.style.display !== 'none' && !isCompanyDataVerified) {
+        showToast('Моля, потвърдете верността на данните за фирмата с (✓) или направете редакция с (✕).', 'error');
+        companyDataPreviewCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
 

@@ -1258,20 +1258,22 @@ select.form-select-styled option:disabled {
   margin-bottom: 4px;
 }
 
-/* Live Dynamic Underlined Placeholders in Document */
+/* Live Dynamic Placeholders in Document */
 .live-field {
-  font-weight: bold;
+  font-weight: 700;
   color: #000000;
 }
 
 .live-field.underlined {
-  border-bottom: 1px dotted #334155;
-  padding: 0 2px;
+  border-bottom: 1px solid #cbd5e1;
+  padding: 0 1px;
 }
 
 .live-field.filled {
-  border-bottom: 1px solid #000000;
-  background-color: #f8fafc;
+  border-bottom: none !important;
+  background-color: transparent !important;
+  text-decoration: none !important;
+  color: #000000 !important;
 }
 
 .mono-font {
@@ -1370,11 +1372,11 @@ select.form-select-styled option:disabled {
 }
 
 .sig-placed-holder {
-  min-height: 38px;
+  min-height: 54px;
   display: flex;
   align-items: flex-end;
   justify-content: flex-start;
-  margin-bottom: -2px; /* Sits naturally right above the dotted line */
+  margin-bottom: -4px; /* Sits naturally right above the dotted line */
 }
 
 .exact-declaration-block {
@@ -1400,13 +1402,13 @@ select.form-select-styled option:disabled {
 }
 
 .placed-merchant-sig.drawn img {
-  max-height: 40px;
+  max-height: 60px !important;
   display: block;
 }
 
 .placed-merchant-sig.typed {
-  font-size: 20px;
-  line-height: 1.1;
+  font-size: 26px;
+  line-height: 1.15;
 }
 
 /* Read Banner on Terms */
@@ -1691,6 +1693,182 @@ input.is-invalid, select.is-invalid {
 .exact-section-sub.app-sub,
 .exact-section-sub-sub.color-iris-orange {
   text-align: center !important;
+}
+
+/* Full-width Feedback Row for EIK */
+.eik-fullwidth-feedback-row {
+  width: 100%;
+  margin-top: 6px;
+  margin-bottom: 10px;
+}
+
+.eik-fullwidth-feedback-row .field-hint-msg {
+  width: 100%;
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 6px 10px;
+  border-radius: 5px;
+  box-sizing: border-box;
+}
+
+.eik-fullwidth-feedback-row .field-hint-msg.success {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  font-weight: 500;
+}
+
+/* Standout Company Data Preview Card */
+.company-preview-card {
+  background: #ffffff;
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.12), 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin: 10px 0 14px 0;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.company-preview-card.verified {
+  border-color: #16a34a;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.14);
+}
+
+.company-preview-card.editing-mode {
+  border-color: #d97706;
+}
+
+.preview-header-bar {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.preview-verify-prompt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.verify-question {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.verify-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-verify-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.btn-verify-yes {
+  background: #16a34a;
+  color: #ffffff;
+  border-color: #15803d;
+}
+
+.btn-verify-yes:hover {
+  background: #15803d;
+  transform: translateY(-1px);
+}
+
+.btn-verify-yes.active {
+  background: #15803d;
+  box-shadow: 0 0 0 2px #bbf7d0;
+}
+
+.btn-verify-no {
+  background: #ffffff;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+.btn-verify-no:hover {
+  background: #fef2f2;
+  border-color: #dc2626;
+  transform: translateY(-1px);
+}
+
+.btn-verify-no.active {
+  background: #fee2e2;
+  border-color: #dc2626;
+}
+
+.preview-status-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  background: #e2e8f0;
+  padding: 3px 9px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.preview-status-badge.success {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.preview-status-badge.editing {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.preview-body-content {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #ffffff;
+}
+
+.preview-field-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.preview-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.preview-val {
+  font-size: 13.5px;
+  color: #0f172a;
+  line-height: 1.45;
+}
+
+.preview-val.highlight {
+  font-weight: 700;
+  color: #1e3a8a;
+  font-size: 14px;
+}
+
+.company-inputs-collapsible {
+  transition: all 0.3s ease;
 }
 
 /* ==========================================================================
