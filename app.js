@@ -16,13 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const bankIbanInput = document.getElementById('bankIban');
   const bankNameSelect = document.getElementById('bankName');
 
-  // Set today's date by default
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
+  // Default: Leave contractDateInput empty initially so document preview starts unpopulated matching PDF
   if (contractDateInput) {
-    contractDateInput.value = `${yyyy}-${mm}-${dd}`;
+    contractDateInput.value = '';
   }
 
   // =========================================================================
@@ -31,49 +27,52 @@ document.addEventListener('DOMContentLoaded', () => {
   const liveSyncMap = {
     companyName: {
       input: document.getElementById('companyName'),
-      placeholder: '„Търговец“'
+      placeholder: '.......................................................................'
     },
     companyEik: {
       input: document.getElementById('companyEik'),
-      placeholder: '—'
+      placeholder: '..................................'
     },
     companyAddress: {
       input: document.getElementById('companyAddress'),
-      placeholder: '—'
+      placeholder: '.....................................................................................................................................................'
     },
     companyRepresentative: {
       input: document.getElementById('companyRepresentative'),
-      placeholder: '—'
+      placeholder: '...................................................................................................'
     },
     bankName: {
       input: document.getElementById('bankName'),
-      placeholder: '—'
+      placeholder: '…........................................'
     },
     bankIban: {
       input: document.getElementById('bankIban'),
-      placeholder: '—'
+      placeholder: '….........................................................................'
     },
     merchantWebsite: {
       input: document.getElementById('merchantWebsite'),
-      placeholder: '—'
+      placeholder: '........................................................'
     },
     contactAddress: {
       input: document.getElementById('contactAddress'),
-      placeholder: '—'
+      placeholder: '...................................................................................................'
     },
     contactEmail: {
       input: document.getElementById('contactEmail'),
-      placeholder: '—'
+      placeholder: '................................................................................'
     },
     contactPhone: {
       input: document.getElementById('contactPhone'),
-      placeholder: '—'
+      placeholder: '..........................................................'
     }
   };
 
   function updateFieldInDoc(fieldName, val, placeholder) {
     const targets = document.querySelectorAll(`.live-field[data-field="${fieldName}"]`);
-    const cleanVal = (val || '').trim();
+    let cleanVal = (val || '').trim();
+    if (fieldName === 'companyAddress' && cleanVal) {
+      cleanVal = cleanVal.replace(/^гр\.\s*/i, '');
+    }
     
     targets.forEach(el => {
       const oldVal = el.textContent;
@@ -90,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         el.textContent = placeholder;
         el.classList.remove('filled');
-        el.classList.add('underlined');
+        el.classList.remove('underlined');
         el.classList.remove('text-animating');
       }
     });
@@ -899,7 +898,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- D. Apply Signature to Documents (Merchant only) ---
   const applySignatureBtn = document.getElementById('applySignatureBtn');
-  const removeSignatureBtn = document.getElementById('removeSignatureBtn');
   const signBothCheckbox = document.getElementById('signBothCheckbox');
 
   let isContractSigned = false;
@@ -963,36 +961,11 @@ document.addEventListener('DOMContentLoaded', () => {
     isAppendixSigned = true;
     updateBadge('badgeAppendix', 'Подписан', true);
 
-    if (removeSignatureBtn) removeSignatureBtn.style.display = 'inline-block';
-    
     // Update step indicator 3
     const step3 = document.getElementById('stepIndicator3');
     if (step3) step3.classList.add('completed');
 
     showToast('Договорът и приложението са успешно подписани', 'success');
-  }
-
-  function removeSignature() {
-    const holder1 = document.getElementById('contractSigHolder1');
-    const holder2 = document.getElementById('contractSigHolder2');
-    const holder3 = document.getElementById('contractSigHolder3');
-    const appendixHolder = document.getElementById('appendixSigHolder');
-
-    if (holder1) holder1.innerHTML = '';
-    if (holder2) holder2.innerHTML = '';
-    if (holder3) holder3.innerHTML = '';
-    if (appendixHolder) appendixHolder.innerHTML = '';
-
-    isContractSigned = false;
-    isAppendixSigned = false;
-    updateBadge('badgeContract', 'Неподписан', false);
-    updateBadge('badgeAppendix', 'Неподписан', false);
-
-    if (removeSignatureBtn) removeSignatureBtn.style.display = 'none';
-    const step3 = document.getElementById('stepIndicator3');
-    if (step3) step3.classList.remove('completed');
-
-    showToast('Подписите бяха премахнати.', 'info');
   }
 
   function updateBadge(id, text, isSigned) {
@@ -1011,89 +984,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (applySignatureBtn) applySignatureBtn.addEventListener('click', applySignature);
-  if (removeSignatureBtn) removeSignatureBtn.addEventListener('click', removeSignature);
-
-  // 5.1 Autofill Test Data Helper Button
-  const btnAutofillTest = document.getElementById('btnAutofillTest');
-  if (btnAutofillTest) {
-    btnAutofillTest.addEventListener('click', () => {
-      // 1. Fill EIK & Date
-      const sampleEik = '206132646';
-      if (companyEikInput) {
-        companyEikInput.value = sampleEik;
-        updateFieldInDoc('companyEik', sampleEik, liveSyncMap.companyEik.placeholder);
-      }
-      if (contractDateInput) {
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const dd = String(today.getDate()).padStart(2, '0');
-        contractDateInput.value = `${yyyy}-${mm}-${dd}`;
-        const formattedDate = `${dd}.${mm}.${yyyy} г.`;
-        document.querySelectorAll('.live-field[data-field="date"]').forEach(el => {
-          el.textContent = formattedDate;
-          el.classList.add('filled');
-          el.classList.remove('underlined');
-        });
-      }
-
-      // 2. Fill Company info
-      const compName = '„Айрис Солюшънс“ АД';
-      const compAddress = 'гр. Варна, бул. Княз Борис I № 45, ет. 2';
-      const compRep = 'Иван Георгиев Иванов';
-
-      if (companyNameInput) companyNameInput.value = compName;
-      if (companyAddressInput) companyAddressInput.value = compAddress;
-      if (companyRepresentativeInput) companyRepresentativeInput.value = compRep;
-
-      updateFieldInDoc('companyName', compName, liveSyncMap.companyName.placeholder);
-      updateFieldInDoc('companyAddress', compAddress, liveSyncMap.companyAddress.placeholder);
-      updateFieldInDoc('companyRepresentative', compRep, liveSyncMap.companyRepresentative.placeholder);
-
-      // Hide verification prompt
-      if (companyVerifyBanner) companyVerifyBanner.style.display = 'none';
-      if (eikFeedbackMsg) eikFeedbackMsg.style.display = 'none';
-      if (companyInputsWrapper) companyInputsWrapper.classList.add('is-verified');
-      isCompanyDataVerified = true;
-
-      // 3. Fill Bank & Website
-      if (bankNameSelect) bankNameSelect.value = 'УниКредит Булбанк';
-      updateFieldInDoc('bankName', 'УниКредит Булбанк', liveSyncMap.bankName.placeholder);
-
-      if (bankIbanInput) {
-        bankIbanInput.value = 'BG18 UNCR 7000 1523 4567 89';
-        updateFieldInDoc('bankIban', 'BG18 UNCR 7000 1523 4567 89', liveSyncMap.bankIban.placeholder);
-      }
-
-      if (merchantWebsiteInput) {
-        merchantWebsiteInput.value = 'https://irispay.bg';
-      }
-      syncWebsites();
-
-      // 4. Fill Contact
-      if (contactAddressInput) contactAddressInput.value = compAddress;
-      updateFieldInDoc('contactAddress', compAddress, liveSyncMap.contactAddress.placeholder);
-
-      if (contactEmailInput) contactEmailInput.value = 'kaloyan.tosev@gmail.com';
-      updateFieldInDoc('contactEmail', 'kaloyan.tosev@gmail.com', liveSyncMap.contactEmail.placeholder);
-
-      if (contactPhoneInput) contactPhoneInput.value = '0888 123 456';
-      updateFieldInDoc('contactPhone', '0888 123 456', liveSyncMap.contactPhone.placeholder);
-
-      // 5. Checkboxes
-      const agreeTerms = document.getElementById('agreeTermsCheckbox');
-      const confirmData = document.getElementById('confirmDataCheckbox');
-      if (agreeTerms) agreeTerms.checked = true;
-      if (confirmData) confirmData.checked = true;
-
-      // 6. Signatures (Apply typed signature automatically to both docs)
-      if (typedSigInput) typedSigInput.value = compRep;
-      applySignature();
-
-      checkStep1Progress();
-      showToast('⚡ Примерните тестови данни и подпис са попълнени! Натиснете бутона долу за изпращане.', 'success');
-    });
-  }
 
   // =========================================================================
   // 6. Progress Tracker Helpers
@@ -1363,11 +1253,24 @@ document.addEventListener('DOMContentLoaded', () => {
       const timeStr = `${formattedDateStr} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       const refNumber = `#IRIS-SIGN-2026-${randomRef}`;
 
+      // Show loading screen overlay immediately
+      const loadingOverlay = document.getElementById('loadingScreenOverlay');
+      const loadingStatus = document.getElementById('loadingDynamicStatus');
+      const step1 = document.getElementById('loadingStep1');
+      const step2 = document.getElementById('loadingStep2');
+      const step3 = document.getElementById('loadingStep3');
+
+      if (loadingOverlay) loadingOverlay.style.display = 'flex';
+      if (step1) step1.className = 'loading-step-item active';
+      if (step2) step2.className = 'loading-step-item';
+      if (step3) step3.className = 'loading-step-item';
+      if (loadingStatus) loadingStatus.textContent = 'Проверка и валидиране на положените електронни подписи...';
+
       // Show sending feedback on submit button
       if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.dataset.originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '⟳ Генериране на PDF и изпращане...';
+        submitBtn.innerHTML = '⟳ Изпращане на документи...';
       }
 
       // Capture merchant signature image as clean PNG Base64
@@ -1398,6 +1301,11 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('Signature PNG capture error:', sigErr);
       }
 
+      // Advance to step 2: PDF generation
+      if (step1) step1.className = 'loading-step-item done';
+      if (step2) step2.className = 'loading-step-item active';
+      if (loadingStatus) loadingStatus.textContent = 'Генериране на 10-страничен официален векторен договор и Приложение 1...';
+
       const compAddress = (document.getElementById('companyAddress')?.value || '').trim();
       const bankVal = bankNameSelect ? bankNameSelect.value.trim() : '';
       const bankNameText = (bankVal === 'custom') ? ((customBankInput?.value || '').trim()) : bankVal;
@@ -1421,6 +1329,11 @@ document.addEventListener('DOMContentLoaded', () => {
         signatureImageBase64: sigBase64
       };
 
+      // Advance to step 3: Dispatch & wait for confirmation
+      if (step2) step2.className = 'loading-step-item done';
+      if (step3) step3.className = 'loading-step-item active';
+      if (loadingStatus) loadingStatus.textContent = 'Изпращане на криптираните документи и очакване на потвърждение...';
+
       try {
         const response = await fetch('/api/send-contract', {
           method: 'POST',
@@ -1428,16 +1341,27 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify(emailPayload)
         });
         const resData = await response.json();
-        console.log('Contract email response:', resData);
+        console.log('Contract email response confirmation:', resData);
+
+        if (step3) step3.className = 'loading-step-item done';
+        if (loadingStatus) loadingStatus.textContent = 'Потвърдено! Зареждане на резултата...';
+
+        // Brief pleasant pause to let user see confirmation check
+        await new Promise(res => setTimeout(res, 500));
       } catch (err) {
         console.warn('Backend email API offline/dev fallback:', err);
       } finally {
+        // Hide loading screen overlay
+        if (loadingOverlay) {
+          loadingOverlay.style.display = 'none';
+        }
+
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.innerHTML = submitBtn.dataset.originalText || 'Потвърди и изпрати договора';
         }
 
-        // Show Success Modal
+        // Show Confirmation / Success Modal
         if (successModalOverlay) {
           successModalOverlay.style.display = 'flex';
         }

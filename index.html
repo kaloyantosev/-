@@ -17,10 +17,10 @@
       <div class="nav-left">
         <img src="assets/iris-logo.svg" alt="IRIS Pay Logo" class="brand-logo">
         <div class="brand-divider"></div>
-        <div class="portal-title">
-          <span class="portal-main">Портал за подписване на договор</span>
-          <span class="portal-sub">Айрис Солюшънс АД • Лицензирана институция от БНБ</span>
-        </div>
+        <span class="portal-main-title">Портал за подписване на договор</span>
+      </div>
+      <div class="nav-right">
+        <span class="portal-bnb-badge">Лицензирана институция от БНБ</span>
       </div>
     </div>
   </header>
@@ -31,15 +31,8 @@
     <!-- LEFT PANEL: Data Input Form (Minimalist, Professional, Monochrome) -->
     <aside class="form-sidebar">
       <div class="sidebar-header">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
-          <div>
-            <h2>Договор IRIS Pay</h2>
-            <p class="sidebar-sub">Данните се попълват в реално време на страниците на договора вдясно.</p>
-          </div>
-          <button type="button" id="btnAutofillTest" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 10px; font-size: 11.5px; font-weight: 600; color: #1e293b; cursor: pointer; display: flex; align-items: center; gap: 4px; white-space: nowrap; margin-top: 2px;" title="Попълни автоматично примерни данни за фирмата и положен подпис">
-            ⚡ Тестови данни
-          </button>
-        </div>
+        <h2>Договор IRIS Pay</h2>
+        <p class="sidebar-sub">Данните се попълват в реално време на страниците на договора вдясно.</p>
       </div>
 
       <form id="merchantContractForm" onsubmit="return false;" novalidate>
@@ -214,20 +207,6 @@
             </div>
           </div>
 
-          <!-- Document sign status indicators -->
-          <div class="sign-status-row">
-            <div class="doc-sign-status-box" id="statusBoxContract">
-              <span class="status-icon pending">●</span>
-              <span class="status-doc-title">Договор:</span>
-              <span class="status-badge" id="badgeContract">Неподписан</span>
-            </div>
-            <div class="doc-sign-status-box" id="statusBoxAppendix">
-              <span class="status-icon pending">●</span>
-              <span class="status-doc-title">Приложение 1:</span>
-              <span class="status-badge" id="badgeAppendix">Неподписан</span>
-            </div>
-          </div>
-
           <!-- Signature creation tabs -->
           <div class="sig-mode-tabs">
             <button type="button" class="sig-tab-btn active" data-mode="draw">
@@ -255,6 +234,18 @@
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 Изчисти
               </button>
+              <div class="inline-canvas-statuses">
+                <div class="doc-sign-status-box" id="statusBoxContract">
+                  <span class="status-icon pending">●</span>
+                  <span class="status-doc-title">Договор:</span>
+                  <span class="status-badge" id="badgeContract">Неподписан</span>
+                </div>
+                <div class="doc-sign-status-box" id="statusBoxAppendix">
+                  <span class="status-icon pending">●</span>
+                  <span class="status-doc-title">Приложение 1:</span>
+                  <span class="status-badge" id="badgeAppendix">Неподписан</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -299,9 +290,6 @@
               <button type="button" class="btn-primary-compact" id="applySignatureBtn">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
                 <span>Подписване на Договор и Приложение</span>
-              </button>
-              <button type="button" class="btn-subtle" id="removeSignatureBtn" style="display:none;">
-                Премахни подпис
               </button>
             </div>
           </div>
@@ -394,11 +382,11 @@
                   РАМКОВ ДОГОВОР ЗА ИЗВЪРШВАНЕ НА ПЛАЩАНИЯ ЧРЕЗ УСЛУГА ПО ИНИЦИИРАНЕ НА ПЛАЩАНИЯ
                 </h1>
 
-                <p class="exact-p">Днес, <span class="live-field" data-field="date">16.10.2026 г.</span>, в гр. София, между:</p>
+                <p class="exact-p">Днес, <span class="live-field" data-field="date">.........................</span> година, в гр. София, между:</p>
 
                 <p class="exact-p">1. <strong>„Айрис Солюшънс“ АД</strong>, регистрирано в ТРРЮЛНЦ към Агенцията по вписвания с ЕИК 208455895, със седалище, адрес на управление: гр. София, бул. Христо Смирненски 78, ет.4, представлявано от изп. директор Галя Димитрова Димитрова или чрез пълномощника си Димитър Йошков Христов, наричано по-долу за краткост „Доставчик“, от една страна,</p>
                 <p class="exact-p">и</p>
-                <p class="exact-p">2. <strong><span class="live-field" data-field="companyName">„Техно Солюшънс“ ЕООД</span></strong>, регистрирано в ТРРЮЛНЦ към Агенцията по вписвания с ЕИК <span class="live-field" data-field="companyEik">205891234</span>, със седалище, адрес на управление: <span class="live-field" data-field="companyAddress">гр. Варна, бул. Княз Борис I № 45, ет. 2</span>, представлявано от <span class="live-field" data-field="companyRepresentative">Иван Георгиев Иванов</span>, наричано по-долу за краткост „Търговец“, от друга страна,</p>
+                <p class="exact-p">2. <span class="live-field" data-field="companyName">.......................................................................</span> регистрирано в ТРРЮЛНЦ към Агенцията по вписвания с ЕИК <span class="live-field" data-field="companyEik">..................................</span> със седалище, адрес на управление: гр. <span class="live-field" data-field="companyAddress">.....................................................................................................................................................</span> представлявано от <span class="live-field" data-field="companyRepresentative">...................................................................................................</span> наричано по-долу за краткост „Търговец“, от друга страна,</p>
 
                 <p class="exact-p mt-3">Заедно наричани Страните,</p>
                 <p class="exact-p">Като се взе предвид, че:</p>
@@ -406,10 +394,10 @@
                 <p class="exact-p">б) Търговецът предоставя набор от стоки/услуги, като се стреми това да става все по-лесно и достъпно за крайните клиенти;</p>
                 <p class="exact-p">в) Доставчикът предоставя софтуерно решение - Платежен терминал, чрез които търговецът може да ползва услугите по буква „а“;</p>
                 <p class="exact-p">г) Търговецът желае да ползва услугите по буква „а“, за предоставяне на допълнителна възможност на Клиентите да заплащат предлаганите от Търговеца стоки/услуги, свързана с:</p>
-                <p class="exact-p indent-item"><strong>&bull; онлайн плащания (електронен магазин);</strong></p>
-                <p class="exact-p indent-item"><strong>&bull; плащания във физически обекти (чрез линк или QR код);</strong></p>
-                <p class="exact-p indent-item"><strong>&bull; плащания с мобилната апликация IRISPay</strong></p>
-                <p class="exact-p indent-item"><strong>&bull; плащания на фактури/задължения (отпечатани на хартия и съдържащи QR код);</strong></p>
+                <p class="exact-p indent-item">• онлайн плащания (електронен магазин);</p>
+                <p class="exact-p indent-item">• плащания във физически обекти (чрез линк или QR код);</p>
+                <p class="exact-p indent-item">• плащания с мобилната апликация IRISPay</p>
+                <p class="exact-p indent-item">• плащания на фактури/задължения (отпечатани на хартия и съдържащи QR код);</p>
                 <p class="exact-p mt-2">д) Страните желаят да уговорят взаимоотношенията си във връзка с гореизложеното,</p>
               </div>
 
@@ -730,16 +718,13 @@
                   <div class="exact-sig-grid-row">
                     <div class="sig-half">
                       <p class="sig-head-title"><strong>За Доставчика:</strong></p>
-                      <div class="iris-unsigned-box"></div>
-                      <div class="sig-underline-dots">....................................................................</div>
+                      <div class="iris-unsigned-box" style="height: 52px;"></div>
                     </div>
                     <div class="sig-half">
                       <p class="sig-head-title"><strong>За Търговеца:</strong></p>
                       <div class="merchant-sig-target" id="contractSigDisplay1" data-slot="c1">
                         <div class="sig-placed-holder" id="contractSigHolder1"></div>
-                        <div class="sig-underline-dots">....................................................................</div>
                       </div>
-                      <div class="sig-rep-footer"><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></div>
                     </div>
                   </div>
 
@@ -750,9 +735,7 @@
                       <p class="sig-head-title"><strong>За Търговеца:</strong></p>
                       <div class="merchant-sig-target" id="contractSigDisplay2" data-slot="c2">
                         <div class="sig-placed-holder" id="contractSigHolder2"></div>
-                        <div class="sig-underline-dots">....................................................................</div>
                       </div>
-                      <div class="sig-rep-footer"><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></div>
                     </div>
                   </div>
 
@@ -768,9 +751,7 @@
                       <p class="sig-head-title"><strong>За Търговеца:</strong></p>
                       <div class="merchant-sig-target" id="contractSigDisplay3" data-slot="c3">
                         <div class="sig-placed-holder" id="contractSigHolder3"></div>
-                        <div class="sig-underline-dots">....................................................................</div>
                       </div>
-                      <div class="sig-rep-footer"><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></div>
                     </div>
                   </div>
                 </div>
@@ -826,17 +807,13 @@
                 <div class="exact-signatures-grid appendix-sig-grid mt-5">
                   <div class="sig-side">
                     <p><strong>За Доставчика</strong></p>
-                    <div class="unsigned-space">
-                      <div class="dotted-sig-line">....................................................................</div>
-                    </div>
+                    <div class="unsigned-space" style="height: 52px;"></div>
                   </div>
                   <div class="sig-side">
                     <p><strong>За Търговеца</strong></p>
                     <div class="merchant-sig-target" id="appendixSigDisplay" data-slot="app">
                       <div class="sig-placed-holder" id="appendixSigHolder"></div>
-                      <div class="dotted-sig-line">....................................................................</div>
                     </div>
-                    <div class="sig-rep-footer"><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></div>
                   </div>
                 </div>
 
@@ -1004,6 +981,45 @@
       </div>
     </section>
   </main>
+
+  <!-- DEDICATED LOADING SCREEN OVERLAY (Awaiting Confirmation) -->
+  <div class="modal-overlay loading-screen-overlay" id="loadingScreenOverlay" style="display:none;">
+    <div class="loading-modal-card">
+      <div class="loading-spinner-wrapper">
+        <div class="loading-ring-spinner"></div>
+        <div class="loading-logo-center">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <path d="M12 18v-6"></path>
+            <path d="M9 15l3 3 3-3"></path>
+          </svg>
+        </div>
+      </div>
+
+      <h3 class="loading-main-title">Изпращане на документите...</h3>
+      <p class="loading-sub-title" id="loadingDynamicStatus">Моля, изчакайте обработката и потвърждението от системата.</p>
+
+      <div class="loading-progress-track">
+        <div class="loading-progress-bar"></div>
+      </div>
+
+      <div class="loading-steps-list">
+        <div class="loading-step-item active" id="loadingStep1">
+          <span class="step-indicator-dot"></span>
+          <span>Проверка на положените електронни подписи</span>
+        </div>
+        <div class="loading-step-item" id="loadingStep2">
+          <span class="step-indicator-dot"></span>
+          <span>Генериране на 10-страничен официален векторен договор</span>
+        </div>
+        <div class="loading-step-item" id="loadingStep3">
+          <span class="step-indicator-dot"></span>
+          <span>Изпращане и изчакване на потвърждение</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- SUCCESS MODAL (Exact Wording Requested) -->
   <div class="modal-overlay" id="successModalOverlay" style="display:none;">

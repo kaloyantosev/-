@@ -278,14 +278,7 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
   const navyColor = rgb(0x19 / 255, 0x2b / 255, 0x6c / 255);
   const slateColor = rgb(0x64 / 255, 0x74 / 255, 0x8b / 255);
 
-  // Provider signature
-  p9.drawText('/ Галя Димитрова Димитрова /', {
-    x: 70.82,
-    y: p9H - 401.60,
-    size: 9.5,
-    font: fontBold,
-    color: slateColor
-  });
+  // Provider slot remains strictly blank (provider signs after receiving the merchant contract)
 
   // Merchant Slot 1
   if (sigImage) {
@@ -348,14 +341,7 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
   const p10 = pdfDoc.getPages()[9];
   const p10H = p10.getHeight();
 
-  // Provider signature
-  p10.drawText('/ Галя Димитрова Димитрова /', {
-    x: 94.55,
-    y: p10H - 561.67,
-    size: 9.5,
-    font: fontBold,
-    color: slateColor
-  });
+  // Provider slot remains strictly blank (provider signs after receiving the merchant contract)
 
   // Merchant slot
   if (sigImage) {
