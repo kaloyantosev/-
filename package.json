@@ -1,0 +1,14 @@
+{
+  "name": "iris-dogovor",
+  "version": "1.0.0",
+  "description": "IRIS Pay Contract Signing and Email Dispatch",
+  "main": "api/send-contract.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "@pdf-lib/fontkit": "^1.1.1"
+  }
+}

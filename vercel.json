@@ -1,6 +1,7 @@
 {
   "functions": {
     "api/send-contract.js": {
+      "includeFiles": "assets/**",
       "maxDuration": 60,
       "memory": 1024
     }

@@ -31,43 +31,43 @@ document.addEventListener('DOMContentLoaded', () => {
   const liveSyncMap = {
     companyName: {
       input: document.getElementById('companyName'),
-      placeholder: '.......................................................................'
+      placeholder: '„Търговец“'
     },
     companyEik: {
       input: document.getElementById('companyEik'),
-      placeholder: '..................................'
+      placeholder: '—'
     },
     companyAddress: {
       input: document.getElementById('companyAddress'),
-      placeholder: '.....................................................................................................................................................'
+      placeholder: '—'
     },
     companyRepresentative: {
       input: document.getElementById('companyRepresentative'),
-      placeholder: '...................................................................................................'
+      placeholder: '—'
     },
     bankName: {
       input: document.getElementById('bankName'),
-      placeholder: '…........................................'
+      placeholder: '—'
     },
     bankIban: {
       input: document.getElementById('bankIban'),
-      placeholder: '….........................................................................'
+      placeholder: '—'
     },
     merchantWebsite: {
       input: document.getElementById('merchantWebsite'),
-      placeholder: '........................................................'
+      placeholder: '—'
     },
     contactAddress: {
       input: document.getElementById('contactAddress'),
-      placeholder: '...................................................................................................'
+      placeholder: '—'
     },
     contactEmail: {
       input: document.getElementById('contactEmail'),
-      placeholder: '................................................................................'
+      placeholder: '—'
     },
     contactPhone: {
       input: document.getElementById('contactPhone'),
-      placeholder: '..........................................................'
+      placeholder: '—'
     }
   };
 
@@ -1370,23 +1370,55 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.innerHTML = '⟳ Генериране на PDF и изпращане...';
       }
 
-      // Generate single combined PDF (Contract + Appendix 1) as Base64
-      let pdfBase64 = null;
+      // Capture merchant signature image as clean PNG Base64
+      let sigBase64 = null;
       try {
-        pdfBase64 = await generateContractPdfBase64();
-      } catch (pdfErr) {
-        console.warn('PDF generation error fallback:', pdfErr);
+        if (currentSigMode === 'draw' && hasDrawn && canvas) {
+          sigBase64 = canvas.toDataURL('image/png');
+        } else {
+          // Render typed signature to offscreen canvas
+          const sigText = (typedSigInput && typedSigInput.value.trim()) || compRep || 'Иван Иванов';
+          const off = document.createElement('canvas');
+          off.width = 320;
+          off.height = 80;
+          const octx = off.getContext('2d');
+          octx.clearRect(0, 0, 320, 80);
+          octx.font = 'italic 28px "Segoe Script", "Brush Script MT", cursive, sans-serif';
+          octx.fillStyle = '#0f3b8c';
+          octx.fillText(sigText, 10, 48);
+          octx.beginPath();
+          octx.moveTo(10, 56);
+          octx.quadraticCurveTo(110, 70, 260, 54);
+          octx.lineWidth = 1.8;
+          octx.strokeStyle = 'rgba(15, 59, 140, 0.7)';
+          octx.stroke();
+          sigBase64 = off.toDataURL('image/png');
+        }
+      } catch (sigErr) {
+        console.warn('Signature PNG capture error:', sigErr);
       }
 
-      // Asynchronous API call to /api/send-contract with DD.MM.YYYY formatted date
+      const compAddress = (document.getElementById('companyAddress')?.value || '').trim();
+      const bankVal = bankNameSelect ? bankNameSelect.value.trim() : '';
+      const bankNameText = (bankVal === 'custom') ? ((customBankInput?.value || '').trim()) : bankVal;
+      const bankIbanVal = (document.getElementById('bankIban')?.value || '').trim();
+      const websiteVal = (document.getElementById('companyWebsite')?.value || '').trim();
+      const contactAddressVal = (document.getElementById('contactAddress')?.value || compAddress || '').trim();
+
+      // Asynchronous API call to /api/send-contract with DD.MM.YYYY formatted date and full vector PDF parameters
       const emailPayload = {
         companyName: compName,
         companyEik: compEik,
+        companyAddress: compAddress,
         companyRepresentative: compRep,
+        bankName: bankNameText,
+        bankIban: bankIbanVal,
+        website: websiteVal,
+        contactAddress: contactAddressVal,
         contactEmail: emailVal,
         contactPhone: phoneVal,
         contractDate: formattedDateStr,
-        pdfBase64: pdfBase64
+        signatureImageBase64: sigBase64
       };
 
       try {

@@ -4,14 +4,18 @@
  * Recipient: kaloyan.tosev@gmail.com (testing) / sales@irisbgsf.com (production)
  * Subject: Подписан договор (Фирма)
  * Content: ЕИК, Фирма, Представляващ, Имейл за контакт, Телефон, Дата (ДД.ММ.ГГГГ)
- * Attachment: PDF (договор + приложение 1)
+ * Attachment: Authentic Vector PDF (договор + приложение 1)
  */
 
-// Vercel body parser config — increase limit to accept large PDF base64 payloads
+import fs from 'fs';
+import path from 'path';
+import { generateContractPdf } from './pdfGenerator.js';
+
+// Vercel body parser config
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '10mb'
+      sizeLimit: '15mb'
     }
   }
 };
@@ -58,10 +62,16 @@ export default async function handler(req, res) {
     const {
       companyName = '—',
       companyEik = '—',
+      companyAddress = '',
       companyRepresentative = '—',
+      bankName = '',
+      bankIban = '',
+      website = '',
+      contactAddress = '',
       contactEmail = '—',
       contactPhone = '—',
       contractDate = '',
+      signatureImageBase64 = null,
       pdfBase64 = null
     } = data || {};
 
@@ -139,12 +149,42 @@ export default async function handler(req, res) {
 </html>
 `.trim();
 
-    // Prepare PDF attachment (Single combined PDF)
-    const attachments = [];
-    if (pdfBase64) {
-      let rawBase64 = String(pdfBase64).trim();
+    // Generate pristine 10-page vector PDF (contract + appendix 1)
+    let finalPdfBase64 = null;
+    try {
+      const candidates = [
+        path.join(process.cwd(), 'assets'),
+        path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/i, '$1')), '..', 'assets'),
+        path.join(process.cwd(), 'scratch', 'IRIS подпис на документи', 'assets')
+      ];
+      let assetsDir = candidates.find(d => fs.existsSync(path.join(d, 'contract_template.pdf')));
+      if (!assetsDir) assetsDir = path.join(process.cwd(), 'assets');
 
-      // 1. Strip data URI prefix regardless of parameters (filename=..., charset=..., etc.)
+      const generatedBytes = await generateContractPdf({
+        companyName: (companyName && companyName !== '—') ? companyName : '',
+        companyEik: (companyEik && companyEik !== '—') ? companyEik : '',
+        companyAddress: companyAddress || '',
+        companyRepresentative: (companyRepresentative && companyRepresentative !== '—') ? companyRepresentative : '',
+        bankName: bankName || '',
+        bankIban: bankIban || '',
+        website: website || '',
+        contactAddress: contactAddress || companyAddress || '',
+        contactEmail: (contactEmail && contactEmail !== '—') ? contactEmail : '',
+        contactPhone: (contactPhone && contactPhone !== '—') ? contactPhone : '',
+        contractDate: displayDate,
+        signatureImageBase64
+      }, assetsDir);
+
+      if (generatedBytes && generatedBytes.length > 0) {
+        finalPdfBase64 = Buffer.from(generatedBytes).toString('base64');
+        console.log('[Vector PDF] Generated pristine vector PDF successfully. Size:', generatedBytes.length);
+      }
+    } catch (genErr) {
+      console.warn('[Vector PDF] Generation error, falling back to passed pdfBase64:', genErr);
+    }
+
+    if (!finalPdfBase64 && pdfBase64) {
+      let rawBase64 = String(pdfBase64).trim();
       const base64Marker = ';base64,';
       const markerIdx = rawBase64.indexOf(base64Marker);
       if (markerIdx !== -1) {
@@ -152,28 +192,29 @@ export default async function handler(req, res) {
       } else {
         rawBase64 = rawBase64.replace(/^data:[^;]*;base64,/, '').trim();
       }
-
-      // 2. Ensure it starts at the PDF magic base64 header 'JVBERi' (%PDF-)
       const pdfMagicIdx = rawBase64.indexOf('JVBERi');
       if (pdfMagicIdx !== -1 && pdfMagicIdx < 80) {
         rawBase64 = rawBase64.substring(pdfMagicIdx).trim();
       }
-
-      // 3. Remove any trailing quotes or invalid whitespace
       rawBase64 = rawBase64.replace(/[\r\n\s"']+$/, '');
-
       if (rawBase64.length > 50) {
-        const cleanCompName = (companyName && companyName !== '—')
-          ? String(companyName).replace(/["'„“«»<>:\/\\|?*]/g, '').trim()
-          : 'Търговец';
-        const pdfFilename = `Договор (${cleanCompName}).pdf`;
-
-        attachments.push({
-          filename: pdfFilename,
-          content: rawBase64,
-          contentType: 'application/pdf'
-        });
+        finalPdfBase64 = rawBase64;
       }
+    }
+
+    // Prepare PDF attachment (Single combined PDF)
+    const attachments = [];
+    if (finalPdfBase64 && finalPdfBase64.length > 50) {
+      const safeCompName = (companyName && companyName !== '—')
+        ? String(companyName).replace(/["'„“«»<>:\/\\|?*]/g, '').trim()
+        : 'Търговец';
+      const pdfFilename = `Договор (${safeCompName}).pdf`;
+
+      attachments.push({
+        filename: pdfFilename,
+        content: finalPdfBase64,
+        contentType: 'application/pdf'
+      });
     }
 
     // 1. Send via Resend API
@@ -261,8 +302,6 @@ export default async function handler(req, res) {
 
     // 2. Fallback / Development response
     console.log(`[Email Notification Prepared] -> To: ${targetEmail} | Subject: ${emailSubject}`);
-    console.log(textBody);
-
     return res.status(200).json({
       success: true,
       provider: 'ready_for_production',
