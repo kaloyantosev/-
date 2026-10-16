@@ -10,19 +10,27 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================================================
   const form = document.getElementById('merchantContractForm');
   const contractDateInput = document.getElementById('contractDate');
+  const hiddenNativeDatePicker = document.getElementById('hiddenNativeDatePicker');
+  const btnCalendarTrigger = document.getElementById('btnCalendarTrigger');
   const sameAddressCheckbox = document.getElementById('sameAddressCheckbox');
   const companyAddressInput = document.getElementById('companyAddress');
   const contactAddressInput = document.getElementById('contactAddress');
   const bankIbanInput = document.getElementById('bankIban');
   const bankNameSelect = document.getElementById('bankName');
 
-  // Default: Automatically load today's date into contract date input
+  // Default: Automatically load today's date into contract date input (DD.MM.YYYY)
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayDmy = `${dd}.${mm}.${yyyy}`;
+  const todayYmd = `${yyyy}-${mm}-${dd}`;
+
   if (contractDateInput) {
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    contractDateInput.value = `${yyyy}-${mm}-${dd}`;
+    contractDateInput.value = todayDmy;
+  }
+  if (hiddenNativeDatePicker) {
+    hiddenNativeDatePicker.value = todayYmd;
   }
 
   // =========================================================================
@@ -99,15 +107,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function formatBulgarianDate(isoDateStr) {
-    if (!isoDateStr) return '.........................';
-    const [y, m, d] = isoDateStr.split('-');
-    const monthsBg = [
-      'януари', 'февруари', 'март', 'април', 'май', 'юни',
-      'юли', 'август', 'септември', 'октомври', 'ноември', 'декември'
-    ];
-    const monthName = monthsBg[parseInt(m, 10) - 1] || m;
-    return `${parseInt(d, 10)} ${monthName} ${y}`;
+  function formatBulgarianDate(rawDateStr) {
+    if (!rawDateStr) return '.........................';
+    const str = String(rawDateStr).trim();
+    // Check if DD.MM.YYYY
+    const dmyMatch = str.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+    if (dmyMatch) {
+      const d = dmyMatch[1].padStart(2, '0');
+      const m = dmyMatch[2].padStart(2, '0');
+      const y = dmyMatch[3];
+      return `${d}.${m}.${y} г.`;
+    }
+    // Check if YYYY-MM-DD
+    const ymdMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (ymdMatch) {
+      const y = ymdMatch[1];
+      const m = ymdMatch[2].padStart(2, '0');
+      const d = ymdMatch[3].padStart(2, '0');
+      return `${d}.${m}.${y} г.`;
+    }
+    return str ? `${str} г.` : '.........................';
   }
 
   function syncAllFields() {
@@ -160,7 +179,57 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  if (hiddenNativeDatePicker) {
+    hiddenNativeDatePicker.addEventListener('change', () => {
+      if (hiddenNativeDatePicker.value) {
+        const [y, m, d] = hiddenNativeDatePicker.value.split('-');
+        if (contractDateInput) {
+          contractDateInput.value = `${d}.${m}.${y}`;
+          contractDateInput.dispatchEvent(new Event('input'));
+        }
+      }
+    });
+  }
+
+  if (btnCalendarTrigger && hiddenNativeDatePicker) {
+    btnCalendarTrigger.addEventListener('click', () => {
+      if (typeof hiddenNativeDatePicker.showPicker === 'function') {
+        hiddenNativeDatePicker.showPicker();
+      } else {
+        hiddenNativeDatePicker.focus();
+        hiddenNativeDatePicker.click();
+      }
+    });
+  }
+
   if (contractDateInput) {
+    contractDateInput.addEventListener('input', (e) => {
+      let val = contractDateInput.value.replace(/[^\d.]/g, '');
+      if (e.inputType !== 'deleteContentBackward' && e.inputType !== 'deleteContentForward') {
+        const digits = val.replace(/\./g, '');
+        if (digits.length >= 5) {
+          val = `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4, 8)}`;
+        } else if (digits.length >= 3) {
+          val = `${digits.slice(0, 2)}.${digits.slice(2)}`;
+        }
+      }
+      contractDateInput.value = val;
+
+      const formattedDate = formatBulgarianDate(val);
+      document.querySelectorAll('.live-field[data-field="date"]').forEach(el => {
+        if (val && val.length >= 2) {
+          el.textContent = formattedDate;
+          el.classList.add('filled');
+          el.classList.remove('underlined');
+        } else {
+          el.textContent = '.........................';
+          el.classList.remove('filled');
+          el.classList.add('underlined');
+        }
+      });
+      checkStep1Progress();
+    });
+
     contractDateInput.addEventListener('change', () => {
       const formattedDate = formatBulgarianDate(contractDateInput.value);
       document.querySelectorAll('.live-field[data-field="date"]').forEach(el => {
@@ -174,6 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
           el.classList.add('underlined');
         }
       });
+      checkStep1Progress();
     });
   }
 
@@ -243,11 +313,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function syncWebsites() {
     const combined = getCombinedWebsites();
+    const websiteLabelEl = document.getElementById('contractWebsiteLabel');
     if (noWebsiteCheckbox && noWebsiteCheckbox.checked) {
       if (contractWebsiteRow) contractWebsiteRow.style.display = 'none';
+      if (websiteLabelEl) websiteLabelEl.textContent = 'Сайт(ако има)';
       updateFieldInDoc('merchantWebsite', '', liveSyncMap.merchantWebsite.placeholder);
     } else {
       if (contractWebsiteRow) contractWebsiteRow.style.display = '';
+      if (websiteLabelEl) {
+        websiteLabelEl.textContent = combined ? 'Сайт' : 'Сайт(ако има)';
+      }
       updateFieldInDoc('merchantWebsite', combined, liveSyncMap.merchantWebsite.placeholder);
     }
   }
@@ -1263,11 +1338,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Format date strictly as DD.MM.YYYY (day, month, year)
       let formattedDateStr = '';
-      if (cDate && /^\d{4}-\d{2}-\d{2}$/.test(cDate)) {
-        const [y, m, d] = cDate.split('-');
-        formattedDateStr = `${d}.${m}.${y} г.`;
-      } else if (cDate) {
-        formattedDateStr = cDate;
+      if (cDate) {
+        formattedDateStr = formatBulgarianDate(cDate);
       } else {
         const dNow = new Date();
         formattedDateStr = `${String(dNow.getDate()).padStart(2, '0')}.${String(dNow.getMonth() + 1).padStart(2, '0')}.${dNow.getFullYear()} г.`;
@@ -1321,7 +1393,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const bankVal = bankNameSelect ? bankNameSelect.value.trim() : '';
       const bankNameText = (bankVal === 'custom') ? ((customBankInput?.value || '').trim()) : bankVal;
       const bankIbanVal = (document.getElementById('bankIban')?.value || '').trim();
-      const websiteVal = (document.getElementById('companyWebsite')?.value || '').trim();
+      const websiteVal = getCombinedWebsites();
       const contactAddressVal = (document.getElementById('contactAddress')?.value || compAddress || '').trim();
 
       // Asynchronous API call to /api/send-contract with DD.MM.YYYY formatted date and full vector PDF parameters

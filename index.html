@@ -54,7 +54,13 @@
             </div>
             <div class="input-group col-half">
               <label for="contractDate">Дата на договора <span class="req">*</span></label>
-              <input type="date" id="contractDate" required>
+              <div class="dmy-date-input-wrapper">
+                <input type="text" id="contractDate" placeholder="ДД.ММ.ГГГГ" maxlength="10" autocomplete="off" required>
+                <input type="date" id="hiddenNativeDatePicker" tabindex="-1" aria-hidden="true" style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;">
+                <button type="button" class="btn-calendar-trigger" id="btnCalendarTrigger" title="Избери дата от календар">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -382,7 +388,7 @@
                   РАМКОВ ДОГОВОР ЗА ИЗВЪРШВАНЕ НА ПЛАЩАНИЯ ЧРЕЗ УСЛУГА ПО ИНИЦИИРАНЕ НА ПЛАЩАНИЯ
                 </h1>
 
-                <p class="exact-p p-p1-lead">Днес, <strong><span class="live-field" data-field="date">.........................</span></strong> година, в гр. София, между:</p>
+                <p class="exact-p p-p1-lead">Днес, <strong><span class="live-field" data-field="date">.........................</span></strong>, в гр. София, между:</p>
 
                 <p class="exact-p p-p1-party">1. <strong>„Айрис Солюшънс“ АД</strong>, регистрирано в ТРРЮЛНЦ към Агенцията по вписвания с ЕИК 208455895, със седалище, адрес на управление: гр. София, бул. Христо Смирненски 78, ет.4, представлявано от изп. директор Галя Димитрова Димитрова или чрез пълномощника си Димитър Йошков Христов, наричано по-долу за краткост „Доставчик“, от една страна,</p>
                 <p class="exact-p p-p1-and">и</p>
@@ -469,7 +475,7 @@
                 <p class="exact-p"><strong>Чл. 4.</strong> Освен ако друго не е посочено в генерираното платежно нареждане, инициираните плащания се изпълняват незабавно (съгласно условията на съответната банка/платежен оператор, обслужващ сметката на Клиента). Плащанията, наредени от Клиенти към Търговеца, се изпълняват по следната сметка на Търговеца:</p>
                 <p class="exact-p indent-item">• Банка/Платежна институция: <span class="live-field underlined" data-field="bankName">…........................................</span></p>
                 <p class="exact-p indent-item">• IBAN: <span class="live-field underlined" data-field="bankIban">….........................................................................</span></p>
-                <p class="exact-p indent-item" id="contractWebsiteRow">• Сайт(ако има): <span class="live-field underlined" data-field="merchantWebsite">........................................................</span></p>
+                <p class="exact-p indent-item" id="contractWebsiteRow">• <span id="contractWebsiteLabel">Сайт(ако има)</span>: <span class="live-field underlined" data-field="merchantWebsite">........................................................</span></p>
 
                 <h2 class="exact-chapter-title">IV. ПРАВА И ЗАДЪЛЖЕНИЯ НА СТРАНИТЕ</h2>
                 <p class="exact-p"><strong>Чл. 5.</strong> Доставчикът се задължава:</p>

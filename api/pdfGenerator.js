@@ -168,53 +168,80 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
   const p3 = pages[2];
   const p3H = p3.getHeight();
 
-  // Bank
+  // Bank (Raised baseline to match label on exact same line)
   p3.drawRectangle({
     x: 252.95,
-    y: p3H - 340.86,
+    y: p3H - 338.5,
     width: 277.05,
     height: 16.0,
     color: rgb(1, 1, 1)
   });
   p3.drawText(String(bankName || ''), {
     x: 258.95,
-    y: p3H - 337.36,
+    y: p3H - 334.8,
     size: 11.5,
-    font: fontBold,
+    font: font,
     color: rgb(0, 0, 0)
   });
 
-  // IBAN
+  // IBAN (Raised baseline, font: normal unbolded)
   p3.drawRectangle({
     x: 133.73,
-    y: p3H - 357.66,
+    y: p3H - 355.3,
     width: 396.27,
     height: 16.0,
     color: rgb(1, 1, 1)
   });
   p3.drawText(String(bankIban || ''), {
     x: 139.73,
-    y: p3H - 354.16,
-    size: 11.5,
-    font: fontBold,
-    color: rgb(0, 0, 0)
-  });
-
-  // Website
-  p3.drawRectangle({
-    x: 180.24,
-    y: p3H - 374.70,
-    width: 349.76,
-    height: 16.0,
-    color: rgb(1, 1, 1)
-  });
-  p3.drawText(String(website || ''), {
-    x: 186.24,
-    y: p3H - 371.20,
+    y: p3H - 351.6,
     size: 11.5,
     font: font,
     color: rgb(0, 0, 0)
   });
+
+  // Website: When website is added, remove "(ако има)" and draw "Сайт: [URL]"
+  const cleanSite = String(website || '').trim();
+  if (cleanSite && cleanSite !== '—') {
+    // Cover "• Сайт(ако има):" from x=105 to line end
+    p3.drawRectangle({
+      x: 105.0,
+      y: p3H - 372.5,
+      width: 422.2,
+      height: 16.0,
+      color: rgb(1, 1, 1)
+    });
+    p3.drawText('Сайт: ', {
+      x: 106.4,
+      y: p3H - 368.6,
+      size: 11.5,
+      font: font,
+      color: rgb(0, 0, 0)
+    });
+    const siteLabelW = font.widthOfTextAtSize('Сайт: ', 11.5);
+    p3.drawText(cleanSite, {
+      x: 106.4 + siteLabelW,
+      y: p3H - 368.6,
+      size: 11.5,
+      font: font,
+      color: rgb(0, 0, 0)
+    });
+  } else {
+    p3.drawRectangle({
+      x: 180.24,
+      y: p3H - 372.5,
+      width: 349.76,
+      height: 16.0,
+      color: rgb(1, 1, 1)
+    });
+    p3.drawText('—', {
+      x: 186.24,
+      y: p3H - 368.6,
+      size: 11.5,
+      font: font,
+      color: rgb(0, 0, 0)
+    });
+  }
 
   // ==========================================
   // PAGE 6 (docSheet6)
@@ -222,49 +249,49 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
   const p6 = pages[5];
   const p6H = p6.getHeight();
 
-  // Address
+  // Address (Raised baseline to match label on exact same line)
   p6.drawRectangle({
     x: 104.45,
-    y: p6H - 572.53,
+    y: p6H - 570.2,
     width: 425.55,
     height: 16.0,
     color: rgb(1, 1, 1)
   });
   p6.drawText(String(contactAddress || companyAddress || ''), {
     x: 110.45,
-    y: p6H - 569.03,
+    y: p6H - 566.5,
     size: 11.5,
     font: font,
     color: rgb(0, 0, 0)
   });
 
-  // Email
+  // Email (Raised baseline to match label on exact same line)
   p6.drawRectangle({
     x: 103.98,
-    y: p6H - 589.33,
+    y: p6H - 587.0,
     width: 426.02,
     height: 16.0,
     color: rgb(1, 1, 1)
   });
   p6.drawText(String(contactEmail || ''), {
     x: 109.98,
-    y: p6H - 585.83,
+    y: p6H - 583.3,
     size: 11.5,
     font: font,
     color: rgb(0, 0, 0)
   });
 
-  // Phone
+  // Phone (Raised baseline to match label on exact same line)
   p6.drawRectangle({
     x: 117.38,
-    y: p6H - 606.13,
+    y: p6H - 603.8,
     width: 412.62,
     height: 16.0,
     color: rgb(1, 1, 1)
   });
   p6.drawText(String(contactPhone || ''), {
     x: 123.38,
-    y: p6H - 602.63,
+    y: p6H - 600.1,
     size: 11.5,
     font: font,
     color: rgb(0, 0, 0)
@@ -275,61 +302,64 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
   // ==========================================
   const p9 = pages[8];
   const p9H = p9.getHeight();
-  const navyColor = rgb(0x19 / 255, 0x2b / 255, 0x6c / 255);
-  const slateColor = rgb(0x64 / 255, 0x74 / 255, 0x8b / 255);
 
   // Provider slot remains strictly blank (provider signs after receiving the merchant contract)
 
-  // Merchant Slot 1
+  // Merchant Slot 1: Placed directly under "За Търговеца:", strictly without printed name
   if (sigImage) {
     p9.drawImage(sigImage, {
       x: 368.94,
-      y: p9H - 409.60,
+      y: p9H - 408.0,
       width: 95.0,
       height: 24.0
     });
   }
-  p9.drawText(`/ ${companyRepresentative} /`, {
-    x: 358.94,
-    y: p9H - 419.60,
-    size: 9.5,
-    font: fontBold,
-    color: navyColor
+
+  // Merchant Slot 2: Provide plenty of space directly under "За Търговеца:" without going to the side
+  // Shift Terms receipt clause slightly down so Slot 2 has ample vertical height
+  p9.drawRectangle({
+    x: 70.0,
+    y: p9H - 502.0,
+    width: 458.0,
+    height: 34.0,
+    color: rgb(1, 1, 1)
   });
 
-  // Merchant Slot 2
-  if (sigImage) {
-    p9.drawImage(sigImage, {
-      x: 433.26,
-      y: p9H - 459.04,
-      width: 87.0,
-      height: 26.0
-    });
-  }
-  p9.drawText(`/ ${companyRepresentative} /`, {
-    x: 358.94,
-    y: p9H - 465.04,
-    size: 8.5,
+  // Redraw Terms receipt banner cleanly shifted 12pt lower
+  p9.drawText('* Получил съм екземпляр и съм съгласен в отношенията ни да се прилагат Общи условия', {
+    x: 70.8,
+    y: p9H - 482.7,
+    size: 10.0,
     font: fontBold,
-    color: navyColor
+    color: rgb(0, 0, 0)
+  });
+  p9.drawText('на “Айрис Солюшънс“ АД относно използване на Продукт Платежен терминал.', {
+    x: 70.8,
+    y: p9H - 496.7,
+    size: 10.0,
+    font: fontBold,
+    color: rgb(0, 0, 0)
   });
 
-  // Merchant Slot 3
+  // Draw Merchant Signature 2 directly under "За Търговеца:" aligned with Slot 1 & 3, strictly without printed name
   if (sigImage) {
     p9.drawImage(sigImage, {
       x: 368.94,
-      y: p9H - 561.30,
+      y: p9H - 468.0,
+      width: 95.0,
+      height: 23.0
+    });
+  }
+
+  // Merchant Slot 3: Placed directly under "За Търговеца:", strictly without printed name
+  if (sigImage) {
+    p9.drawImage(sigImage, {
+      x: 368.94,
+      y: p9H - 558.0,
       width: 95.0,
       height: 24.0
     });
   }
-  p9.drawText(`/ ${companyRepresentative} /`, {
-    x: 358.94,
-    y: p9H - 571.30,
-    size: 9.5,
-    font: fontBold,
-    color: navyColor
-  });
 
   // ==========================================
   // PAGE 10 (Appendix 1)
@@ -343,7 +373,7 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
 
   // Provider slot remains strictly blank (provider signs after receiving the merchant contract)
 
-  // Merchant slot
+  // Merchant slot: Placed directly under "За Търговеца:", strictly without printed name
   if (sigImage) {
     p10.drawImage(sigImage, {
       x: 392.65,
@@ -352,13 +382,6 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
       height: 24.0
     });
   }
-  p10.drawText(`/ ${companyRepresentative} /`, {
-    x: 382.65,
-    y: p10H - 579.67,
-    size: 9.5,
-    font: fontBold,
-    color: navyColor
-  });
 
   const pdfBytes = await pdfDoc.save();
   return pdfBytes;
