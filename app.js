@@ -368,47 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function isValidBulgarianEik(eikStr) {
     const clean = (eikStr || '').replace(/\D/g, '');
-    if (clean.length !== 9 && clean.length !== 13) return false;
-
-    // 9-digit algorithm (Module 11)
-    const d = clean.split('').map(Number);
-    let sum = 0;
-    for (let i = 0; i < 8; i++) {
-      sum += d[i] * (i + 1);
-    }
-    let remainder = sum % 11;
-    if (remainder === 10) {
-      let sum2 = 0;
-      const weights2 = [3, 4, 5, 6, 7, 8, 9, 10];
-      for (let i = 0; i < 8; i++) {
-        sum2 += d[i] * weights2[i];
-      }
-      remainder = sum2 % 11;
-      if (remainder === 10) remainder = 0;
-    }
-    if (d[8] !== remainder) return false;
-
-    // 13-digit algorithm (branch/subdivision)
-    if (clean.length === 13) {
-      const w13_1 = [2, 7, 3, 5];
-      let sum13 = 0;
-      for (let i = 0; i < 4; i++) {
-        sum13 += d[8 + i] * w13_1[i];
-      }
-      let rem13 = sum13 % 11;
-      if (rem13 === 10) {
-        const w13_2 = [4, 9, 5, 7];
-        let sum13_2 = 0;
-        for (let i = 0; i < 4; i++) {
-          sum13_2 += d[8 + i] * w13_2[i];
-        }
-        rem13 = sum13_2 % 11;
-        if (rem13 === 10) rem13 = 0;
-      }
-      if (d[12] !== rem13) return false;
-    }
-
-    return true;
+    return clean.length >= 9 && clean.length <= 13;
   }
 
   // Pre-cached verified records for instantaneous demonstration & fallback safety
@@ -646,19 +606,6 @@ document.addEventListener('DOMContentLoaded', () => {
           eikFeedbackMsg.style.display = 'block';
           eikFeedbackMsg.textContent = 'Въведете ЕИК за автоматично попълване на данни';
           eikFeedbackMsg.className = 'field-hint-msg';
-        }
-        if (companyVerifyBanner) companyVerifyBanner.style.display = 'none';
-        isCompanyDataVerified = false;
-        return;
-      }
-
-      const isValid = isValidBulgarianEik(val);
-      if (!isValid) {
-        companyEikInput.classList.add('is-invalid');
-        if (eikFeedbackMsg) {
-          eikFeedbackMsg.style.display = 'block';
-          eikFeedbackMsg.textContent = '⚠ Невалидна контролна цифра на ЕИК по БУЛСТАТ.';
-          eikFeedbackMsg.className = 'field-hint-msg error';
         }
         if (companyVerifyBanner) companyVerifyBanner.style.display = 'none';
         isCompanyDataVerified = false;
@@ -1278,9 +1225,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       // 2. Validate EIK
-      const eikVal = (companyEikInput?.value || '').trim();
-      if (!isValidBulgarianEik(eikVal)) {
-        showToast('Моля, въведете валиден 9-цифрен ЕИК / БУЛСТАТ.', 'error');
+      const eikVal = (companyEikInput?.value || '').replace(/\D/g, '');
+      if (eikVal.length < 9) {
+        showToast('Моля, въведете 9-цифрен ЕИК / БУЛСТАТ.', 'error');
         if (companyEikInput) {
           companyEikInput.classList.add('is-invalid');
           companyEikInput.focus();
