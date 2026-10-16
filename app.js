@@ -499,14 +499,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function cleanAddress(raw) {
     if (!raw) return '';
-    return raw
+    let addr = raw
       .replace(/^Държава:\s*БЪЛГАРИЯ,?\s*/i, '')
       .replace(/Област:\s*[^,]+,\s*/i, '')
       .replace(/Община:\s*[^,]+,\s*/i, '')
       .replace(/Населено място:\s*/i, '')
       .replace(/бул\.\/ул\.\s*/i, '')
-      .replace(/\s+/g, ' ')
+      .replace(/\s+/g, ' ');
+
+    // User requested: "трябва ЕИК разпознавателя да знае че като чете адрес е възможно да е сложен имейл или телефон там и трябва да не го включва в адреса. тоест да маха телефона и думата телефон и мейл и думаъа мейл ако има."
+    addr = addr.replace(/(?:Електронна\s+поща|Електронен\s+адрес|Е-мейл|E-mail|Email|Имейл|Мейл)\s*[:\s]*[\w.-]+@[\w.-]+\.[a-z]{2,}/gi, '');
+    addr = addr.replace(/[\w.-]+@[\w.-]+\.[a-z]{2,}/gi, '');
+    addr = addr.replace(/(?:Електронна\s+поща|Електронен\s+адрес|Е-мейл|E-mail|Email|Имейл|Мейл)\s*[:\s]*/gi, '');
+
+    addr = addr.replace(/(?:Телефон|Тел\.|Тел|GSM|Факс|Fax)\s*[:\s]*(\+?[0-9\s/()-]{6,})/gi, '');
+    addr = addr.replace(/(?:Телефон|Тел\.|Тел|GSM|Факс|Fax)\s*[:\s]*/gi, '');
+
+    addr = addr
+      .replace(/\s*,\s*,+/g, ',')
+      .replace(/\s*;\s*;/g, ';')
+      .replace(/^[,\s;.-]+|[,\s;.-]+$/g, '')
+      .replace(/\s{2,}/g, ' ')
       .trim();
+
+    return addr;
   }
 
   function parseRegistryAgencyJson(data, eik) {
@@ -618,19 +634,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function showCompanyPreview(compData, eik) {
+    const cleanAddr = cleanAddress(compData.address);
+
     // Set input values directly into the actual form fields
     if (companyNameInput) companyNameInput.value = compData.name;
-    if (companyAddressInput) companyAddressInput.value = compData.address;
+    if (companyAddressInput) companyAddressInput.value = cleanAddr;
     if (companyRepresentativeInput) companyRepresentativeInput.value = compData.rep;
 
     // Live update document
     updateFieldInDoc('companyName', compData.name, liveSyncMap.companyName.placeholder);
-    updateFieldInDoc('companyAddress', compData.address, liveSyncMap.companyAddress.placeholder);
+    updateFieldInDoc('companyAddress', cleanAddr, liveSyncMap.companyAddress.placeholder);
     updateFieldInDoc('companyRepresentative', compData.rep, liveSyncMap.companyRepresentative.placeholder);
 
     if (sameAddressCheckbox && sameAddressCheckbox.checked && contactAddressInput) {
-      contactAddressInput.value = compData.address;
-      updateFieldInDoc('contactAddress', compData.address, liveSyncMap.contactAddress.placeholder);
+      contactAddressInput.value = cleanAddr;
+      updateFieldInDoc('contactAddress', cleanAddr, liveSyncMap.contactAddress.placeholder);
     }
 
     if (typedSigInput && !typedSigInput.dataset.userEdited) {

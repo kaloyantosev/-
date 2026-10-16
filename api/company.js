@@ -73,13 +73,33 @@ export default async function handler(req, res) {
 
   const cleanAddressText = (raw) => {
     if (!raw) return '';
-    return raw
+    let addr = raw
       .replace(/^Държава:\s*БЪЛГАРИЯ,?\s*/i, '')
       .replace(/Област:\s*[^,]+,\s*/i, '')
       .replace(/Община:\s*[^,]+,\s*/i, '')
       .replace(/Населено място:\s*/i, '')
       .replace(/бул\.\/ул\.\s*/i, '')
+      .replace(/\s+/g, ' ');
+
+    // User requested: "трябва ЕИК разпознавателя да знае че като чете адрес е възможно да е сложен имейл или телефон там и трябва да не го включва в адреса. тоест да маха телефона и думата телефон и мейл и думаъа мейл ако има."
+    // Remove email patterns and prefixes
+    addr = addr.replace(/(?:Електронна\s+поща|Електронен\s+адрес|Е-мейл|E-mail|Email|Имейл|Мейл)\s*[:\s]*[\w.-]+@[\w.-]+\.[a-z]{2,}/gi, '');
+    addr = addr.replace(/[\w.-]+@[\w.-]+\.[a-z]{2,}/gi, '');
+    addr = addr.replace(/(?:Електронна\s+поща|Електронен\s+адрес|Е-мейл|E-mail|Email|Имейл|Мейл)\s*[:\s]*/gi, '');
+
+    // Remove phone patterns and prefixes
+    addr = addr.replace(/(?:Телефон|Тел\.|Тел|GSM|Факс|Fax)\s*[:\s]*(\+?[0-9\s/()-]{6,})/gi, '');
+    addr = addr.replace(/(?:Телефон|Тел\.|Тел|GSM|Факс|Fax)\s*[:\s]*/gi, '');
+
+    // Clean dangling punctuation and spaces
+    addr = addr
+      .replace(/\s*,\s*,+/g, ',')
+      .replace(/\s*;\s*;/g, ';')
+      .replace(/^[,\s;.-]+|[,\s;.-]+$/g, '')
+      .replace(/\s{2,}/g, ' ')
       .trim();
+
+    return addr;
   };
 
   // 2. Query official Registry Agency portal if available
@@ -180,10 +200,7 @@ export default async function handler(req, res) {
           cleanName = `„${cleanName}“`;
         }
 
-        let cleanAddr = rawAddr
-          .replace(/\s+/g, ' ')
-          .replace(/обл\.[^,]+,\s*/gi, '')
-          .trim();
+        let cleanAddr = cleanAddressText(rawAddr);
 
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Content-Type', 'application/json; charset=utf-8');

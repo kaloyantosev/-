@@ -32,8 +32,8 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
   const pdfDoc = await PDFDocument.load(contractBytes);
   pdfDoc.registerFontkit(fontkit);
 
-  const font = await pdfDoc.embedFont(fontRegularBytes);
-  const fontBold = await pdfDoc.embedFont(fontBoldBytes);
+  const font = await pdfDoc.embedFont(fontRegularBytes, { features: { liga: false, calt: false } });
+  const fontBold = await pdfDoc.embedFont(fontBoldBytes, { features: { liga: false, calt: false } });
 
   // Embed merchant signature image
   let sigImage = null;
@@ -100,9 +100,25 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
     color: rgb(1, 1, 1)
   });
 
+function stripPhoneAndEmailFromAddress(addr) {
+  if (!addr) return '';
+  let clean = String(addr)
+    .replace(/(?:Електронна\s+поща|Електронен\s+адрес|Е-мейл|E-mail|Email|Имейл|Мейл)\s*[:\s]*[\w.-]+@[\w.-]+\.[a-z]{2,}/gi, '')
+    .replace(/[\w.-]+@[\w.-]+\.[a-z]{2,}/gi, '')
+    .replace(/(?:Електронна\s+поща|Електронен\s+адрес|Е-мейл|E-mail|Email|Имейл|Мейл)\s*[:\s]*/gi, '')
+    .replace(/(?:Телефон|Тел\.|Тел|GSM|Факс|Fax)\s*[:\s]*(\+?[0-9\s/()-]{6,})/gi, '')
+    .replace(/(?:Телефон|Тел\.|Тел|GSM|Факс|Fax)\s*[:\s]*/gi, '')
+    .replace(/\s*,\s*,+/g, ',')
+    .replace(/\s*;\s*;/g, ';')
+    .replace(/^[,\s;.-]+|[,\s;.-]+$/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  return clean;
+}
+
   const safeCompName = String(companyName || '„Търговец“').trim();
   const safeCompEik = String(companyEik || '—').trim();
-  const safeCompAddr = String(companyAddress || '—').trim();
+  const safeCompAddr = stripPhoneAndEmailFromAddress(companyAddress || '—');
   const safeCompRep = String(companyRepresentative || '—').trim();
 
   const chunks = [
@@ -168,33 +184,33 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
   const p3 = pages[2];
   const p3H = p3.getHeight();
 
-  // Bank (Raised baseline to match label on exact same line)
+  // Bank (Baseline calibrated to match template label line exactly)
   p3.drawRectangle({
     x: 252.95,
-    y: p3H - 338.5,
+    y: p3H - 341.7,
     width: 277.05,
     height: 16.0,
     color: rgb(1, 1, 1)
   });
   p3.drawText(String(bankName || ''), {
     x: 258.95,
-    y: p3H - 334.8,
+    y: p3H - 338.0,
     size: 11.5,
     font: font,
     color: rgb(0, 0, 0)
   });
 
-  // IBAN (Raised baseline, font: normal unbolded)
+  // IBAN (Baseline calibrated to match template label line exactly, font: normal unbolded)
   p3.drawRectangle({
     x: 133.73,
-    y: p3H - 355.3,
+    y: p3H - 358.5,
     width: 396.27,
     height: 16.0,
     color: rgb(1, 1, 1)
   });
   p3.drawText(String(bankIban || ''), {
     x: 139.73,
-    y: p3H - 351.6,
+    y: p3H - 354.8,
     size: 11.5,
     font: font,
     color: rgb(0, 0, 0)
@@ -206,22 +222,22 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
     // Cover "• Сайт(ако има):" from x=105 to line end
     p3.drawRectangle({
       x: 105.0,
-      y: p3H - 372.5,
+      y: p3H - 375.5,
       width: 422.2,
       height: 16.0,
       color: rgb(1, 1, 1)
     });
     p3.drawText('Сайт: ', {
-      x: 106.4,
-      y: p3H - 368.6,
+      x: 106.85,
+      y: p3H - 371.8,
       size: 11.5,
       font: font,
       color: rgb(0, 0, 0)
     });
     const siteLabelW = font.widthOfTextAtSize('Сайт: ', 11.5);
     p3.drawText(cleanSite, {
-      x: 106.4 + siteLabelW,
-      y: p3H - 368.6,
+      x: 106.85 + siteLabelW,
+      y: p3H - 371.8,
       size: 11.5,
       font: font,
       color: rgb(0, 0, 0)
@@ -229,14 +245,14 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
   } else {
     p3.drawRectangle({
       x: 180.24,
-      y: p3H - 372.5,
+      y: p3H - 375.5,
       width: 349.76,
       height: 16.0,
       color: rgb(1, 1, 1)
     });
     p3.drawText('—', {
       x: 186.24,
-      y: p3H - 368.6,
+      y: p3H - 371.8,
       size: 11.5,
       font: font,
       color: rgb(0, 0, 0)
@@ -249,49 +265,50 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
   const p6 = pages[5];
   const p6H = p6.getHeight();
 
-  // Address (Raised baseline to match label on exact same line)
+  // Address (Clean phone/email and baseline calibrated to match template label line exactly)
+  const cleanContactAddr = stripPhoneAndEmailFromAddress(contactAddress || companyAddress || '');
   p6.drawRectangle({
     x: 104.45,
-    y: p6H - 570.2,
+    y: p6H - 573.5,
     width: 425.55,
     height: 16.0,
     color: rgb(1, 1, 1)
   });
-  p6.drawText(String(contactAddress || companyAddress || ''), {
+  p6.drawText(cleanContactAddr, {
     x: 110.45,
-    y: p6H - 566.5,
+    y: p6H - 569.8,
     size: 11.5,
     font: font,
     color: rgb(0, 0, 0)
   });
 
-  // Email (Raised baseline to match label on exact same line)
+  // Email (Baseline calibrated to match template label line exactly)
   p6.drawRectangle({
     x: 103.98,
-    y: p6H - 587.0,
+    y: p6H - 590.3,
     width: 426.02,
     height: 16.0,
     color: rgb(1, 1, 1)
   });
   p6.drawText(String(contactEmail || ''), {
     x: 109.98,
-    y: p6H - 583.3,
+    y: p6H - 586.6,
     size: 11.5,
     font: font,
     color: rgb(0, 0, 0)
   });
 
-  // Phone (Raised baseline to match label on exact same line)
+  // Phone (Baseline calibrated to match template label line exactly)
   p6.drawRectangle({
     x: 117.38,
-    y: p6H - 603.8,
+    y: p6H - 607.1,
     width: 412.62,
     height: 16.0,
     color: rgb(1, 1, 1)
   });
   p6.drawText(String(contactPhone || ''), {
     x: 123.38,
-    y: p6H - 600.1,
+    y: p6H - 603.4,
     size: 11.5,
     font: font,
     color: rgb(0, 0, 0)
