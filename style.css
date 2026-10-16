@@ -1066,6 +1066,21 @@ select.form-select-styled option:disabled {
   position: relative;
 }
 
+body.generating-pdf .doc-viewport {
+  overflow: visible !important;
+}
+
+body.generating-pdf .pages-stack,
+body.generating-pdf .doc-page-card,
+body.generating-pdf .a4-sheet {
+  width: 850px !important;
+  min-width: 850px !important;
+  max-width: 850px !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
 .page-content-area {
   flex: 1 1 auto;
 }

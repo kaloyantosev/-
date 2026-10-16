@@ -1157,33 +1157,51 @@ document.addEventListener('DOMContentLoaded', () => {
     const opt = {
       margin: 0,
       filename: pdfFilename,
-      image: { type: 'jpeg', quality: 0.82 },
-      html2canvas: { scale: 1.2, useCORS: true, logging: false },
+      image: { type: 'jpeg', quality: 0.88 },
+      html2canvas: {
+        scale: 1.5,
+        useCORS: true,
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        x: 0,
+        y: 0,
+        backgroundColor: '#ffffff'
+      },
       jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
     };
 
-    try {
-      const firstEl = document.getElementById(sheetIds[0]);
-      if (!firstEl) return null;
+    const savedScrollX = window.scrollX || window.pageXOffset || 0;
+    const savedScrollY = window.scrollY || window.pageYOffset || 0;
 
-      // Initialize jsPDF through first sheet worker
-      const firstWorker = html2pdf().set(opt).from(firstEl);
-      const pdf = await firstWorker.toPdf().get('pdf');
+    try {
+      // Temporarily scroll to top so html2canvas never calculates offset from pageYOffset
+      window.scrollTo(0, 0);
+
+      document.body.classList.add('generating-pdf');
+
+      // Initialize a clean 1-page jsPDF instance
+      const dummyDiv = document.createElement('div');
+      dummyDiv.style.cssText = 'width:1px;height:1px;background:#ffffff;';
+      const pdf = await html2pdf().set(opt).from(dummyDiv).toPdf().get('pdf');
 
       const a4Width = 595.28;
       const a4Height = 841.89;
 
-      // Render sheets 2 through 8 (Appendix 1) to individual canvas and add as exact A4 pages
-      for (let i = 1; i < sheetIds.length; i++) {
+      for (let i = 0; i < sheetIds.length; i++) {
         const el = document.getElementById(sheetIds[i]);
         if (!el) continue;
 
         const canvas = await html2pdf().set(opt).from(el).toCanvas().get('canvas');
-        pdf.addPage('a4', 'portrait');
+        if (i > 0) {
+          pdf.addPage('a4', 'portrait');
+        }
 
-        const scale = a4Width / canvas.width;
-        const imgHeight = Math.min(canvas.height * scale, a4Height);
-        pdf.addImage(canvas, 'JPEG', 0, 0, a4Width, imgHeight, undefined, 'FAST');
+        const scale = Math.min(a4Width / canvas.width, a4Height / canvas.height);
+        const drawW = canvas.width * scale;
+        const drawH = canvas.height * scale;
+        const offsetX = (a4Width - drawW) / 2;
+        pdf.addImage(canvas, 'JPEG', offsetX, 0, drawW, drawH, undefined, 'FAST');
       }
 
       const pdfDataUri = pdf.output('datauristring');
@@ -1204,6 +1222,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('Грешка при генериране на PDF документ:', err);
       return null;
+    } finally {
+      document.body.classList.remove('generating-pdf');
+      window.scrollTo(savedScrollX, savedScrollY);
     }
   }
   window.generateContractPdfBase64 = generateContractPdfBase64;
@@ -1357,27 +1378,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('PDF generation error fallback:', pdfErr);
       }
 
-      // Populate Success Modal Data
-      const modalRefEl = document.getElementById('modalRefNumber');
-      const modalCompEl = document.getElementById('modalCompanyName');
-      const modalEikEl = document.getElementById('modalCompanyEik');
-      const modalRepEl = document.getElementById('modalCompanyRep');
-      const modalEmailEl = document.getElementById('modalContactEmail');
-      const modalPhoneEl = document.getElementById('modalContactPhone');
-      const modalSubjectEl = document.getElementById('modalEmailSubject');
-      const modalTimeEl = document.getElementById('modalTimestamp');
-
-      if (modalRefEl) modalRefEl.textContent = refNumber;
-      if (modalCompEl) modalCompEl.textContent = compName;
-      if (modalEikEl) modalEikEl.textContent = compEik;
-      if (modalRepEl) modalRepEl.textContent = compRep;
-      if (modalEmailEl) modalEmailEl.textContent = emailVal;
-      const cleanCompName = compName ? compName.replace(/["'„“«»]/g, '').trim() : 'Търговец';
-      const emailSubject = `Подписан договор (${cleanCompName})`;
-      if (modalPhoneEl) modalPhoneEl.textContent = phoneVal;
-      if (modalSubjectEl) modalSubjectEl.textContent = emailSubject;
-      if (modalTimeEl) modalTimeEl.textContent = timeStr;
-
       // Asynchronous API call to /api/send-contract with DD.MM.YYYY formatted date
       const emailPayload = {
         companyName: compName,
@@ -1410,7 +1410,7 @@ document.addEventListener('DOMContentLoaded', () => {
           successModalOverlay.style.display = 'flex';
         }
 
-        showToast('Договорът и Приложение 1 са изпратени успешно с прикачен PDF към sales@irisbgsf.com!', 'success');
+        showToast('Договорът и Приложение 1 са изпратени успешно!', 'success');
       }
     });
   }
