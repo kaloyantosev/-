@@ -184,33 +184,33 @@ function stripPhoneAndEmailFromAddress(addr) {
   const p3 = pages[2];
   const p3H = p3.getHeight();
 
-  // Bank (Baseline calibrated to match template label line exactly)
+  // Bank (Baseline raised a tiny notch ~1.2 pt to perfectly level with preceding label)
   p3.drawRectangle({
     x: 252.95,
-    y: p3H - 341.7,
+    y: p3H - 340.5,
     width: 277.05,
     height: 16.0,
     color: rgb(1, 1, 1)
   });
   p3.drawText(String(bankName || ''), {
     x: 258.95,
-    y: p3H - 338.0,
+    y: p3H - 336.8,
     size: 11.5,
     font: font,
     color: rgb(0, 0, 0)
   });
 
-  // IBAN (Baseline calibrated to match template label line exactly, font: normal unbolded)
+  // IBAN (Baseline raised a tiny notch ~1.2 pt, font: normal unbolded)
   p3.drawRectangle({
     x: 133.73,
-    y: p3H - 358.5,
+    y: p3H - 357.3,
     width: 396.27,
     height: 16.0,
     color: rgb(1, 1, 1)
   });
   p3.drawText(String(bankIban || ''), {
     x: 139.73,
-    y: p3H - 354.8,
+    y: p3H - 353.6,
     size: 11.5,
     font: font,
     color: rgb(0, 0, 0)
@@ -222,14 +222,14 @@ function stripPhoneAndEmailFromAddress(addr) {
     // Cover "• Сайт(ако има):" from x=105 to line end
     p3.drawRectangle({
       x: 105.0,
-      y: p3H - 375.5,
+      y: p3H - 374.3,
       width: 422.2,
       height: 16.0,
       color: rgb(1, 1, 1)
     });
     p3.drawText('Сайт: ', {
       x: 106.85,
-      y: p3H - 371.8,
+      y: p3H - 370.6,
       size: 11.5,
       font: font,
       color: rgb(0, 0, 0)
@@ -237,7 +237,7 @@ function stripPhoneAndEmailFromAddress(addr) {
     const siteLabelW = font.widthOfTextAtSize('Сайт: ', 11.5);
     p3.drawText(cleanSite, {
       x: 106.85 + siteLabelW,
-      y: p3H - 371.8,
+      y: p3H - 370.6,
       size: 11.5,
       font: font,
       color: rgb(0, 0, 0)
@@ -245,14 +245,14 @@ function stripPhoneAndEmailFromAddress(addr) {
   } else {
     p3.drawRectangle({
       x: 180.24,
-      y: p3H - 375.5,
+      y: p3H - 374.3,
       width: 349.76,
       height: 16.0,
       color: rgb(1, 1, 1)
     });
     p3.drawText('—', {
       x: 186.24,
-      y: p3H - 371.8,
+      y: p3H - 370.6,
       size: 11.5,
       font: font,
       color: rgb(0, 0, 0)
@@ -265,50 +265,50 @@ function stripPhoneAndEmailFromAddress(addr) {
   const p6 = pages[5];
   const p6H = p6.getHeight();
 
-  // Address (Clean phone/email and baseline calibrated to match template label line exactly)
+  // Address (Clean phone/email and baseline raised a tiny notch ~1.2 pt)
   const cleanContactAddr = stripPhoneAndEmailFromAddress(contactAddress || companyAddress || '');
   p6.drawRectangle({
     x: 104.45,
-    y: p6H - 573.5,
+    y: p6H - 572.3,
     width: 425.55,
     height: 16.0,
     color: rgb(1, 1, 1)
   });
   p6.drawText(cleanContactAddr, {
     x: 110.45,
-    y: p6H - 569.8,
+    y: p6H - 568.6,
     size: 11.5,
     font: font,
     color: rgb(0, 0, 0)
   });
 
-  // Email (Baseline calibrated to match template label line exactly)
+  // Email (Baseline raised a tiny notch ~1.2 pt)
   p6.drawRectangle({
     x: 103.98,
-    y: p6H - 590.3,
+    y: p6H - 589.1,
     width: 426.02,
     height: 16.0,
     color: rgb(1, 1, 1)
   });
   p6.drawText(String(contactEmail || ''), {
     x: 109.98,
-    y: p6H - 586.6,
+    y: p6H - 585.4,
     size: 11.5,
     font: font,
     color: rgb(0, 0, 0)
   });
 
-  // Phone (Baseline calibrated to match template label line exactly)
+  // Phone (Baseline raised a tiny notch ~1.2 pt)
   p6.drawRectangle({
     x: 117.38,
-    y: p6H - 607.1,
+    y: p6H - 605.9,
     width: 412.62,
     height: 16.0,
     color: rgb(1, 1, 1)
   });
   p6.drawText(String(contactPhone || ''), {
     x: 123.38,
-    y: p6H - 603.4,
+    y: p6H - 602.2,
     size: 11.5,
     font: font,
     color: rgb(0, 0, 0)
