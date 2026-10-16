@@ -195,57 +195,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
-  // 2.1. Bulgarian IBAN Auto-formatter & Mod-97 Checksum Validation
+  // 2.1. IBAN Formatting & Live Sync (No restrictive validation)
   // =========================================================================
-  const bankIbanError = document.getElementById('bankIbanError');
-
-  function isValidBulgarianIban(ibanStr) {
-    const clean = (ibanStr || '').replace(/\s+/g, '').toUpperCase();
-    if (!clean.startsWith('BG')) return false;
-    if (clean.length !== 22) return false;
-    if (!/^[A-Z0-9]+$/.test(clean)) return false;
-
-    // Bulgarian IBAN bank identifier (chars 4-7) must be letters
-    if (!/^[A-Z]{4}/.test(clean.substring(4, 8))) return false;
-
-    // Mod 97 algorithm on rearranged string
-    const rearranged = clean.substring(4) + clean.substring(0, 4);
-    let numericStr = '';
-    for (let i = 0; i < rearranged.length; i++) {
-      const code = rearranged.charCodeAt(i);
-      if (code >= 65 && code <= 90) {
-        numericStr += (code - 55).toString();
-      } else {
-        numericStr += rearranged[i];
-      }
-    }
-    let remainder = 0;
-    for (let i = 0; i < numericStr.length; i++) {
-      remainder = (remainder * 10 + parseInt(numericStr[i], 10)) % 97;
-    }
-    return remainder === 1;
-  }
-
-  function handleIbanValidation() {
-    if (!bankIbanInput) return true;
-    const val = bankIbanInput.value.replace(/\s+/g, '').toUpperCase();
-    if (!val) {
-      bankIbanInput.classList.remove('is-invalid');
-      if (bankIbanError) bankIbanError.style.display = 'none';
-      return false;
-    }
-    const valid = isValidBulgarianIban(val);
-    if (!valid) {
-      bankIbanInput.classList.add('is-invalid');
-      if (bankIbanError) bankIbanError.style.display = 'block';
-      return false;
-    } else {
-      bankIbanInput.classList.remove('is-invalid');
-      if (bankIbanError) bankIbanError.style.display = 'none';
-      return true;
-    }
-  }
-
   if (bankIbanInput) {
     bankIbanInput.addEventListener('input', (e) => {
       let raw = e.target.value.replace(/\s+/g, '').toUpperCase();
@@ -256,16 +207,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       e.target.value = formatted;
       updateFieldInDoc('bankIban', formatted, liveSyncMap.bankIban.placeholder);
-      if (raw.length >= 22) {
-        handleIbanValidation();
-      } else {
-        bankIbanInput.classList.remove('is-invalid');
-        if (bankIbanError) bankIbanError.style.display = 'none';
-      }
+      bankIbanInput.classList.remove('is-invalid');
       checkStep1Progress();
     });
-
-    bankIbanInput.addEventListener('blur', handleIbanValidation);
   }
 
   // =========================================================================
@@ -1172,7 +1116,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (bankIbanInput) {
         bankIbanInput.value = 'BG18 UNCR 7000 1523 4567 89';
         updateFieldInDoc('bankIban', 'BG18 UNCR 7000 1523 4567 89', liveSyncMap.bankIban.placeholder);
-        handleIbanValidation();
       }
 
       if (merchantWebsiteInput) {
@@ -1364,15 +1307,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // 4.1 Check IBAN format
-      const ibanVal = (bankIbanInput?.value || '').replace(/\s+/g, '').toUpperCase();
-      if (!isValidBulgarianIban(ibanVal)) {
-        showToast('Моля, въведете валиден 22-знаков български IBAN (започващ с BG).', 'error');
+      // 4.1 Check IBAN entered
+      const ibanVal = (bankIbanInput?.value || '').trim();
+      if (!ibanVal) {
+        showToast('Моля, въведете IBAN сметка на Търговеца.', 'error');
         if (bankIbanInput) {
           bankIbanInput.classList.add('is-invalid');
           bankIbanInput.focus();
         }
-        if (bankIbanError) bankIbanError.style.display = 'block';
         return;
       }
 

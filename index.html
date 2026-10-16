@@ -142,8 +142,7 @@
 
           <div class="input-group">
             <label for="bankIban">IBAN сметка на Търговеца <span class="req">*</span></label>
-            <input type="text" id="bankIban" placeholder="BG00 UNCR 7000 1234 5678 90" maxlength="34" required style="font-family: monospace; letter-spacing: 1px;">
-            <span class="field-error-msg" id="bankIbanError" style="display:none;">Невалиден IBAN формат. Българският IBAN съдържа точно 22 знака (започва с BG).</span>
+            <input type="text" id="bankIban" placeholder="BG00 UNCR 7000 1234 5678 90" maxlength="34" required>
           </div>
 
           <div class="input-group" id="merchantWebsiteGroup">
@@ -481,7 +480,7 @@
 
                 <p class="exact-p"><strong>Чл. 4.</strong> Освен ако друго не е посочено в генерираното платежно нареждане, инициираните плащания се изпълняват незабавно (съгласно условията на съответната банка/платежен оператор, обслужващ сметката на Клиента). Плащанията, наредени от Клиенти към Търговеца, се изпълняват по следната сметка на Търговеца:</p>
                 <p class="exact-p indent-item">• Банка/Платежна институция: <span class="live-field underlined" data-field="bankName">…........................................</span></p>
-                <p class="exact-p indent-item">• IBAN: <span class="live-field underlined mono-font" data-field="bankIban">….........................................................................</span></p>
+                <p class="exact-p indent-item">• IBAN: <span class="live-field underlined" data-field="bankIban">….........................................................................</span></p>
                 <p class="exact-p indent-item" id="contractWebsiteRow">• Сайт(ако има): <span class="live-field underlined" data-field="merchantWebsite">........................................................</span></p>
 
                 <h2 class="exact-chapter-title">IV. ПРАВА И ЗАДЪЛЖЕНИЯ НА СТРАНИТЕ</h2>

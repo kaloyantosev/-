@@ -1280,8 +1280,8 @@ select.form-select-styled option:disabled {
 }
 
 .mono-font {
-  font-family: monospace;
-  letter-spacing: 0.5px;
+  font-family: inherit;
+  letter-spacing: inherit;
 }
 
 /* Exact Contract Signatures Grid (Page 9 - 3 Merchant Signature Slots) */
