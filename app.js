@@ -76,14 +76,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const cleanVal = (val || '').trim();
     
     targets.forEach(el => {
+      const oldVal = el.textContent;
       if (cleanVal) {
-        el.textContent = cleanVal;
+        if (oldVal !== cleanVal) {
+          el.textContent = cleanVal;
+          el.classList.remove('text-animating');
+          // Trigger DOM reflow to re-trigger the CSS animation (100% transparent smoothly to solid)
+          void el.offsetWidth;
+          el.classList.add('text-animating');
+        }
         el.classList.add('filled');
         el.classList.remove('underlined');
       } else {
         el.textContent = placeholder;
         el.classList.remove('filled');
         el.classList.add('underlined');
+        el.classList.remove('text-animating');
       }
     });
   }
@@ -102,13 +110,17 @@ document.addEventListener('DOMContentLoaded', () => {
   function syncAllFields() {
     // 1. Regular inputs
     Object.keys(liveSyncMap).forEach(key => {
+      if (key === 'merchantWebsite') return; // Handled specially by syncWebsites()
       const { input, placeholder } = liveSyncMap[key];
       if (input) {
         updateFieldInDoc(key, input.value, placeholder);
       }
     });
 
-    // 2. Date input
+    // 2. Websites
+    syncWebsites();
+
+    // 3. Date input
     const dateVal = contractDateInput ? contractDateInput.value : '';
     const formattedDate = formatBulgarianDate(dateVal);
     const dateTargets = document.querySelectorAll('.live-field[data-field="date"]');
@@ -124,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // 3. Update Typed Signature samples if representative changes
+    // 4. Update Typed Signature samples if representative changes
     const repName = (document.getElementById('companyRepresentative').value || '').trim();
     const typedSigInput = document.getElementById('typedSigInput');
     if (typedSigInput && !typedSigInput.dataset.userEdited && repName) {
@@ -135,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Bind input listeners
   Object.keys(liveSyncMap).forEach(key => {
+    if (key === 'merchantWebsite') return;
     const { input, placeholder } = liveSyncMap[key];
     if (input) {
       input.addEventListener('input', () => {
@@ -181,7 +194,58 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // IBAN auto-formatter (uppercase and space every 4 chars)
+  // =========================================================================
+  // 2.1. Bulgarian IBAN Auto-formatter & Mod-97 Checksum Validation
+  // =========================================================================
+  const bankIbanError = document.getElementById('bankIbanError');
+
+  function isValidBulgarianIban(ibanStr) {
+    const clean = (ibanStr || '').replace(/\s+/g, '').toUpperCase();
+    if (!clean.startsWith('BG')) return false;
+    if (clean.length !== 22) return false;
+    if (!/^[A-Z0-9]+$/.test(clean)) return false;
+
+    // Bulgarian IBAN bank identifier (chars 4-7) must be letters
+    if (!/^[A-Z]{4}/.test(clean.substring(4, 8))) return false;
+
+    // Mod 97 algorithm on rearranged string
+    const rearranged = clean.substring(4) + clean.substring(0, 4);
+    let numericStr = '';
+    for (let i = 0; i < rearranged.length; i++) {
+      const code = rearranged.charCodeAt(i);
+      if (code >= 65 && code <= 90) {
+        numericStr += (code - 55).toString();
+      } else {
+        numericStr += rearranged[i];
+      }
+    }
+    let remainder = 0;
+    for (let i = 0; i < numericStr.length; i++) {
+      remainder = (remainder * 10 + parseInt(numericStr[i], 10)) % 97;
+    }
+    return remainder === 1;
+  }
+
+  function handleIbanValidation() {
+    if (!bankIbanInput) return true;
+    const val = bankIbanInput.value.replace(/\s+/g, '').toUpperCase();
+    if (!val) {
+      bankIbanInput.classList.remove('is-invalid');
+      if (bankIbanError) bankIbanError.style.display = 'none';
+      return false;
+    }
+    const valid = isValidBulgarianIban(val);
+    if (!valid) {
+      bankIbanInput.classList.add('is-invalid');
+      if (bankIbanError) bankIbanError.style.display = 'block';
+      return false;
+    } else {
+      bankIbanInput.classList.remove('is-invalid');
+      if (bankIbanError) bankIbanError.style.display = 'none';
+      return true;
+    }
+  }
+
   if (bankIbanInput) {
     bankIbanInput.addEventListener('input', (e) => {
       let raw = e.target.value.replace(/\s+/g, '').toUpperCase();
@@ -192,15 +256,72 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       e.target.value = formatted;
       updateFieldInDoc('bankIban', formatted, liveSyncMap.bankIban.placeholder);
+      if (raw.length >= 22) {
+        handleIbanValidation();
+      } else {
+        bankIbanInput.classList.remove('is-invalid');
+        if (bankIbanError) bankIbanError.style.display = 'none';
+      }
+      checkStep1Progress();
     });
+
+    bankIbanInput.addEventListener('blur', handleIbanValidation);
   }
 
   // =========================================================================
-  // 2.1. Website Checkbox ("без сайт" -> hides website row in contract)
+  // 2.2. Multi-Website Checkbox & Integration Support
   // =========================================================================
   const noWebsiteCheckbox = document.getElementById('noWebsiteCheckbox');
   const merchantWebsiteInput = document.getElementById('merchantWebsite');
   const contractWebsiteRow = document.getElementById('contractWebsiteRow');
+  const extraWebsitesCheckbox = document.getElementById('extraWebsitesCheckbox');
+  const extraWebsitesWrapper = document.getElementById('extraWebsitesWrapper');
+  const extraWebsite1 = document.getElementById('extraWebsite1');
+  const extraWebsite2 = document.getElementById('extraWebsite2');
+
+  function getCombinedWebsites() {
+    if (noWebsiteCheckbox && noWebsiteCheckbox.checked) return '';
+    const mainWeb = (merchantWebsiteInput?.value || '').trim();
+    const sites = [];
+    if (mainWeb) sites.push(mainWeb);
+
+    if (extraWebsitesCheckbox && extraWebsitesCheckbox.checked) {
+      const s1 = (extraWebsite1?.value || '').trim();
+      const s2 = (extraWebsite2?.value || '').trim();
+      if (s1) sites.push(s1);
+      if (s2) sites.push(s2);
+    }
+    return sites.join(', ');
+  }
+
+  function syncWebsites() {
+    const combined = getCombinedWebsites();
+    if (noWebsiteCheckbox && noWebsiteCheckbox.checked) {
+      if (contractWebsiteRow) contractWebsiteRow.style.display = 'none';
+      updateFieldInDoc('merchantWebsite', '', liveSyncMap.merchantWebsite.placeholder);
+    } else {
+      if (contractWebsiteRow) contractWebsiteRow.style.display = '';
+      updateFieldInDoc('merchantWebsite', combined, liveSyncMap.merchantWebsite.placeholder);
+    }
+  }
+
+  if (merchantWebsiteInput) {
+    merchantWebsiteInput.addEventListener('input', syncWebsites);
+  }
+
+  if (extraWebsitesCheckbox && extraWebsitesWrapper) {
+    extraWebsitesCheckbox.addEventListener('change', () => {
+      if (extraWebsitesCheckbox.checked) {
+        extraWebsitesWrapper.style.display = 'flex';
+      } else {
+        extraWebsitesWrapper.style.display = 'none';
+      }
+      syncWebsites();
+    });
+  }
+
+  if (extraWebsite1) extraWebsite1.addEventListener('input', syncWebsites);
+  if (extraWebsite2) extraWebsite2.addEventListener('input', syncWebsites);
 
   if (noWebsiteCheckbox) {
     noWebsiteCheckbox.addEventListener('change', () => {
@@ -210,17 +331,20 @@ document.addEventListener('DOMContentLoaded', () => {
           merchantWebsiteInput.disabled = true;
           merchantWebsiteInput.classList.remove('is-invalid');
         }
-        if (contractWebsiteRow) {
-          contractWebsiteRow.style.display = 'none';
+        if (extraWebsitesCheckbox) {
+          extraWebsitesCheckbox.checked = false;
+          extraWebsitesCheckbox.disabled = true;
         }
-        updateFieldInDoc('merchantWebsite', '', liveSyncMap.merchantWebsite.placeholder);
+        if (extraWebsitesWrapper) extraWebsitesWrapper.style.display = 'none';
+        syncWebsites();
       } else {
         if (merchantWebsiteInput) {
           merchantWebsiteInput.disabled = false;
         }
-        if (contractWebsiteRow) {
-          contractWebsiteRow.style.display = '';
+        if (extraWebsitesCheckbox) {
+          extraWebsitesCheckbox.disabled = false;
         }
+        syncWebsites();
       }
     });
   }
@@ -576,7 +700,7 @@ document.addEventListener('DOMContentLoaded', () => {
         companyEikInput.classList.remove('is-invalid');
         if (eikFeedbackMsg) {
           eikFeedbackMsg.style.display = 'block';
-          eikFeedbackMsg.textContent = 'Въведете 9 цифри за проверка в Търговския регистър';
+          eikFeedbackMsg.textContent = 'Въведете ЕИК за автоматично попълване на данни';
           eikFeedbackMsg.className = 'field-hint-msg';
         }
         if (companyVerifyBanner) companyVerifyBanner.style.display = 'none';
@@ -940,15 +1064,13 @@ document.addEventListener('DOMContentLoaded', () => {
     isContractSigned = true;
     updateBadge('badgeContract', 'Подписан', true);
 
-    // If sign both is checked, sign Appendix 1 slot
-    if (!signBothCheckbox || signBothCheckbox.checked) {
-      const appendixHolder = document.getElementById('appendixSigHolder');
-      if (appendixHolder) {
-        appendixHolder.innerHTML = sigHtml;
-      }
-      isAppendixSigned = true;
-      updateBadge('badgeAppendix', 'Подписан', true);
+    // Unconditionally sign Appendix 1 slot simultaneously without requiring separate prompt
+    const appendixHolder = document.getElementById('appendixSigHolder');
+    if (appendixHolder) {
+      appendixHolder.innerHTML = sigHtml;
     }
+    isAppendixSigned = true;
+    updateBadge('badgeAppendix', 'Подписан', true);
 
     if (removeSignatureBtn) removeSignatureBtn.style.display = 'inline-block';
     
@@ -1000,6 +1122,89 @@ document.addEventListener('DOMContentLoaded', () => {
   if (applySignatureBtn) applySignatureBtn.addEventListener('click', applySignature);
   if (removeSignatureBtn) removeSignatureBtn.addEventListener('click', removeSignature);
 
+  // 5.1 Autofill Test Data Helper Button
+  const btnAutofillTest = document.getElementById('btnAutofillTest');
+  if (btnAutofillTest) {
+    btnAutofillTest.addEventListener('click', () => {
+      // 1. Fill EIK & Date
+      const sampleEik = '206132646';
+      if (companyEikInput) {
+        companyEikInput.value = sampleEik;
+        updateFieldInDoc('companyEik', sampleEik, liveSyncMap.companyEik.placeholder);
+      }
+      if (contractDateInput) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        contractDateInput.value = `${yyyy}-${mm}-${dd}`;
+        const formattedDate = `${dd}.${mm}.${yyyy} г.`;
+        document.querySelectorAll('.live-field[data-field="date"]').forEach(el => {
+          el.textContent = formattedDate;
+          el.classList.add('filled');
+          el.classList.remove('underlined');
+        });
+      }
+
+      // 2. Fill Company info
+      const compName = '„Айрис Солюшънс“ АД';
+      const compAddress = 'гр. Варна, бул. Княз Борис I № 45, ет. 2';
+      const compRep = 'Иван Георгиев Иванов';
+
+      if (companyNameInput) companyNameInput.value = compName;
+      if (companyAddressInput) companyAddressInput.value = compAddress;
+      if (companyRepresentativeInput) companyRepresentativeInput.value = compRep;
+
+      updateFieldInDoc('companyName', compName, liveSyncMap.companyName.placeholder);
+      updateFieldInDoc('companyAddress', compAddress, liveSyncMap.companyAddress.placeholder);
+      updateFieldInDoc('companyRepresentative', compRep, liveSyncMap.companyRepresentative.placeholder);
+
+      // Hide verification prompt
+      if (companyVerifyBanner) companyVerifyBanner.style.display = 'none';
+      if (eikFeedbackMsg) eikFeedbackMsg.style.display = 'none';
+      if (companyInputsWrapper) companyInputsWrapper.classList.add('is-verified');
+      isCompanyDataVerified = true;
+
+      // 3. Fill Bank & Website
+      if (bankNameSelect) bankNameSelect.value = 'УниКредит Булбанк';
+      updateFieldInDoc('bankName', 'УниКредит Булбанк', liveSyncMap.bankName.placeholder);
+
+      if (bankIbanInput) {
+        bankIbanInput.value = 'BG18 UNCR 7000 1523 4567 89';
+        updateFieldInDoc('bankIban', 'BG18 UNCR 7000 1523 4567 89', liveSyncMap.bankIban.placeholder);
+        handleIbanValidation();
+      }
+
+      if (merchantWebsiteInput) {
+        merchantWebsiteInput.value = 'https://irispay.bg';
+      }
+      syncWebsites();
+
+      // 4. Fill Contact
+      if (contactAddressInput) contactAddressInput.value = compAddress;
+      updateFieldInDoc('contactAddress', compAddress, liveSyncMap.contactAddress.placeholder);
+
+      if (contactEmailInput) contactEmailInput.value = 'kaloyan.tosev@gmail.com';
+      updateFieldInDoc('contactEmail', 'kaloyan.tosev@gmail.com', liveSyncMap.contactEmail.placeholder);
+
+      if (contactPhoneInput) contactPhoneInput.value = '0888 123 456';
+      updateFieldInDoc('contactPhone', '0888 123 456', liveSyncMap.contactPhone.placeholder);
+
+      // 5. Checkboxes
+      const agreeTerms = document.getElementById('agreeTermsCheckbox');
+      const confirmData = document.getElementById('confirmDataCheckbox');
+      if (agreeTerms) agreeTerms.checked = true;
+      if (confirmData) confirmData.checked = true;
+
+      // 6. Signatures (Apply typed signature automatically to both docs)
+      if (typedSigInput) typedSigInput.value = compRep;
+      applySignature();
+
+      checkStep1Progress();
+      showToast('⚡ Примерните тестови данни и подпис са попълнени! Натиснете бутона долу за изпращане.', 'success');
+    });
+  }
+
   // =========================================================================
   // 6. Progress Tracker Helpers
   // =========================================================================
@@ -1036,6 +1241,7 @@ document.addEventListener('DOMContentLoaded', () => {
    * Returns a raw Base64 string for direct attachment via Resend API.
    */
   async function generateContractPdfBase64() {
+    window.generateContractPdfBase64 = generateContractPdfBase64;
     if (typeof html2pdf === 'undefined') {
       console.warn('html2pdf library is not loaded');
       return null;
@@ -1049,95 +1255,55 @@ document.addEventListener('DOMContentLoaded', () => {
       'docSheet5',
       'docSheet6',
       'docSheet7',
+      'docSheet8',
+      'docSheet9',
       'docSheetAppendix'
     ];
 
-    // Create an isolated container positioned offscreen
-    const container = document.createElement('div');
-    container.id = 'tempPdfRenderWrapper';
-    container.style.position = 'fixed';
-    container.style.left = '-10000px';
-    container.style.top = '0';
-    container.style.width = '820px';
-    container.style.backgroundColor = '#ffffff';
-    container.style.color = '#1e293b';
-    container.style.fontFamily = "'Calibri', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
-    container.style.zIndex = '-9999';
+    const compName = (document.getElementById('companyName')?.value || '').trim();
+    const cleanCompName = compName ? compName.replace(/["'„“«»<>:\/\\|?*]/g, '').trim() : 'Търговец';
+    const pdfFilename = `Договор (${cleanCompName}).pdf`;
 
-    sheetIds.forEach((id, idx) => {
-      const orig = document.getElementById(id);
-      if (!orig) return;
-      const clone = orig.cloneNode(true);
-      clone.style.width = '820px';
-      clone.style.maxWidth = '820px';
-      clone.style.minHeight = '1140px';
-      clone.style.margin = '0';
-      clone.style.padding = '58px 72px 42px 72px';
-      clone.style.boxSizing = 'border-box';
-      clone.style.boxShadow = 'none';
-      clone.style.border = 'none';
-      clone.style.borderRadius = '0';
-      clone.style.backgroundColor = '#ffffff';
-
-      // Copy any drawn canvas elements if present
-      const origCanvases = orig.querySelectorAll('canvas');
-      const cloneCanvases = clone.querySelectorAll('canvas');
-      origCanvases.forEach((origCanvas, cIdx) => {
-        if (cloneCanvases[cIdx]) {
-          const destCtx = cloneCanvases[cIdx].getContext('2d');
-          destCtx.drawImage(origCanvas, 0, 0);
-        }
-      });
-
-      container.appendChild(clone);
-
-      if (idx < sheetIds.length - 1) {
-        const pageBreakDiv = document.createElement('div');
-        pageBreakDiv.className = 'html2pdf__page-break';
-        pageBreakDiv.style.pageBreakAfter = 'always';
-        pageBreakDiv.style.breakAfter = 'page';
-        pageBreakDiv.style.height = '0';
-        pageBreakDiv.style.margin = '0';
-        pageBreakDiv.style.padding = '0';
-        container.appendChild(pageBreakDiv);
-      }
-    });
-
-    document.body.appendChild(container);
+    const opt = {
+      margin: 0,
+      filename: pdfFilename,
+      image: { type: 'jpeg', quality: 0.82 },
+      html2canvas: { scale: 1.2, useCORS: true, logging: false },
+      jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
+    };
 
     try {
-      const compName = (document.getElementById('companyName')?.value || '').trim();
-      const cleanCompName = compName ? compName.replace(/["'„“«»<>:\/\\|?*]/g, '').trim() : 'Търговец';
-      const pdfFilename = `Договор (${cleanCompName}).pdf`;
-      const opt = {
-        margin: [0, 0, 0, 0],
-        filename: pdfFilename,
-        image: { type: 'jpeg', quality: 0.92 },
-        html2canvas: {
-          scale: 1.5,
-          useCORS: true,
-          logging: false,
-          scrollY: 0,
-          scrollX: 0,
-          windowWidth: 1024
-        },
-        jsPDF: {
-          unit: 'pt',
-          format: 'a4',
-          orientation: 'portrait'
-        },
-        pagebreak: { mode: ['css', 'legacy'] }
-      };
+      const firstEl = document.getElementById(sheetIds[0]);
+      if (!firstEl) return null;
 
-      const pdfDataUri = await html2pdf().set(opt).from(container).outputPdf('datauristring');
+      // Initialize jsPDF through first sheet worker
+      const firstWorker = html2pdf().set(opt).from(firstEl);
+      const pdf = await firstWorker.toPdf().get('pdf');
+
+      const a4Width = 595.28;
+      const a4Height = 841.89;
+
+      // Render sheets 2 through 8 (Appendix 1) to individual canvas and add as exact A4 pages
+      for (let i = 1; i < sheetIds.length; i++) {
+        const el = document.getElementById(sheetIds[i]);
+        if (!el) continue;
+
+        const canvas = await html2pdf().set(opt).from(el).toCanvas().get('canvas');
+        pdf.addPage('a4', 'portrait');
+
+        const scale = a4Width / canvas.width;
+        const imgHeight = Math.min(canvas.height * scale, a4Height);
+        pdf.addImage(canvas, 'JPEG', 0, 0, a4Width, imgHeight, undefined, 'FAST');
+      }
+
+      const pdfDataUri = pdf.output('datauristring');
       if (pdfDataUri && typeof pdfDataUri === 'string') {
         const base64Marker = ';base64,';
         const markerIdx = pdfDataUri.indexOf(base64Marker);
         let rawBase64 = markerIdx !== -1
           ? pdfDataUri.substring(markerIdx + base64Marker.length).trim()
           : pdfDataUri.replace(/^data:[^;]*;base64,/, '').trim();
-        
-        // Ensure starting at the PDF magic base64 bytes 'JVBERi' (%PDF-)
+
         const pdfMagicIdx = rawBase64.indexOf('JVBERi');
         if (pdfMagicIdx !== -1 && pdfMagicIdx < 80) {
           rawBase64 = rawBase64.substring(pdfMagicIdx).trim();
@@ -1148,12 +1314,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('Грешка при генериране на PDF документ:', err);
       return null;
-    } finally {
-      if (container.parentNode) {
-        container.parentNode.removeChild(container);
-      }
     }
   }
+  window.generateContractPdfBase64 = generateContractPdfBase64;
 
   if (form) {
     form.addEventListener('submit', async (e) => {
@@ -1198,6 +1361,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (bankNameSelect.value === 'custom' && (!customBankInput || !customBankInput.value.trim())) {
         showToast('Моля, въведете наименованието на Вашата банка / институция.', 'error');
         if (customBankInput) customBankInput.focus();
+        return;
+      }
+
+      // 4.1 Check IBAN format
+      const ibanVal = (bankIbanInput?.value || '').replace(/\s+/g, '').toUpperCase();
+      if (!isValidBulgarianIban(ibanVal)) {
+        showToast('Моля, въведете валиден 22-знаков български IBAN (започващ с BG).', 'error');
+        if (bankIbanInput) {
+          bankIbanInput.classList.add('is-invalid');
+          bankIbanInput.focus();
+        }
+        if (bankIbanError) bankIbanError.style.display = 'block';
         return;
       }
 

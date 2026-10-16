@@ -1,11 +1,20 @@
 /**
  * Vercel Serverless Function: Send Contract Notification Email
  * Endpoint: /api/send-contract
- * Recipient: sales@irisbgsf.com
- * Subject: Подписан договор IRIS Pay
+ * Recipient: kaloyan.tosev@gmail.com (testing) / sales@irisbgsf.com (production)
+ * Subject: Подписан договор (Фирма)
  * Content: ЕИК, Фирма, Представляващ, Имейл за контакт, Телефон, Дата (ДД.ММ.ГГГГ)
- * Attachment: Един комбиниран PDF файл (договор + приложение)
+ * Attachment: PDF (договор + приложение 1)
  */
+
+// Vercel body parser config — increase limit to accept large PDF base64 payloads
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb'
+    }
+  }
+};
 
 function formatBulgarianDate(dStr) {
   if (!dStr || dStr === '—') {
@@ -56,7 +65,7 @@ export default async function handler(req, res) {
       pdfBase64 = null
     } = data || {};
 
-    const targetEmail = 'sales@irisbgsf.com';
+    const targetEmail = data.targetEmail || data.recipientEmail || process.env.CONTRACT_RECIPIENT_EMAIL || 'kaloyan.tosev@gmail.com';
     const cleanCompName = (companyName && companyName !== '—')
       ? String(companyName).replace(/["'„“«»]/g, '').trim()
       : 'Търговец';
@@ -193,6 +202,7 @@ export default async function handler(req, res) {
           body: JSON.stringify(resendPayload)
         });
 
+        console.log('Resend HTTP status:', resendRes.status, resendRes.statusText);
         if (resendRes.ok) {
           const resendData = await resendRes.json();
           return res.status(200).json({
@@ -205,8 +215,8 @@ export default async function handler(req, res) {
           });
         }
 
-        // Check if unverified domain restricts to account owner
         const errData = await resendRes.json();
+        console.log('Resend error data:', errData);
         if (errData && errData.statusCode === 403 && errData.message && errData.message.includes('kaloyan.tosev@gmail.com')) {
           console.log('[Resend Sandbox] Sending to account owner email kaloyan.tosev@gmail.com...');
           const fallbackPayload = {
