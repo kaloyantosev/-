@@ -1385,13 +1385,13 @@ body.generating-pdf .a4-sheet {
 
 .live-field[data-field="companyName"].filled,
 .live-field[data-field="companyEik"].filled,
+.live-field[data-field="companyAddress"].filled,
 .live-field[data-field="companyRepresentative"].filled,
-.live-field[data-field="date"].filled,
-.live-field[data-field="bankIban"].filled {
+.live-field[data-field="date"].filled {
   font-weight: 700 !important;
 }
 
-.live-field[data-field="companyAddress"].filled,
+.live-field[data-field="bankIban"].filled,
 .live-field[data-field="contactAddress"].filled,
 .live-field[data-field="contactEmail"].filled,
 .live-field[data-field="contactPhone"].filled,
@@ -1773,6 +1773,21 @@ body.generating-pdf .a4-sheet {
   box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
   text-align: center;
   animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.loading-modal-card.loading-pure-spinner {
+  max-width: 140px !important;
+  width: auto !important;
+  padding: 30px !important;
+  border-radius: 24px !important;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.3) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.loading-modal-card.loading-pure-spinner .loading-spinner-wrapper {
+  margin: 0 !important;
 }
 
 .loading-spinner-wrapper {

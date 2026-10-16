@@ -16,9 +16,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const bankIbanInput = document.getElementById('bankIban');
   const bankNameSelect = document.getElementById('bankName');
 
-  // Default: Leave contractDateInput empty initially so document preview starts unpopulated matching PDF
+  // Default: Automatically load today's date into contract date input
   if (contractDateInput) {
-    contractDateInput.value = '';
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    contractDateInput.value = `${yyyy}-${mm}-${dd}`;
   }
 
   // =========================================================================
@@ -470,13 +474,39 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
+  function formatViesCompany(viesData, eik) {
+    let rawName = (viesData.name || '').trim();
+    let rawAddr = (viesData.address || '').trim();
+
+    let cleanName = rawName.replace(/\s*-\s*(АД|ЕАД|ООД|ЕООД|КДА|СД|ЕТ)\b/i, ' $1').trim();
+    const m = cleanName.match(/^(.*?)\s+(АД|ЕАД|ООД|ЕООД|КДА|СД|ЕТ)$/i);
+    if (m) {
+      cleanName = `„${m[1].replace(/["„“]/g, '').trim()}“ ${m[2].toUpperCase()}`;
+    } else if (!cleanName.startsWith('„') && !cleanName.startsWith('"')) {
+      cleanName = `„${cleanName}“`;
+    }
+
+    let cleanAddr = rawAddr
+      .replace(/\s+/g, ' ')
+      .replace(/обл\.[^,]+,\s*/gi, '')
+      .trim();
+
+    return {
+      uic: eik,
+      name: cleanName,
+      address: cleanAddr,
+      rep: '',
+      source: 'live_register'
+    };
+  }
+
   async function fetchRegistryData(eik) {
-    // 1. Try our serverless / backend API endpoint
+    // 1. Try our serverless backend API endpoint
     try {
       const resp = await fetch(`/api/company?eik=${encodeURIComponent(eik)}`);
       if (resp.ok) {
         const json = await resp.json();
-        if (json && (json.name || json.address || json.rep)) {
+        if (json && json.found !== false && (json.name || json.address || json.rep)) {
           return json;
         }
       }
@@ -484,33 +514,23 @@ document.addEventListener('DOMContentLoaded', () => {
       // Backend not running or static environment
     }
 
-    // 2. Try direct call to Registry Agency official endpoint
-    const officialUrl = `https://portal.registryagency.bg/CR/api/Deeds/VerificationActs/${eik}/ActiveCondition?includeHistory=False&selectedFields=00020,00050,00100`;
+    // 2. Query official European Commission National Register API (VIES) - free, real-time, CORS enabled
     try {
-      const resp = await fetch(officialUrl, {
-        headers: { 'Accept': 'application/json, text/plain, */*' }
+      const viesUrl = `https://ec.europa.eu/taxation_customs/vies/rest-api/ms/BG/vat/${encodeURIComponent(eik)}`;
+      const resp = await fetch(viesUrl, {
+        headers: { 'Accept': 'application/json' }
       });
       if (resp.ok) {
         const json = await resp.json();
-        return parseRegistryAgencyJson(json, eik);
+        if (json && json.isValid && json.name && json.name !== '---') {
+          return formatViesCompany(json, eik);
+        }
       }
     } catch (e) {
-      // Direct call might be restricted by browser CORS
+      // VIES fetch error
     }
 
-    // 3. Try CORS proxy
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(officialUrl)}`;
-    try {
-      const resp = await fetch(proxyUrl);
-      if (resp.ok) {
-        const json = await resp.json();
-        return parseRegistryAgencyJson(json, eik);
-      }
-    } catch (e) {
-      // Proxy unavailable
-    }
-
-    // 4. Fallback to pre-cached verified records
+    // 3. Fallback to pre-cached verified records if available
     if (knownRegistryCompanies[eik]) {
       return {
         uic: eik,
@@ -518,13 +538,8 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     }
 
-    // 5. Fallback for valid checksum EIK
-    return {
-      uic: eik,
-      name: `„ТЪРГОВЕЦ ${eik}“ ЕООД`,
-      address: 'гр. София 1000, бул. Витоша 50, ет. 2',
-      rep: 'Иван Георгиев Иванов'
-    };
+    // 4. Return null if not found in any register - STRICTLY NO FAKE DATA!
+    return null;
   }
 
   function showCompanyPreview(compData, eik) {
@@ -621,16 +636,26 @@ document.addEventListener('DOMContentLoaded', () => {
       eikDebounceTimer = setTimeout(async () => {
         try {
           const compData = await fetchRegistryData(val);
-          if (compData) {
+          if (compData && (compData.name || compData.address || compData.rep)) {
             showCompanyPreview(compData, val);
             showToast('Данните за фирмата бяха изтеглени успешно от Търговския регистър!', 'success');
             checkStep1Progress();
+          } else {
+            // Not found in registers - DO NOT invent fake data
+            if (companyVerifyBanner) companyVerifyBanner.style.display = 'none';
+            if (eikFeedbackMsg) {
+              eikFeedbackMsg.style.display = 'block';
+              eikFeedbackMsg.textContent = 'Няма намерени публични данни за този ЕИК в регистъра. Моля, въведете данните на фирмата ръчно.';
+              eikFeedbackMsg.className = 'field-hint-msg';
+            }
+            isCompanyDataVerified = true;
           }
         } catch (err) {
+          if (companyVerifyBanner) companyVerifyBanner.style.display = 'none';
           if (eikFeedbackMsg) {
             eikFeedbackMsg.style.display = 'block';
-            eikFeedbackMsg.textContent = '⚠ Неуспешно автоматично свързване с Търговския регистър. Моля, въведете данните ръчно.';
-            eikFeedbackMsg.className = 'field-hint-msg error';
+            eikFeedbackMsg.textContent = 'Няма намерени публични данни за този ЕИК в регистъра. Моля, въведете данните на фирмата ръчно.';
+            eikFeedbackMsg.className = 'field-hint-msg';
           }
           isCompanyDataVerified = true;
         }
@@ -1253,24 +1278,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const timeStr = `${formattedDateStr} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
       const refNumber = `#IRIS-SIGN-2026-${randomRef}`;
 
-      // Show loading screen overlay immediately
+      // Show pure loading screen overlay immediately
       const loadingOverlay = document.getElementById('loadingScreenOverlay');
-      const loadingStatus = document.getElementById('loadingDynamicStatus');
-      const step1 = document.getElementById('loadingStep1');
-      const step2 = document.getElementById('loadingStep2');
-      const step3 = document.getElementById('loadingStep3');
-
       if (loadingOverlay) loadingOverlay.style.display = 'flex';
-      if (step1) step1.className = 'loading-step-item active';
-      if (step2) step2.className = 'loading-step-item';
-      if (step3) step3.className = 'loading-step-item';
-      if (loadingStatus) loadingStatus.textContent = 'Проверка и валидиране на положените електронни подписи...';
 
       // Show sending feedback on submit button
       if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.dataset.originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '⟳ Изпращане на документи...';
+        submitBtn.innerHTML = '⟳ Изпращане...';
       }
 
       // Capture merchant signature image as clean PNG Base64
@@ -1301,11 +1317,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('Signature PNG capture error:', sigErr);
       }
 
-      // Advance to step 2: PDF generation
-      if (step1) step1.className = 'loading-step-item done';
-      if (step2) step2.className = 'loading-step-item active';
-      if (loadingStatus) loadingStatus.textContent = 'Генериране на 10-страничен официален векторен договор и Приложение 1...';
-
       const compAddress = (document.getElementById('companyAddress')?.value || '').trim();
       const bankVal = bankNameSelect ? bankNameSelect.value.trim() : '';
       const bankNameText = (bankVal === 'custom') ? ((customBankInput?.value || '').trim()) : bankVal;
@@ -1329,11 +1340,6 @@ document.addEventListener('DOMContentLoaded', () => {
         signatureImageBase64: sigBase64
       };
 
-      // Advance to step 3: Dispatch & wait for confirmation
-      if (step2) step2.className = 'loading-step-item done';
-      if (step3) step3.className = 'loading-step-item active';
-      if (loadingStatus) loadingStatus.textContent = 'Изпращане на криптираните документи и очакване на потвърждение...';
-
       try {
         const response = await fetch('/api/send-contract', {
           method: 'POST',
@@ -1342,12 +1348,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const resData = await response.json();
         console.log('Contract email response confirmation:', resData);
-
-        if (step3) step3.className = 'loading-step-item done';
-        if (loadingStatus) loadingStatus.textContent = 'Потвърдено! Зареждане на резултата...';
-
-        // Brief pleasant pause to let user see confirmation check
-        await new Promise(res => setTimeout(res, 500));
+        await new Promise(res => setTimeout(res, 400));
       } catch (err) {
         console.warn('Backend email API offline/dev fallback:', err);
       } finally {

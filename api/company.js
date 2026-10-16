@@ -1,7 +1,7 @@
 /**
  * Vercel Serverless Function: Real-time Bulgarian Commercial Register Lookup
  * Endpoint: /api/company?eik={eik}
- * Queries the official Registry Agency (Търговски регистър) portal API.
+ * Queries the official Registry Agency (Търговски регистър) and EU VIES National Database.
  */
 
 export default async function handler(req, res) {
@@ -29,9 +29,9 @@ export default async function handler(req, res) {
       rep: 'Галя Димитрова Димитрова'
     },
     '121396123': {
-      name: '„Обединена Българска Банка“ АД',
-      address: 'гр. София 1463, район Триадица, бул. „Витоша“ № 89Б, Милениум център',
-      rep: 'Питър Рубен'
+      name: '„БЪЛГАРСКИ ПОЩИ“ ЕАД',
+      address: 'гр. София 1700, ж.к. Студентски град, ул. „Акад. Стефан Младенов“ № 1, бл. 31',
+      rep: 'Филип Алексиев'
     },
     '831641799': {
       name: '„УниКредит Булбанк“ АД',
@@ -49,6 +49,18 @@ export default async function handler(req, res) {
       rep: 'Петя Димитрова'
     }
   };
+
+  // 1. Fast cache check
+  if (staticCache[eik]) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    return res.status(200).json({
+      uic: eik,
+      ...staticCache[eik],
+      source: 'verified_cache',
+      found: true
+    });
+  }
 
   const cleanHtml = (html) => {
     if (!html) return '';
@@ -70,11 +82,12 @@ export default async function handler(req, res) {
       .trim();
   };
 
+  // 2. Query official Registry Agency portal if available
   try {
     const url = `https://portal.registryagency.bg/CR/api/Deeds/VerificationActs/${eik}/ActiveCondition?includeHistory=False&selectedFields=00020,00050,00100`;
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6500);
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
 
     const response = await fetch(url, {
       signal: controller.signal,
@@ -118,48 +131,82 @@ export default async function handler(req, res) {
           }
         }
 
-        // Clean up quotes or HTML artifacts in company name
         name = name.replace(/<[^>]+>/g, '').replace(/^"|"$/g, '').trim();
         if (name && !name.startsWith('„') && !name.startsWith('"')) {
           name = `„${name}“`;
         }
 
-        if (name || address || rep) {
+        if (name) {
           res.setHeader('Access-Control-Allow-Origin', '*');
           res.setHeader('Content-Type', 'application/json; charset=utf-8');
           return res.status(200).json({
             uic: eik,
-            name: name || `„ТЪРГОВЕЦ ${eik}“`,
-            address: address || 'гр. София, България',
-            rep: rep || 'Управител',
-            source: 'live_commercial_register'
+            name: name,
+            address: address,
+            rep: rep,
+            source: 'live_commercial_register',
+            found: true
           });
         }
       }
     }
   } catch (err) {
-    // Network or timeout error from portal.registryagency.bg
+    // Registry agency portal timed out or blocked
   }
 
-  // Check fallback cache
-  if (staticCache[eik]) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    return res.status(200).json({
-      uic: eik,
-      ...staticCache[eik],
-      source: 'verified_cache'
+  // 3. Query Official EU VIES Database (Direct National Revenue Agency / Register feed for Bulgaria)
+  try {
+    const viesUrl = `https://ec.europa.eu/taxation_customs/vies/rest-api/ms/BG/vat/${encodeURIComponent(eik)}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4500);
+
+    const viesResp = await fetch(viesUrl, {
+      signal: controller.signal,
+      headers: { 'Accept': 'application/json' }
     });
+    clearTimeout(timeoutId);
+
+    if (viesResp.ok) {
+      const viesData = await viesResp.json();
+      if (viesData && viesData.isValid && viesData.name && viesData.name !== '---') {
+        let rawName = (viesData.name || '').trim();
+        let rawAddr = (viesData.address || '').trim();
+
+        let cleanName = rawName.replace(/\s*-\s*(АД|ЕАД|ООД|ЕООД|КДА|СД|ЕТ)\b/i, ' $1').trim();
+        const m = cleanName.match(/^(.*?)\s+(АД|ЕАД|ООД|ЕООД|КДА|СД|ЕТ)$/i);
+        if (m) {
+          cleanName = `„${m[1].replace(/["„“]/g, '').trim()}“ ${m[2].toUpperCase()}`;
+        } else if (!cleanName.startsWith('„') && !cleanName.startsWith('"')) {
+          cleanName = `„${cleanName}“`;
+        }
+
+        let cleanAddr = rawAddr
+          .replace(/\s+/g, ' ')
+          .replace(/обл\.[^,]+,\s*/gi, '')
+          .trim();
+
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        return res.status(200).json({
+          uic: eik,
+          name: cleanName,
+          address: cleanAddr,
+          rep: '',
+          source: 'live_register',
+          found: true
+        });
+      }
+    }
+  } catch (err) {
+    // VIES timeout
   }
 
-  // If live fetch returned nothing, return 404 or generic format
+  // 4. Company NOT found in live registers - STRICTLY RETURN NOT FOUND (NEVER FAKE DATA)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   return res.status(200).json({
     uic: eik,
-    name: `„ТЪРГОВЕЦ ${eik}“ ЕООД`,
-    address: 'гр. София, бул. България 102, ет. 3',
-    rep: 'Иван Георгиев Иванов',
-    source: 'fallback'
+    found: false,
+    message: 'Няма намерени публични данни за този ЕИК в регистъра.'
   });
 }
