@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IRIS Pay | Партньорски Портал и Афилиейт Статистика</title>
+  <link rel="icon" href="assets/iris-logo.svg" type="image/svg+xml">
+  <style>
+    :root {
+      --primary: #1F3864;
+      --primary-hover: #182D50;
+      --primary-light: #2E75B6;
+      --accent: #00A3E0;
+      --bg: #F4F7FB;
+      --card-bg: #FFFFFF;
+      --text: #262626;
+      --text-muted: #595959;
+      --border: #D9E1F2;
+      --border-light: #E9ECEF;
+      --success-bg: #DEF7EC;
+      --success-text: #03543F;
+      --success-border: #BCF0DA;
+      --badge-bg: #E8F0FE;
+      --badge-text: #1F3864;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .top-navbar {
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .nav-logo {
+      height: 38px;
+    }
+
+    .brand-divider {
+      height: 24px;
+      width: 1px;
+      background: var(--border);
+    }
+
+    .nav-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .nav-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-pill {
+      background: var(--badge-bg);
+      color: var(--primary);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #D0E1FD;
+    }
+
+    .btn-portal-link {
+      background: #FFFFFF;
+      color: var(--primary-light);
+      border: 1px solid var(--border);
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-portal-link:hover {
+      background: #F4F7FB;
+      border-color: var(--primary-light);
+    }
+
+    .btn-logout {
+      background: #FFF1F0;
+      color: #CF1322;
+      border: 1px solid #FFA39E;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-logout:hover {
+      background: #FF4D4F;
+      color: #FFFFFF;
+      border-color: #FF4D4F;
+    }
+
+    /* Main Container */
+    .main-content {
+      max-width: 1280px;
+      width: 100%;
+      margin: 24px auto;
+      padding: 0 20px;
+      flex: 1;
+    }
+
+    /* Metric Cards */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .metric-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 22px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .metric-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--primary-light);
+    }
+
+    .metric-card.accent-navy::before { background: var(--primary); }
+    .metric-card.accent-blue::before { background: var(--primary-light); }
+    .metric-card.accent-teal::before { background: #00A3E0; }
+    .metric-card.accent-gold::before { background: #D97706; }
+
+    .metric-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .metric-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .metric-icon {
+      font-size: 20px;
+    }
+
+    .metric-value {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1;
+    }
+
+    .metric-foot {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 10px;
+    }
+
+    /* Action & Filter Panel */
+    .controls-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .filter-group-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .control-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .control-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .filter-select, .filter-input {
+      height: 38px;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      background: #FFFFFF;
+      color: var(--text);
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .filter-select:focus, .filter-input:focus {
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 2px rgba(46, 117, 182, 0.15);
+    }
+
+    .btn-create-link {
+      background: linear-gradient(135deg, #1F3864 0%, #2E75B6 100%);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 10px rgba(31, 56, 100, 0.2);
+      transition: all 0.2s;
+    }
+
+    .btn-create-link:hover {
+      background: linear-gradient(135deg, #182D50 0%, #25639B 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(31, 56, 100, 0.3);
+    }
+
+    .btn-reset-filters {
+      height: 38px;
+      background: #F4F7FB;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 6px;
+      padding: 0 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      align-self: flex-end;
+    }
+
+    .btn-reset-filters:hover {
+      background: #E9ECEF;
+      color: var(--text);
+    }
+
+    /* Table Container */
+    .table-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+      overflow: hidden;
+    }
+
+    .table-header-title {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .table-header-title h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .active-filter-badge {
+      font-size: 12px;
+      color: var(--primary-light);
+      font-weight: 600;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .data-table th {
+      background: #F8FAFD;
+      color: var(--primary);
+      font-size: 12.5px;
+      font-weight: 700;
+      padding: 14px 20px;
+      border-bottom: 2px solid var(--border);
+      letter-spacing: 0.3px;
+    }
+
+    .data-table td {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 13.5px;
+      vertical-align: middle;
+    }
+
+    .data-table tr:hover {
+      background: #FAFCFE;
+    }
+
+    .partner-name-cell {
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .partner-email-sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-weight: normal;
+      margin-top: 2px;
+    }
+
+    .link-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #F4F7FB;
+      border: 1px solid #D9E1F2;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-family: monospace;
+      color: var(--primary-light);
+      max-width: 320px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .btn-copy-link {
+      background: #FFFFFF;
+      border: 1px solid #CBD5E1;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+
+    .btn-copy-link:hover {
+      background: var(--primary-light);
+      color: #FFFFFF;
+      border-color: var(--primary-light);
+    }
+
+    .contracts-count-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
+      height: 28px;
+      padding: 0 10px;
+      background: #E8F0FE;
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 14px;
+      border-radius: 14px;
+      border: 1px solid #C2D7FA;
+    }
+
+    .contracts-count-badge.has-contracts {
+      background: var(--success-bg);
+      color: var(--success-text);
+      border-color: var(--success-border);
+    }
+
+    .btn-details {
+      background: none;
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary-light);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-details:hover {
+      background: var(--badge-bg);
+      border-color: var(--primary-light);
+    }
+
+    .empty-row td {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 30, 54, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-box {
+      background: #FFFFFF;
+      border-radius: 14px;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.96) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      background: #FAFCFE;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .btn-close-modal {
+      background: none;
+      border: none;
+      font-size: 22px;
+      color: var(--text-muted);
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      background: #FAFCFE;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .preview-link-box {
+      background: #F4F7FB;
+      border: 1px dashed var(--primary-light);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-top: 16px;
+    }
+
+    .preview-link-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .preview-link-url {
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary-light);
+      word-break: break-all;
+    }
+
+    .btn-cancel {
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      padding: 9px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1F3864;
+      color: #FFFFFF;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+      z-index: 2000;
+      display: none;
+      animation: toastIn 0.3s ease-out;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .details-list {
+      max-height: 280px;
+      overflow-y: auto;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+    }
+
+    .details-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .details-item:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <nav class="top-navbar">
+    <div class="nav-brand">
+      <img src="assets/iris-logo.svg" alt="IRIS Pay" class="nav-logo">
+      <div class="brand-divider"></div>
+      <div>
+        <div class="nav-title">Партньорски Портал</div>
+        <div class="nav-subtitle">Статистика на договори & Афилиейт линкове</div>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <a href="/" target="_blank" class="btn-portal-link">🌐 Отвори сайта за договори</a>
+      <span class="user-pill">👤 sales</span>
+      <button id="logoutBtn" class="btn-logout">Изход</button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Key Metrics Grid -->
+    <section class="metrics-grid">
+      <div class="metric-card accent-navy">
+        <div class="metric-header">
+          <span class="metric-label">Общ брой партньори</span>
+          <span class="metric-icon">🤝</span>
+        </div>
+        <div class="metric-value" id="kpiPartnersCount">0</div>
+        <div class="metric-foot">Регистрирани активни партньори</div>
+      </div>
+
+      <div class="metric-card accent-blue">
+        <div class="metric-header">
+          <span class="metric-label">Договори за периода</span>
+          <span class="metric-icon">📄</span>
+        </div>
+        <div class="metric-value" id="kpiPeriodContracts">0</div>
+        <div class="metric-foot" id="kpiPeriodSubtext">Според избрания филтър</div>
+      </div>
+
+      <div class="metric-card accent-teal">
+        <div class="metric-header">
+          <span class="metric-label">Общо договори (всички)</span>
+          <span class="metric-icon">📈</span>
+        </div>
+        <div class="metric-value" id="kpiTotalContracts">0</div>
+        <div class="metric-foot">Общ брой през афилиейт системата</div>
+      </div>
+
+      <div class="metric-card accent-gold">
+        <div class="metric-header">
+          <span class="metric-label">Най-активен партньор</span>
+          <span class="metric-icon">🏆</span>
+        </div>
+        <div class="metric-value" style="font-size: 20px; line-height: 1.3;" id="kpiTopPartner">—</div>
+        <div class="metric-foot" id="kpiTopPartnerCount">0 договора</div>
+      </div>
+    </section>
+
+    <!-- Controls & Filters Panel -->
+    <section class="controls-panel">
+      <div class="filter-group-wrapper">
+        <div class="control-item">
+          <label class="control-label" for="filterMonth">Филтър по Месец</label>
+          <select id="filterMonth" class="filter-select">
+            <option value="">Всички месеци</option>
+          </select>
+        </div>
+
+        <div class="control-item">
+          <label class="control-label" for="filterFrom">От дата</label>
+          <input type="date" id="filterFrom" class="filter-input">
+        </div>
+
+        <div class="control-item">
+          <label class="control-label" for="filterTo">До дата</label>
+          <input type="date" id="filterTo" class="filter-input">
+        </div>
+
+        <div class="control-item">
+          <label class="control-label" for="searchPartner">Търсене</label>
+          <input type="text" id="searchPartner" class="filter-input" placeholder="Име или код..." style="min-width: 170px;">
+        </div>
+
+        <button id="btnResetFilters" class="btn-reset-filters">Изчисти филтрите</button>
+      </div>
+
+      <button id="btnOpenCreateModal" class="btn-create-link">
+        <span>➕</span>
+        <span>Генерирай нов Affiliate Link</span>
+      </button>
+    </section>
+
+    <!-- Partners Table -->
+    <section class="table-container">
+      <div class="table-header-title">
+        <h2>Списък с партньори и докарани договори</h2>
+        <span id="activeFilterDesc" class="active-filter-badge">Показване: Всички времена</span>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 28%;">Партньор</th>
+            <th style="width: 32%;">Affiliate Линк</th>
+            <th style="width: 16%; text-align: center;">Докарани договори</th>
+            <th style="width: 14%;">Последен договор</th>
+            <th style="width: 10%; text-align: right;">Действия</th>
+          </tr>
+        </thead>
+        <tbody id="partnersTableBody">
+          <tr class="empty-row">
+            <td colspan="5">Зареждане на данни...</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <!-- Modal: Generate Affiliate Link -->
+  <div id="createModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Генериране на нов Affiliate Link</h3>
+        <button class="btn-close-modal" id="btnCloseCreateModal">&times;</button>
+      </div>
+
+      <form id="createAffiliateForm">
+        <div class="modal-body">
+          <div style="margin-bottom: 16px;">
+            <label style="display:block; font-size:13px; font-weight:600; color:var(--primary); margin-bottom:6px;">
+              Име на партньора / фирмата: *
+            </label>
+            <input 
+              type="text" 
+              id="newPartnerName" 
+              class="filter-input" 
+              placeholder="напр. СуперХостинг или Тех Академи" 
+              required 
+              style="width: 100%; height: 42px;"
+            >
+          </div>
+
+          <div style="margin-bottom: 16px;">
+            <label style="display:block; font-size:13px; font-weight:600; color:var(--primary); margin-bottom:6px;">
+              Име на линка (URL код / slug): *
+            </label>
+            <input 
+              type="text" 
+              id="newPartnerSlug" 
+              class="filter-input" 
+              placeholder="напр. superhosting или tech-academy" 
+              required 
+              style="width: 100%; height: 42px; font-family: monospace;"
+            >
+            <span style="font-size:11.5px; color:var(--text-muted); display:block; margin-top:4px;">
+              Разрешени са букви, цифри и тирета.
+            </span>
+          </div>
+
+          <div style="margin-bottom: 16px;">
+            <label style="display:block; font-size:13px; font-weight:600; color:var(--primary); margin-bottom:6px;">
+              Имейл за контакт (по избор):
+            </label>
+            <input 
+              type="email" 
+              id="newPartnerEmail" 
+              class="filter-input" 
+              placeholder="partner@example.bg" 
+              style="width: 100%; height: 42px;"
+            >
+          </div>
+
+          <!-- Live Preview Box -->
+          <div class="preview-link-box">
+            <div class="preview-link-label">Вашият афилиейт линк ще бъде:</div>
+            <div class="preview-link-url" id="previewUrlText">https://.../</div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" id="btnCancelCreateModal">Отказ</button>
+          <button type="submit" class="btn-create-link" id="btnSubmitNewAff">
+            <span>✅</span>
+            <span>Създай и копирай линка</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: View Contracts Details -->
+  <div id="detailsModal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3 id="detailsModalTitle">Докарани договори</h3>
+        <button class="btn-close-modal" id="btnCloseDetailsModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="detailsContractsList" class="details-list"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" id="btnCloseDetailsBtn">Затвори</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastNotification" class="toast"></div>
+
+  <script>
+    // 1. Session verification & Token handling
+    const token = localStorage.getItem('iris_auth_token') || sessionStorage.getItem('iris_auth_token');
+    
+    function getAuthHeaders() {
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      return headers;
+    }
+
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/auth?action=check', { headers: getAuthHeaders() });
+        const data = await res.json();
+        if (!data || !data.authenticated) {
+          window.location.replace('/login');
+        }
+      } catch (err) {
+        window.location.replace('/login');
+      }
+    }
+    checkAuth();
+
+    // 2. Elements
+    const kpiPartnersCount = document.getElementById('kpiPartnersCount');
+    const kpiPeriodContracts = document.getElementById('kpiPeriodContracts');
+    const kpiTotalContracts = document.getElementById('kpiTotalContracts');
+    const kpiTopPartner = document.getElementById('kpiTopPartner');
+    const kpiTopPartnerCount = document.getElementById('kpiTopPartnerCount');
+    const kpiPeriodSubtext = document.getElementById('kpiPeriodSubtext');
+    const activeFilterDesc = document.getElementById('activeFilterDesc');
+
+    const filterMonth = document.getElementById('filterMonth');
+    const filterFrom = document.getElementById('filterFrom');
+    const filterTo = document.getElementById('filterTo');
+    const searchPartner = document.getElementById('searchPartner');
+    const btnResetFilters = document.getElementById('btnResetFilters');
+    const partnersTableBody = document.getElementById('partnersTableBody');
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    const toast = document.getElementById('toastNotification');
+
+    // Create Modal Elements
+    const btnOpenCreateModal = document.getElementById('btnOpenCreateModal');
+    const createModal = document.getElementById('createModal');
+    const btnCloseCreateModal = document.getElementById('btnCloseCreateModal');
+    const btnCancelCreateModal = document.getElementById('btnCancelCreateModal');
+    const createAffiliateForm = document.getElementById('createAffiliateForm');
+    const newPartnerName = document.getElementById('newPartnerName');
+    const newPartnerSlug = document.getElementById('newPartnerSlug');
+    const newPartnerEmail = document.getElementById('newPartnerEmail');
+    const previewUrlText = document.getElementById('previewUrlText');
+
+    // Details Modal Elements
+    const detailsModal = document.getElementById('detailsModal');
+    const detailsModalTitle = document.getElementById('detailsModalTitle');
+    const detailsContractsList = document.getElementById('detailsContractsList');
+    const btnCloseDetailsModal = document.getElementById('btnCloseDetailsModal');
+    const btnCloseDetailsBtn = document.getElementById('btnCloseDetailsBtn');
+
+    let currentAffiliates = [];
+
+    // Helper: Toast message
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 3000);
+    }
+
+    // Helper: Build Full Affiliate URL
+    function getFullAffiliateUrl(slug) {
+      const origin = window.location.origin;
+      return `${origin}/${slug}`;
+    }
+
+    // Helper: Format Dates
+    function formatDateBG(isoStr) {
+      if (!isoStr) return '—';
+      try {
+        const d = new Date(isoStr);
+        if (isNaN(d.getTime())) return isoStr;
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        const hours = String(d.getHours()).padStart(2, '0');
+        const mins = String(d.getMinutes()).padStart(2, '0');
+        return `${day}.${month}.${year} г. (${hours}:${mins})`;
+      } catch (e) {
+        return isoStr;
+      }
+    }
+
+    // Slug generator helper
+    function slugify(text) {
+      return text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+
+    newPartnerName.addEventListener('input', () => {
+      if (!newPartnerSlug.dataset.userEdited) {
+        newPartnerSlug.value = slugify(newPartnerName.value);
+        updatePreviewUrl();
+      }
+    });
+
+    newPartnerSlug.addEventListener('input', () => {
+      newPartnerSlug.dataset.userEdited = 'true';
+      newPartnerSlug.value = slugify(newPartnerSlug.value);
+      updatePreviewUrl();
+    });
+
+    function updatePreviewUrl() {
+      const slug = newPartnerSlug.value.trim() || '(име-на-линк)';
+      previewUrlText.textContent = getFullAffiliateUrl(slug);
+    }
+
+    // Load Data
+    async function loadAffiliatesData() {
+      const month = filterMonth.value;
+      const fromDate = filterFrom.value;
+      const toDate = filterTo.value;
+      const search = searchPartner.value.trim();
+
+      const queryParams = new URLSearchParams();
+      if (month) queryParams.set('month', month);
+      if (fromDate) queryParams.set('fromDate', fromDate);
+      if (toDate) queryParams.set('toDate', toDate);
+      if (search) queryParams.set('search', search);
+
+      try {
+        const res = await fetch(`/api/affiliates?${queryParams.toString()}`, {
+          headers: getAuthHeaders()
+        });
+
+        if (res.status === 401) {
+          window.location.replace('/login');
+          return;
+        }
+
+        const data = await res.json();
+        if (data.success) {
+          currentAffiliates = data.affiliates || [];
+          renderSummary(data.summary, month, fromDate, toDate);
+          renderTable(data.affiliates);
+          populateMonthsDropdown(data.summary?.monthsList || []);
+        }
+      } catch (err) {
+        console.error('Error fetching affiliates data:', err);
+      }
+    }
+
+    function populateMonthsDropdown(monthsList) {
+      const currentSelected = filterMonth.value;
+      // Preserve first option
+      filterMonth.innerHTML = '<option value="">Всички месеци</option>';
+      monthsList.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.value;
+        opt.textContent = m.label;
+        if (m.value === currentSelected) opt.selected = true;
+        filterMonth.appendChild(opt);
+      });
+    }
+
+    function renderSummary(summary, month, fromDate, toDate) {
+      if (!summary) return;
+
+      kpiPartnersCount.textContent = summary.totalPartners || 0;
+      kpiPeriodContracts.textContent = summary.periodContracts || 0;
+      kpiTotalContracts.textContent = summary.totalContractsAllTime || 0;
+
+      if (summary.topPartner) {
+        kpiTopPartner.textContent = summary.topPartner.name;
+        kpiTopPartnerCount.textContent = `${summary.topPartner.count} договора в периода`;
+      } else {
+        kpiTopPartner.textContent = '—';
+        kpiTopPartnerCount.textContent = 'Няма данни';
+      }
+
+      // Update filter description badge
+      if (month) {
+        const selectedOpt = filterMonth.options[filterMonth.selectedIndex];
+        const monthName = selectedOpt ? selectedOpt.textContent : month;
+        activeFilterDesc.textContent = `Период: ${monthName}`;
+        kpiPeriodSubtext.textContent = `За ${monthName}`;
+      } else if (fromDate || toDate) {
+        activeFilterDesc.textContent = `Период: ${fromDate || '...'} до ${toDate || '...'}`;
+        kpiPeriodSubtext.textContent = `От ${fromDate || '...'} до ${toDate || '...'}`;
+      } else {
+        activeFilterDesc.textContent = 'Показване: Всички времена';
+        kpiPeriodSubtext.textContent = 'Всички времена';
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function renderTable(affiliates) {
+      partnersTableBody.innerHTML = '';
+
+      if (!affiliates || affiliates.length === 0) {
+        partnersTableBody.innerHTML = `
+          <tr class="empty-row">
+            <td colspan="5">Няма намерени партньори по избраните критерии.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      affiliates.forEach((aff, index) => {
+        const fullUrl = getFullAffiliateUrl(aff.slug);
+        const count = aff.contractCount || 0;
+        const total = aff.totalContractCount || 0;
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td>
+            <div class="partner-name-cell">${escapeHtml(aff.name)}</div>
+            ${aff.email ? `<div class="partner-email-sub">✉️ ${escapeHtml(aff.email)}</div>` : ''}
+          </td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="link-pill" title="${fullUrl}">/${escapeHtml(aff.slug)}</span>
+              <button class="btn-copy-link" data-url="${fullUrl}">
+                📋 Копирай
+              </button>
+            </div>
+          </td>
+          <td style="text-align: center;">
+            <span class="contracts-count-badge ${count > 0 ? 'has-contracts' : ''}" title="Общо за всички времена: ${total}">
+              ${count}
+            </span>
+          </td>
+          <td>
+            <span style="font-size: 12.5px; color: var(--text-muted);">
+              ${aff.lastContractDate ? formatDateBG(aff.lastContractDate) : 'Няма още'}
+            </span>
+          </td>
+          <td style="text-align: right;">
+            <button class="btn-details" data-slug="${escapeHtml(aff.slug)}" data-name="${escapeHtml(aff.name)}">
+              Детайли
+            </button>
+          </td>
+        `;
+
+        partnersTableBody.appendChild(tr);
+      });
+
+      // Attach copy listeners
+      document.querySelectorAll('.btn-copy-link').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const url = e.currentTarget.dataset.url;
+          try {
+            await navigator.clipboard.writeText(url);
+            const origText = e.currentTarget.innerHTML;
+            e.currentTarget.innerHTML = '✅ Копирано!';
+            showToast(`Линкът е копиран: ${url}`);
+            setTimeout(() => {
+              e.currentTarget.innerHTML = origText;
+            }, 2000);
+          } catch (err) {
+            prompt('Копирайте линка от тук:', url);
+          }
+        });
+      });
+
+      // Attach details listeners
+      document.querySelectorAll('.btn-details').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const slug = e.currentTarget.dataset.slug;
+          const name = e.currentTarget.dataset.name;
+          openDetailsModal(slug, name);
+        });
+      });
+    }
+
+    // Details Modal Logic
+    function openDetailsModal(slug, name) {
+      const aff = currentAffiliates.find(a => a.slug === slug);
+      detailsModalTitle.textContent = `Договори за: ${name} (/${slug})`;
+      detailsContractsList.innerHTML = '';
+
+      const contracts = aff?.contracts || [];
+      if (contracts.length === 0) {
+        detailsContractsList.innerHTML = `
+          <div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 13.5px;">
+            Няма изпратени договори от този партньор за избрания период.
+          </div>
+        `;
+      } else {
+        contracts.forEach(c => {
+          const item = document.createElement('div');
+          item.className = 'details-item';
+          item.innerHTML = `
+            <div>
+              <div style="font-weight: 600; color: var(--primary);">${escapeHtml(c.companyName)}</div>
+              <div style="font-size: 11.5px; color: var(--text-muted);">ЕИК: ${escapeHtml(c.companyEik)}</div>
+            </div>
+            <div style="text-align: right; font-size: 12px; color: var(--primary-light); font-weight: 600;">
+              📅 ${formatDateBG(c.date)}
+            </div>
+          `;
+          detailsContractsList.appendChild(item);
+        });
+      }
+
+      detailsModal.style.display = 'flex';
+    }
+
+    btnCloseDetailsModal.addEventListener('click', () => { detailsModal.style.display = 'none'; });
+    btnCloseDetailsBtn.addEventListener('click', () => { detailsModal.style.display = 'none'; });
+
+    // Create Modal Logic
+    btnOpenCreateModal.addEventListener('click', () => {
+      createAffiliateForm.reset();
+      delete newPartnerSlug.dataset.userEdited;
+      updatePreviewUrl();
+      createModal.style.display = 'flex';
+      newPartnerName.focus();
+    });
+
+    function closeCreateModal() {
+      createModal.style.display = 'none';
+    }
+
+    btnCloseCreateModal.addEventListener('click', closeCreateModal);
+    btnCancelCreateModal.addEventListener('click', closeCreateModal);
+
+    createAffiliateForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = newPartnerName.value.trim();
+      const slug = newPartnerSlug.value.trim();
+      const email = newPartnerEmail.value.trim();
+
+      if (!name || !slug) return;
+
+      const submitBtn = document.getElementById('btnSubmitNewAff');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Създаване...';
+
+      try {
+        const res = await fetch('/api/affiliates', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ name, slug, email })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const fullUrl = getFullAffiliateUrl(data.affiliate.slug);
+          try {
+            await navigator.clipboard.writeText(fullUrl);
+            showToast(`Линкът е създаден и копиран: ${fullUrl}`);
+          } catch (clipErr) {
+            showToast(`Линкът е създаден: ${fullUrl}`);
+          }
+
+          closeCreateModal();
+          await loadAffiliatesData();
+        } else {
+          alert(data.error || 'Възникна грешка при създаване на партньор.');
+        }
+      } catch (err) {
+        console.error('Error creating affiliate:', err);
+        alert('Мрежова грешка при създаване на партньор.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>✅</span><span>Създай и копирай линка</span>';
+      }
+    });
+
+    // Filters event listeners
+    filterMonth.addEventListener('change', () => {
+      filterFrom.value = '';
+      filterTo.value = '';
+      loadAffiliatesData();
+    });
+
+    filterFrom.addEventListener('change', () => {
+      filterMonth.value = '';
+      loadAffiliatesData();
+    });
+
+    filterTo.addEventListener('change', () => {
+      filterMonth.value = '';
+      loadAffiliatesData();
+    });
+
+    let searchTimeout = null;
+    searchPartner.addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(loadAffiliatesData, 250);
+    });
+
+    btnResetFilters.addEventListener('click', () => {
+      filterMonth.value = '';
+      filterFrom.value = '';
+      filterTo.value = '';
+      searchPartner.value = '';
+      loadAffiliatesData();
+    });
+
+    // Logout logic
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await fetch('/api/auth?action=logout', {
+          method: 'POST',
+          headers: getAuthHeaders()
+        });
+      } catch (e) {
+        // Ignore
+      }
+      localStorage.removeItem('iris_auth_token');
+      sessionStorage.removeItem('iris_auth_token');
+      window.location.replace('/login');
+    });
+
+    // Close modals on backdrop click
+    window.addEventListener('click', (e) => {
+      if (e.target === createModal) closeCreateModal();
+      if (e.target === detailsModal) detailsModal.style.display = 'none';
+    });
+
+    // Initial Load
+    loadAffiliatesData();
+  </script>
+</body>
+</html>

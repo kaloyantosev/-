@@ -33,6 +33,28 @@ document.addEventListener('DOMContentLoaded', () => {
     hiddenNativeDatePicker.value = todayYmd;
   }
 
+  // Detect & persist affiliate referral from URL path (/slug) or parameter (?ref=slug)
+  try {
+    const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    const ignored = ['login', 'dashboard', 'index.html', 'api', 'assets', 'favicon.ico'];
+    let slug = null;
+    if (rawPath && !ignored.includes(rawPath.toLowerCase()) && !rawPath.includes('/')) {
+      slug = rawPath;
+    }
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('ref')) {
+      slug = urlParams.get('ref');
+    }
+    if (slug) {
+      const cleanSlug = slug.toLowerCase().trim();
+      localStorage.setItem('iris_affiliate_ref', cleanSlug);
+      sessionStorage.setItem('iris_affiliate_ref', cleanSlug);
+      console.log('[IRIS Pay] Affiliate partner detected:', cleanSlug);
+    }
+  } catch (e) {
+    console.warn('Affiliate tracking error:', e);
+  }
+
   // =========================================================================
   // 2. Real-time Live Sync (Form inputs -> Document live fields)
   // =========================================================================
@@ -1533,7 +1555,8 @@ document.addEventListener('DOMContentLoaded', () => {
         contactEmail: emailVal,
         contactPhone: phoneVal,
         contractDate: formattedDateStr,
-        signatureImageBase64: sigBase64
+        signatureImageBase64: sigBase64,
+        affiliateRef: localStorage.getItem('iris_affiliate_ref') || sessionStorage.getItem('iris_affiliate_ref') || null
       };
 
       try {

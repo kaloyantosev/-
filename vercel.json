@@ -10,6 +10,21 @@
     {
       "src": "/api/(.*)",
       "dest": "/api/$1"
+    },
+    {
+      "src": "/login",
+      "dest": "/login.html"
+    },
+    {
+      "src": "/dashboard",
+      "dest": "/dashboard.html"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/([^/]+)",
+      "dest": "/index.html"
     }
   ]
 }

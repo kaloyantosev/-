@@ -10,6 +10,7 @@
 import fs from 'fs';
 import path from 'path';
 import { generateContractPdf } from './pdfGenerator.js';
+import { recordContractAttribution } from './store.js';
 
 // Vercel body parser config
 export const config = {
@@ -72,8 +73,23 @@ export default async function handler(req, res) {
       contactPhone = '—',
       contractDate = '',
       signatureImageBase64 = null,
-      pdfBase64 = null
+      pdfBase64 = null,
+      affiliateRef = null
     } = data || {};
+
+    // Record affiliate attribution if present
+    const refCode = affiliateRef || data.ref || data.affiliate || null;
+    if (refCode) {
+      try {
+        recordContractAttribution({
+          affiliateSlug: refCode,
+          companyName: companyName,
+          companyEik: companyEik
+        });
+      } catch (attErr) {
+        console.warn('Could not record contract attribution:', attErr);
+      }
+    }
 
     const targetEmail = data.targetEmail || data.recipientEmail || process.env.CONTRACT_RECIPIENT_EMAIL || 'sales@irisbgsf.com';
     const cleanCompName = (companyName && companyName !== '—')
