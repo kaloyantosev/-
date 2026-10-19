@@ -218,7 +218,7 @@ export async function getAffiliatesData({ month = '', fromDate = '', toDate = ''
   return store.affiliates.map(aff => {
     // Filter contracts for this affiliate
     const affContracts = store.contracts.filter(c => {
-      if (c.affiliateSlug.toLowerCase() !== aff.slug.toLowerCase()) return false;
+      if (!c.affiliateSlug || c.affiliateSlug.toLowerCase() !== aff.slug.toLowerCase()) return false;
 
       const cDate = new Date(c.date);
       if (isNaN(cDate.getTime())) return false;
@@ -248,12 +248,12 @@ export async function getAffiliatesData({ month = '', fromDate = '', toDate = ''
 
     // Total all-time contracts
     const totalAllTime = store.contracts.filter(
-      c => c.affiliateSlug.toLowerCase() === aff.slug.toLowerCase()
+      c => c.affiliateSlug && c.affiliateSlug.toLowerCase() === aff.slug.toLowerCase()
     ).length;
 
     // Latest contract date
     const latestContract = store.contracts
-      .filter(c => c.affiliateSlug.toLowerCase() === aff.slug.toLowerCase())
+      .filter(c => c.affiliateSlug && c.affiliateSlug.toLowerCase() === aff.slug.toLowerCase())
       .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
 
     return {

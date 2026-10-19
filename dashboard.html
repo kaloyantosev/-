@@ -980,9 +980,20 @@
           renderSummary(data.summary, month, fromDate, toDate);
           renderTable(data.affiliates);
           populateMonthsDropdown(data.summary?.monthsList || []);
+        } else {
+          partnersTableBody.innerHTML = `
+            <tr class="empty-row">
+              <td colspan="5" style="color: #ef4444;">Грешка при зареждане: ${escapeHtml(data.error || 'Сървърът върна неуспешен отговор')}</td>
+            </tr>
+          `;
         }
       } catch (err) {
         console.error('Error fetching affiliates data:', err);
+        partnersTableBody.innerHTML = `
+          <tr class="empty-row">
+            <td colspan="5" style="color: #ef4444;">Грешка при връзка със сървъра. Моля, опитайте отново след малко.</td>
+          </tr>
+        `;
       }
     }
 
