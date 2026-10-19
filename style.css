@@ -839,8 +839,29 @@ select.form-select-styled option:disabled {
   transition: background 0.15s ease;
 }
 
-.btn-primary-compact:hover {
+.btn-primary-compact:hover:not(:disabled):not(.btn-disabled) {
   background-color: var(--dark-btn-hover);
+}
+
+.btn-primary-compact:disabled,
+.btn-primary-compact.btn-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background-color: #64748b !important;
+  box-shadow: none !important;
+  pointer-events: auto; /* allows click to trigger explanation warning */
+}
+
+@keyframes shakeAnimation {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+.shake-error {
+  animation: shakeAnimation 0.4s ease-in-out !important;
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25) !important;
 }
 
 /* Confirmation Card */

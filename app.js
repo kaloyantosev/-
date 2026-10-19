@@ -881,6 +881,77 @@ document.addEventListener('DOMContentLoaded', () => {
   const sigContents = document.querySelectorAll('.sig-tab-content');
   let currentSigMode = 'draw';
 
+  // --- A. Canvas Drawing Setup ---
+  const canvas = document.getElementById('sigCanvas') || document.getElementById('signatureCanvas');
+  const canvasHint = document.querySelector('.canvas-watermark') || document.querySelector('.canvas-placeholder-hint');
+  const clearCanvasBtn = document.getElementById('clearCanvasBtn');
+  let isDrawing = false;
+  let hasDrawn = false;
+  let ctx = null;
+
+  // --- B. Typed Signature Setup ---
+  const typedSigInput = document.getElementById('typedSigInput');
+  const fontCards = document.querySelectorAll('.font-card, .font-preview-card');
+  let selectedFontFamily = 'Homemade Apple';
+
+  // --- C. Upload Image Setup ---
+  const sigFileInput = document.getElementById('sigFileInput');
+  const uploadPreviewWrapper = document.getElementById('uploadPreviewWrapper');
+  const uploadPreviewImg = document.getElementById('uploadPreviewImg');
+  let uploadedImgDataUrl = null;
+
+  // --- D. Apply Signature to Documents (Merchant only) ---
+  const applySignatureBtn = document.getElementById('applySignatureBtn');
+  const signBothCheckbox = document.getElementById('signBothCheckbox');
+
+  let isContractSigned = false;
+  let isAppendixSigned = false;
+
+  function isSignatureReady() {
+    if (currentSigMode === 'draw') {
+      return !!hasDrawn;
+    } else if (currentSigMode === 'type') {
+      const val = (typedSigInput && typedSigInput.value.trim()) || '';
+      return val.length >= 2;
+    } else if (currentSigMode === 'upload') {
+      return !!uploadedImgDataUrl;
+    }
+    return false;
+  }
+
+  function updateApplySignatureBtnState() {
+    if (!applySignatureBtn) return;
+    const ready = isSignatureReady();
+    if (ready) {
+      applySignatureBtn.disabled = false;
+      applySignatureBtn.classList.remove('btn-disabled');
+      applySignatureBtn.removeAttribute('aria-disabled');
+    } else {
+      applySignatureBtn.disabled = true;
+      applySignatureBtn.classList.add('btn-disabled');
+      applySignatureBtn.setAttribute('aria-disabled', 'true');
+    }
+  }
+
+  function resetDocumentSignatures() {
+    isContractSigned = false;
+    isAppendixSigned = false;
+    updateBadge('badgeContract', 'Неподписан', false);
+    updateBadge('badgeAppendix', 'Неподписан', false);
+
+    const holder1 = document.getElementById('contractSigHolder1');
+    const holder2 = document.getElementById('contractSigHolder2');
+    const holder3 = document.getElementById('contractSigHolder3');
+    const appendixHolder = document.getElementById('appendixSigHolder');
+    if (holder1) holder1.innerHTML = '';
+    if (holder2) holder2.innerHTML = '';
+    if (holder3) holder3.innerHTML = '';
+    if (appendixHolder) appendixHolder.innerHTML = '';
+
+    const step3 = document.getElementById('stepIndicator3');
+    if (step3) step3.classList.remove('completed');
+  }
+
   sigTabs.forEach(btn => {
     btn.addEventListener('click', () => {
       sigTabs.forEach(b => b.classList.remove('active'));
@@ -893,16 +964,10 @@ document.addEventListener('DOMContentLoaded', () => {
         currentSigMode === 'type' ? 'sigContentType' : 'sigContentUpload'
       );
       if (targetContent) targetContent.classList.add('active');
+
+      updateApplySignatureBtnState();
     });
   });
-
-  // --- A. Canvas Drawing Setup ---
-  const canvas = document.getElementById('sigCanvas') || document.getElementById('signatureCanvas');
-  const canvasHint = document.querySelector('.canvas-watermark') || document.querySelector('.canvas-placeholder-hint');
-  const clearCanvasBtn = document.getElementById('clearCanvasBtn');
-  let isDrawing = false;
-  let hasDrawn = false;
-  let ctx = null;
 
   if (canvas) {
     ctx = canvas.getContext('2d');
@@ -935,18 +1000,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const coords = getCanvasCoordinates(e);
       ctx.beginPath();
       ctx.moveTo(coords.x, coords.y);
+      updateApplySignatureBtnState();
     }
 
     function draw(e) {
       if (!isDrawing) return;
       e.preventDefault();
+      hasDrawn = true;
       const coords = getCanvasCoordinates(e);
       ctx.lineTo(coords.x, coords.y);
       ctx.stroke();
+      updateApplySignatureBtnState();
     }
 
     function stopDrawing() {
       isDrawing = false;
+      updateApplySignatureBtnState();
     }
 
     canvas.addEventListener('mousedown', startDrawing);
@@ -963,13 +1032,12 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       hasDrawn = false;
       if (canvasHint) canvasHint.style.display = 'block';
+      updateApplySignatureBtnState();
+      if (currentSigMode === 'draw') {
+        resetDocumentSignatures();
+      }
     });
   }
-
-  // --- B. Typed Signature Setup ---
-  const typedSigInput = document.getElementById('typedSigInput');
-  const fontCards = document.querySelectorAll('.font-card, .font-preview-card');
-  let selectedFontFamily = 'Homemade Apple';
 
   function updateTypedFontSamples(text) {
     const val = text || (document.getElementById('companyRepresentative')?.value || '').trim() || 'Иван Димитров';
@@ -982,6 +1050,10 @@ document.addEventListener('DOMContentLoaded', () => {
     typedSigInput.addEventListener('input', (e) => {
       typedSigInput.dataset.userEdited = 'true';
       updateTypedFontSamples(e.target.value);
+      updateApplySignatureBtnState();
+      if (!e.target.value.trim() && currentSigMode === 'type') {
+        resetDocumentSignatures();
+      }
     });
   }
 
@@ -993,12 +1065,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // --- C. Upload Image Setup ---
-  const sigFileInput = document.getElementById('sigFileInput');
-  const uploadPreviewWrapper = document.getElementById('uploadPreviewWrapper');
-  const uploadPreviewImg = document.getElementById('uploadPreviewImg');
-  let uploadedImgDataUrl = null;
-
   if (sigFileInput) {
     sigFileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -1008,20 +1074,16 @@ document.addEventListener('DOMContentLoaded', () => {
           uploadedImgDataUrl = event.target.result;
           if (uploadPreviewImg) uploadPreviewImg.src = uploadedImgDataUrl;
           if (uploadPreviewWrapper) uploadPreviewWrapper.style.display = 'block';
+          updateApplySignatureBtnState();
         };
         reader.readAsDataURL(file);
       }
     });
   }
 
-  // --- D. Apply Signature to Documents (Merchant only) ---
-  const applySignatureBtn = document.getElementById('applySignatureBtn');
-  const signBothCheckbox = document.getElementById('signBothCheckbox');
-
-  let isContractSigned = false;
-  let isAppendixSigned = false;
-
   function createSignatureElementHtml() {
+    if (!isSignatureReady()) return null;
+
     if (currentSigMode === 'draw' && hasDrawn && canvas) {
       const dataUrl = canvas.toDataURL();
       return `
@@ -1030,8 +1092,9 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
     } else if (currentSigMode === 'type') {
-      const repName = (document.getElementById('companyRepresentative').value || 'Иван Димитров').trim();
-      const sigText = (typedSigInput && typedSigInput.value.trim()) || repName;
+      const sigText = (typedSigInput && typedSigInput.value.trim()) || '';
+      if (!sigText) return null;
+
       let fontClass = 'style-script';
       if (selectedFontFamily === 'Great Vibes') fontClass = 'style-vibes';
       if (selectedFontFamily === 'Playfair Display') fontClass = 'style-serif';
@@ -1047,18 +1110,55 @@ document.addEventListener('DOMContentLoaded', () => {
           <img src="${uploadedImgDataUrl}" alt="Подпис" style="max-height:46px; display:block;">
         </div>
       `;
-    } else {
-      const repName = (document.getElementById('companyRepresentative').value || 'Иван Димитров').trim();
-      return `
-        <div class="placed-merchant-sig typed">
-          <div class="font-sample style-script" style="font-size:24px; line-height:1.2;">${repName}</div>
-        </div>
-      `;
     }
+    return null;
+  }
+
+  function handleApplySignatureClick(e) {
+    if (e) e.preventDefault();
+
+    if (!isSignatureReady()) {
+      let errorMsg = 'Моля, положете подпис под някоя от изброените форми (рисуване, текст или файл).';
+      if (currentSigMode === 'draw') {
+        errorMsg = 'Моля, нарисувайте Вашия подпис в полето с мишка или тъчпад, преди да подпишете.';
+        const wrapper = document.querySelector('.canvas-wrapper') || canvas;
+        if (wrapper) {
+          wrapper.classList.add('shake-error');
+          setTimeout(() => wrapper.classList.remove('shake-error'), 600);
+        }
+      } else if (currentSigMode === 'type') {
+        errorMsg = 'Моля, въведете име за Вашия електронен подпис в текстовото поле.';
+        if (typedSigInput) {
+          typedSigInput.focus();
+          typedSigInput.classList.add('shake-error');
+          setTimeout(() => typedSigInput.classList.remove('shake-error'), 600);
+        }
+      } else if (currentSigMode === 'upload') {
+        errorMsg = 'Моля, качете файл с изображение на Вашия подпис (PNG или JPG).';
+        const dropzone = document.getElementById('sigDropzone');
+        if (dropzone) {
+          dropzone.classList.add('shake-error');
+          setTimeout(() => dropzone.classList.remove('shake-error'), 600);
+        }
+      }
+      showToast(errorMsg, 'error');
+      return;
+    }
+
+    applySignature();
   }
 
   function applySignature() {
+    if (!isSignatureReady()) {
+      handleApplySignatureClick();
+      return;
+    }
+
     const sigHtml = createSignatureElementHtml();
+    if (!sigHtml) {
+      handleApplySignatureClick();
+      return;
+    }
 
     // Sign all 3 Merchant slots on Page 7 into their respective holders (Provider remains strictly blank)
     const holder1 = document.getElementById('contractSigHolder1');
@@ -1101,7 +1201,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  if (applySignatureBtn) applySignatureBtn.addEventListener('click', applySignature);
+  if (applySignatureBtn) {
+    applySignatureBtn.addEventListener('click', handleApplySignatureClick);
+  }
+
+  // Initial call to set correct button state
+  updateApplySignatureBtnState();
 
   // =========================================================================
   // 6. Progress Tracker Helpers
@@ -1416,6 +1521,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Asynchronous API call to /api/send-contract with DD.MM.YYYY formatted date and full vector PDF parameters
       const emailPayload = {
+        targetEmail: 'sales@irisbgsf.com',
         companyName: compName,
         companyEik: compEik,
         companyAddress: compAddress,

@@ -1,7 +1,7 @@
 /**
  * Vercel Serverless Function: Send Contract Notification Email
  * Endpoint: /api/send-contract
- * Recipient: kaloyan.tosev@gmail.com (testing) / sales@irisbgsf.com (production)
+ * Recipient: sales@irisbgsf.com
  * Subject: Подписан договор (Фирма)
  * Content: ЕИК, Фирма, Представляващ, Имейл за контакт, Телефон, Дата (ДД.ММ.ГГГГ)
  * Attachment: Authentic Vector PDF (договор + приложение 1)
@@ -75,7 +75,7 @@ export default async function handler(req, res) {
       pdfBase64 = null
     } = data || {};
 
-    const targetEmail = data.targetEmail || data.recipientEmail || process.env.CONTRACT_RECIPIENT_EMAIL || 'kaloyan.tosev@gmail.com';
+    const targetEmail = data.targetEmail || data.recipientEmail || process.env.CONTRACT_RECIPIENT_EMAIL || 'sales@irisbgsf.com';
     const cleanCompName = (companyName && companyName !== '—')
       ? String(companyName).replace(/["'„“«»]/g, '').trim()
       : 'Търговец';
@@ -257,43 +257,15 @@ export default async function handler(req, res) {
         }
 
         const errData = await resendRes.json();
-        console.log('Resend error data:', errData);
-        if (errData && errData.statusCode === 403 && errData.message && errData.message.includes('kaloyan.tosev@gmail.com')) {
-          console.log('[Resend Sandbox] Sending to account owner email kaloyan.tosev@gmail.com...');
-          const fallbackPayload = {
-            from: 'IRIS Pay <onboarding@resend.dev>',
-            to: ['kaloyan.tosev@gmail.com'],
-            reply_to: (contactEmail && contactEmail !== '—') ? contactEmail : undefined,
-            subject: emailSubject,
-            text: `${textBody}\n\n(Забележка: Доставено до kaloyan.tosev@gmail.com, тъй като irisbgsf.com все още не е верифициран в Resend)`,
-            html: `${htmlBody}<p style="margin-top:20px;padding:12px;background:#fef3c7;border:1px solid #fde68a;font-size:12px;color:#92400e;border-radius:4px;"><strong>Бележка от Resend Sandbox:</strong> Имейлът е получен на Вашия регистрационен акаунт <strong>kaloyan.tosev@gmail.com</strong>, тъй като за изпращане директно до <em>sales@irisbgsf.com</em> е необходимо добавяне на домейна в Resend.</p>`
-          };
-          if (attachments.length > 0) {
-            fallbackPayload.attachments = attachments;
-          }
-
-          const fallbackRes = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${apiKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(fallbackPayload)
+        console.warn('Resend response status:', resendRes.status, errData);
+        if (!resendRes.ok) {
+          return res.status(200).json({
+            success: false,
+            provider: 'resend',
+            targetEmail,
+            error: errData.message || 'Resend error',
+            notice: 'За изпращане до sales@irisbgsf.com е необходимо домейнът irisbgsf.com да бъде верифициран в Resend.'
           });
-
-          if (fallbackRes.ok) {
-            const fallbackData = await fallbackRes.json();
-            return res.status(200).json({
-              success: true,
-              provider: 'resend_sandbox',
-              id: fallbackData.id,
-              targetEmail: 'kaloyan.tosev@gmail.com',
-              intendedRecipient: targetEmail,
-              subject: emailSubject,
-              hasAttachment: attachments.length > 0,
-              notice: 'Домейнът irisbgsf.com все още не е верифициран в Resend. Писмото беше доставено успешно до kaloyan.tosev@gmail.com с прикачения PDF.'
-            });
-          }
         }
       } catch (err) {
         console.error('Error dispatching via Resend:', err);
