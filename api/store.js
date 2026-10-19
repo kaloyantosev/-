@@ -1,73 +1,106 @@
 /**
  * Persistent Affiliate & Contract Attribution Store
  * IRIS Pay Document Portal
+ * 
+ * Supports both local environment and Vercel/AWS Lambda serverless environments
+ * (handles read-only /var/task filesystem by utilizing /tmp).
  */
 
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
-const DATA_FILE = path.join(ROOT_DIR, 'data', 'affiliates.json');
 
-// Initial verified partners list
-const DEFAULT_AFFILIATES = [
-  { id: 'aff_1', name: 'ЛЛВ Технолоджис ЕООД', slug: 'llv-tech', email: 'sales@llvtechnology.com', createdAt: '2026-09-01T09:00:00.000Z', active: true },
-  { id: 'aff_2', name: 'ТЕХ АКАДЕМИ ООД', slug: 'tech-academy', email: 'office@tech-academy.bg', createdAt: '2026-09-02T10:00:00.000Z', active: true },
-  { id: 'aff_3', name: 'УРУКИ ООД', slug: 'uruki', email: 'uruki.ltd@gmail.com', createdAt: '2026-09-05T11:30:00.000Z', active: true },
-  { id: 'aff_4', name: 'Счетоводна кантора Елвада ЕООД', slug: 'elvada', email: 'elvada@elvada.com', createdAt: '2026-09-08T14:00:00.000Z', active: true },
-  { id: 'aff_5', name: 'Финблокс ЕООД', slug: 'finblox', email: 'george.shulev@finblox.io', createdAt: '2026-09-10T15:20:00.000Z', active: true },
-  { id: 'aff_6', name: 'ПропъртиПиърс ООД', slug: 'propertypeers', email: 'sarasovi@propertypeers.eu', createdAt: '2026-09-12T09:45:00.000Z', active: true },
-  { id: 'aff_7', name: 'Локалс ООД', slug: 'locals', email: 'evgenia.kondeva@locals.bg', createdAt: '2026-09-15T12:00:00.000Z', active: true },
-  { id: 'aff_8', name: 'ТУГУД ТЕХНОЛОДЖИС ЕООД', slug: '2good-tech', email: 'office@2good.tech', createdAt: '2026-09-18T16:15:00.000Z', active: true },
-  { id: 'aff_9', name: 'БАЛКАН СЪРВИСИС ООД', slug: 'balkan-services', email: 'vladimir.rashev@balkanservices.com', createdAt: '2026-09-20T10:30:00.000Z', active: true },
-  { id: 'aff_10', name: 'Карма 17 ЕООД', slug: 'karma17', email: 'bob.bojkov@gmail.com', createdAt: '2026-09-22T13:40:00.000Z', active: true }
-];
+const LOCAL_DATA_DIR = path.join(ROOT_DIR, 'data');
+const LOCAL_DATA_FILE = path.join(LOCAL_DATA_DIR, 'affiliates.json');
+const TMP_DATA_FILE = path.join(os.tmpdir(), 'iris_affiliates.json');
 
-// Initial demo contracts to provide immediately visible, realistic statistics
-const DEFAULT_CONTRACTS = [
-  { id: 'cnt_101', affiliateSlug: 'tech-academy', companyName: '„Нова Трейд“ ЕООД', companyEik: '201948123', date: '2026-09-14T11:20:00.000Z' },
-  { id: 'cnt_102', affiliateSlug: 'tech-academy', companyName: '„Дигитал Плюс“ ООД', companyEik: '204128994', date: '2026-09-28T14:35:00.000Z' },
-  { id: 'cnt_103', affiliateSlug: 'tech-academy', companyName: '„ИТ Солюшънс БГ“ ЕООД', companyEik: '205881472', date: '2026-10-04T10:15:00.000Z' },
-  { id: 'cnt_104', affiliateSlug: 'elvada', companyName: '„Прогрес Мениджмънт“ ООД', companyEik: '131492001', date: '2026-09-19T16:40:00.000Z' },
-  { id: 'cnt_105', affiliateSlug: 'elvada', companyName: '„Смарт Файнънс“ ЕООД', companyEik: '206711902', date: '2026-10-11T13:05:00.000Z' },
-  { id: 'cnt_106', affiliateSlug: 'llv-tech', companyName: '„Алфа Софтуер“ ООД', companyEik: '203491823', date: '2026-09-25T09:50:00.000Z' },
-  { id: 'cnt_107', affiliateSlug: 'balkan-services', companyName: '„Еко Логистика“ ЕАД', companyEik: '175293041', date: '2026-10-08T15:30:00.000Z' },
-  { id: 'cnt_108', affiliateSlug: 'finblox', companyName: '„Криптопей БГ“ ЕООД', companyEik: '207119448', date: '2026-10-15T12:10:00.000Z' }
-];
+// All demo/initial affiliate links removed as requested
+const DEFAULT_AFFILIATES = [];
+const DEFAULT_CONTRACTS = [];
 
-function ensureDataFile() {
-  const dir = path.dirname(DATA_FILE);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  if (!fs.existsSync(DATA_FILE)) {
-    const initialData = {
-      affiliates: DEFAULT_AFFILIATES,
-      contracts: DEFAULT_CONTRACTS,
-      updatedAt: new Date().toISOString()
-    };
-    fs.writeFileSync(DATA_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
-  }
-}
+// In-memory cache for fast read/write within the container
+let cachedStore = null;
 
+const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+
+/**
+ * Load store data from /tmp (if modified), bundled local file, or default empty structure
+ */
 export function loadStore() {
-  ensureDataFile();
-  try {
-    const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-    return JSON.parse(raw);
-  } catch (err) {
-    console.error('[Store] Error loading data file, re-initializing:', err);
-    return { affiliates: DEFAULT_AFFILIATES, contracts: DEFAULT_CONTRACTS };
+  if (cachedStore) {
+    return cachedStore;
   }
+
+  // 1. Try /tmp file first (contains latest writes in serverless)
+  try {
+    if (fs.existsSync(TMP_DATA_FILE)) {
+      const raw = fs.readFileSync(TMP_DATA_FILE, 'utf-8');
+      cachedStore = JSON.parse(raw);
+      return cachedStore;
+    }
+  } catch (err) {
+    console.warn('[Store] Warning reading tmp data file:', err.message);
+  }
+
+  // 2. Try local project file
+  try {
+    if (fs.existsSync(LOCAL_DATA_FILE)) {
+      const raw = fs.readFileSync(LOCAL_DATA_FILE, 'utf-8');
+      cachedStore = JSON.parse(raw);
+      return cachedStore;
+    }
+  } catch (err) {
+    console.warn('[Store] Warning reading local data file:', err.message);
+  }
+
+  // 3. Fallback to empty default
+  cachedStore = {
+    affiliates: DEFAULT_AFFILIATES,
+    contracts: DEFAULT_CONTRACTS,
+    updatedAt: new Date().toISOString()
+  };
+  return cachedStore;
 }
 
+/**
+ * Save store data safely without crashing on read-only filesystems (EROFS)
+ */
 export function saveStore(data) {
-  ensureDataFile();
+  cachedStore = data;
   data.updatedAt = new Date().toISOString();
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  const serialized = JSON.stringify(data, null, 2);
+
+  // In serverless environments, /var/task is read-only (EROFS). Always write to /tmp.
+  if (IS_SERVERLESS) {
+    try {
+      fs.writeFileSync(TMP_DATA_FILE, serialized, 'utf-8');
+      return;
+    } catch (err) {
+      console.error('[Store] Error writing to tmp data file:', err);
+      return;
+    }
+  }
+
+  // In local development, try local directory first
+  try {
+    if (!fs.existsSync(LOCAL_DATA_DIR)) {
+      fs.mkdirSync(LOCAL_DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(LOCAL_DATA_FILE, serialized, 'utf-8');
+  } catch (err) {
+    // If local write fails (e.g. read-only permission / EROFS), fall back to /tmp
+    console.warn('[Store] Local write failed with', err.code || err.message, '- falling back to tmpdir');
+    try {
+      fs.writeFileSync(TMP_DATA_FILE, serialized, 'utf-8');
+    } catch (tmpErr) {
+      console.error('[Store] Failed to write to tmp fallback:', tmpErr);
+    }
+  }
 }
 
 /**
@@ -98,65 +131,63 @@ export function getAffiliatesData({ month = '', fromDate = '', toDate = '', sear
       const cDate = new Date(c.date);
       if (isNaN(cDate.getTime())) return false;
 
-      // Month filter: format YYYY-MM
+      // Filter by Month: format YYYY-MM
       if (month) {
-        const cYearMonth = `${cDate.getFullYear()}-${String(cDate.getMonth() + 1).padStart(2, '0')}`;
-        if (cYearMonth !== month) return false;
+        const cMonth = `${cDate.getFullYear()}-${String(cDate.getMonth() + 1).padStart(2, '0')}`;
+        if (cMonth !== month) return false;
       }
 
-      // From date filter: format YYYY-MM-DD
+      // Filter by Date From: format YYYY-MM-DD
       if (fromDate) {
         const from = new Date(fromDate);
-        if (!isNaN(from.getTime()) && cDate < from) return false;
+        from.setHours(0, 0, 0, 0);
+        if (cDate < from) return false;
       }
 
-      // To date filter: format YYYY-MM-DD (end of day)
+      // Filter by Date To: format YYYY-MM-DD
       if (toDate) {
         const to = new Date(toDate);
         to.setHours(23, 59, 59, 999);
-        if (!isNaN(to.getTime()) && cDate > to) return false;
+        if (cDate > to) return false;
       }
 
       return true;
     });
 
-    const allContractsForAff = store.contracts.filter(
+    // Total all-time contracts
+    const totalAllTime = store.contracts.filter(
       c => c.affiliateSlug.toLowerCase() === aff.slug.toLowerCase()
-    );
+    ).length;
 
-    // Find latest contract date
-    let lastContractDate = null;
-    if (allContractsForAff.length > 0) {
-      const sorted = [...allContractsForAff].sort((a, b) => new Date(b.date) - new Date(a.date));
-      lastContractDate = sorted[0].date;
-    }
+    // Latest contract date
+    const latestContract = store.contracts
+      .filter(c => c.affiliateSlug.toLowerCase() === aff.slug.toLowerCase())
+      .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
 
     return {
       id: aff.id,
       name: aff.name,
       slug: aff.slug,
-      email: aff.email || '',
       createdAt: aff.createdAt,
       active: aff.active !== false,
       contractCount: affContracts.length,
-      totalContractCount: allContractsForAff.length,
-      lastContractDate,
+      totalContractCount: totalAllTime,
+      lastContractDate: latestContract ? latestContract.date : null,
       contracts: affContracts
     };
   }).filter(aff => {
     if (!searchLower) return true;
     return (
       aff.name.toLowerCase().includes(searchLower) ||
-      aff.slug.toLowerCase().includes(searchLower) ||
-      (aff.email && aff.email.toLowerCase().includes(searchLower))
+      aff.slug.toLowerCase().includes(searchLower)
     );
   }).sort((a, b) => b.contractCount - a.contractCount || a.name.localeCompare(b.name));
 }
 
 /**
- * Create a new affiliate partner
+ * Create a new affiliate partner (without email)
  */
-export function createAffiliate({ name, slug, email = '' }) {
+export function createAffiliate({ name, slug }) {
   const store = loadStore();
   const cleanName = String(name || '').trim();
   const cleanSlug = sanitizeSlug(slug || name);
@@ -178,7 +209,6 @@ export function createAffiliate({ name, slug, email = '' }) {
     id: 'aff_' + Date.now(),
     name: cleanName,
     slug: cleanSlug,
-    email: String(email || '').trim(),
     createdAt: new Date().toISOString(),
     active: true
   };
@@ -205,7 +235,6 @@ export function recordContractAttribution({ affiliateSlug, companyName, companyE
       id: 'aff_' + Date.now(),
       name: cleanSlug.charAt(0).toUpperCase() + cleanSlug.slice(1),
       slug: cleanSlug,
-      email: '',
       createdAt: new Date().toISOString(),
       active: true
     };
@@ -251,23 +280,17 @@ export function getDashboardSummary({ month = '', fromDate = '', toDate = '' } =
     }
   });
 
-  // Always include current and previous month
-  const now = new Date();
-  const curYm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const prevYm = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
-  monthsSet.add(curYm);
-  monthsSet.add(prevYm);
+  const monthNamesBG = [
+    'Януари', 'Февруари', 'Март', 'Април', 'Май', 'Юни',
+    'Юли', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'
+  ];
 
   const monthsList = Array.from(monthsSet).sort().reverse().map(ym => {
     const [y, m] = ym.split('-');
-    const monthNames = [
-      'Януари', 'Февруари', 'Март', 'Април', 'Май', 'Юни',
-      'Юли', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'
-    ];
+    const mIdx = parseInt(m, 10) - 1;
     return {
       value: ym,
-      label: `${monthNames[parseInt(m, 10) - 1]} ${y} г.`
+      label: `${monthNamesBG[mIdx]} ${y} г.`
     };
   });
 

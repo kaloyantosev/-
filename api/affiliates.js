@@ -52,13 +52,13 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-      const { name, slug, email } = body || {};
+      const { name, slug } = body || {};
 
       if (!name || !String(name).trim()) {
         return res.status(400).json({ error: 'Името на партньора е задължително.' });
       }
 
-      const created = createAffiliate({ name, slug, email });
+      const created = createAffiliate({ name, slug });
 
       return res.status(201).json({
         success: true,

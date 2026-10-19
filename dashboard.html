@@ -761,19 +761,6 @@
             </span>
           </div>
 
-          <div style="margin-bottom: 16px;">
-            <label style="display:block; font-size:13px; font-weight:600; color:var(--primary); margin-bottom:6px;">
-              Имейл за контакт (по избор):
-            </label>
-            <input 
-              type="email" 
-              id="newPartnerEmail" 
-              class="filter-input" 
-              placeholder="partner@example.bg" 
-              style="width: 100%; height: 42px;"
-            >
-          </div>
-
           <!-- Live Preview Box -->
           <div class="preview-link-box">
             <div class="preview-link-label">Вашият афилиейт линк ще бъде:</div>
@@ -867,7 +854,6 @@
     const createAffiliateForm = document.getElementById('createAffiliateForm');
     const newPartnerName = document.getElementById('newPartnerName');
     const newPartnerSlug = document.getElementById('newPartnerSlug');
-    const newPartnerEmail = document.getElementById('newPartnerEmail');
     const previewUrlText = document.getElementById('previewUrlText');
 
     // Details Modal Elements
@@ -1033,9 +1019,13 @@
       partnersTableBody.innerHTML = '';
 
       if (!affiliates || affiliates.length === 0) {
+        const hasFilters = filterMonth.value || filterFrom.value || filterTo.value || searchPartner.value.trim();
+        const emptyMsg = hasFilters 
+          ? 'Няма намерени партньори по избраните критерии.' 
+          : 'Все още няма добавени affiliate линкове. Натиснете бутона „Генерирай нов Affiliate Link“, за да създадете първия.';
         partnersTableBody.innerHTML = `
           <tr class="empty-row">
-            <td colspan="5">Няма намерени партньори по избраните критерии.</td>
+            <td colspan="5">${emptyMsg}</td>
           </tr>
         `;
         return;
@@ -1050,7 +1040,6 @@
         tr.innerHTML = `
           <td>
             <div class="partner-name-cell">${escapeHtml(aff.name)}</div>
-            ${aff.email ? `<div class="partner-email-sub">✉️ ${escapeHtml(aff.email)}</div>` : ''}
           </td>
           <td>
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -1164,7 +1153,6 @@
       e.preventDefault();
       const name = newPartnerName.value.trim();
       const slug = newPartnerSlug.value.trim();
-      const email = newPartnerEmail.value.trim();
 
       if (!name || !slug) return;
 
@@ -1176,7 +1164,7 @@
         const res = await fetch('/api/affiliates', {
           method: 'POST',
           headers: getAuthHeaders(),
-          body: JSON.stringify({ name, slug, email })
+          body: JSON.stringify({ name, slug })
         });
 
         const data = await res.json();
