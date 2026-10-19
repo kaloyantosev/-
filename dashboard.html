@@ -814,7 +814,10 @@
   <script>
     // 1. Session verification & Token handling
     const token = localStorage.getItem('iris_auth_token') || sessionStorage.getItem('iris_auth_token');
-    
+    if (!token) {
+      window.location.replace('/login');
+    }
+
     function getAuthHeaders() {
       const headers = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = 'Bearer ' + token;
@@ -822,14 +825,17 @@
     }
 
     async function checkAuth() {
+      if (!token) return;
       try {
         const res = await fetch('/api/auth?action=check', { headers: getAuthHeaders() });
         const data = await res.json();
         if (!data || !data.authenticated) {
+          localStorage.removeItem('iris_auth_token');
+          sessionStorage.removeItem('iris_auth_token');
           window.location.replace('/login');
         }
       } catch (err) {
-        window.location.replace('/login');
+        console.error('Auth verification error:', err);
       }
     }
     checkAuth();
@@ -953,6 +959,8 @@
         });
 
         if (res.status === 401) {
+          localStorage.removeItem('iris_auth_token');
+          sessionStorage.removeItem('iris_auth_token');
           window.location.replace('/login');
           return;
         }

@@ -9,15 +9,14 @@
  * Security features:
  * - HMAC-SHA256 / timingSafeEqual password verification (prevents timing attacks)
  * - Anti-Brute-Force Rate Limiting (locks out after 5 failed attempts for 15 min)
- * - Cryptographic 256-bit session tokens with expiration
- * - HttpOnly & SameSite=Strict cookie + Bearer token support
- * - Session invalidation on logout
+ * - Cryptographically signed stateless session tokens (tamper-proof, robust across all lambda/server environments)
+ * - HttpOnly & SameSite=Lax cookie + Bearer token support
  */
 
 import crypto from 'crypto';
 
-// Server salt for password hashing (unique to instance)
-const SERVER_SALT = process.env.AUTH_SECRET || 'iris_pay_secure_salt_8f4b29a10c7e43d';
+// Server secret salt for password hashing & token signing
+const SERVER_SALT = process.env.AUTH_SECRET || 'iris_pay_secure_salt_8f4b29a10c7e43d99a2f7';
 
 // Valid credentials
 const VALID_USERNAME = 'sales';
@@ -26,8 +25,6 @@ const EXPECTED_HASH = crypto.createHmac('sha256', SERVER_SALT).update('1!2@3№4
 
 // In-memory rate-limiting store: ip -> { attempts: count, lockoutUntil: timestamp, firstAttempt: timestamp }
 const rateLimitMap = new Map();
-// Active sessions store: token -> { user, ip, userAgent, createdAt, expiresAt }
-const sessionsMap = new Map();
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
@@ -54,7 +51,7 @@ function checkRateLimit(ip) {
       allowed: false,
       lockout: true,
       minutesLeft,
-      message: `Твърде много неуспешни опити. Достъпът е блокиран за още ${minutesLeft} минути с цел защита.`
+      message: `Твърде много неуспешни опити. Достъпът е временно блокиран за ${minutesLeft} минути с цел защита.`
     };
   }
 
@@ -84,6 +81,21 @@ function resetRateLimit(ip) {
   rateLimitMap.delete(ip);
 }
 
+/**
+ * Creates a cryptographically signed session token.
+ * Stateless, tamper-proof, and resilient across multiple serverless lambdas.
+ */
+export function createSessionToken(username) {
+  const payload = {
+    user: username,
+    exp: Date.now() + SESSION_TTL_MS,
+    nonce: crypto.randomBytes(16).toString('hex')
+  };
+  const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto.createHmac('sha256', SERVER_SALT).update(payloadB64).digest('base64url');
+  return `${payloadB64}.${signature}`;
+}
+
 export function extractToken(req) {
   // 1. From Authorization Header
   const authHeader = req.headers['authorization'] || '';
@@ -108,18 +120,34 @@ export function extractToken(req) {
 
 export function verifySession(req) {
   const token = extractToken(req);
-  if (!token) return null;
+  if (!token || typeof token !== 'string') return null;
 
-  const session = sessionsMap.get(token);
-  if (!session) return null;
+  const parts = token.split('.');
+  if (parts.length !== 2) return null;
 
-  // Check expiry
-  if (Date.now() > session.expiresAt) {
-    sessionsMap.delete(token);
+  const [payloadB64, signature] = parts;
+  if (!payloadB64 || !signature) return null;
+
+  const expectedSignature = crypto.createHmac('sha256', SERVER_SALT).update(payloadB64).digest('base64url');
+
+  const sigBuf = Buffer.from(signature, 'utf-8');
+  const expBuf = Buffer.from(expectedSignature, 'utf-8');
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
     return null;
   }
 
-  return session;
+  try {
+    const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf-8'));
+    if (!payload || !payload.exp || Date.now() > payload.exp) {
+      return null;
+    }
+    return {
+      user: payload.user,
+      expiresAt: payload.exp
+    };
+  } catch (err) {
+    return null;
+  }
 }
 
 export default async function handler(req, res) {
@@ -149,11 +177,7 @@ export default async function handler(req, res) {
 
   // 2. Logout endpoint
   if (action === 'logout') {
-    const token = extractToken(req);
-    if (token) {
-      sessionsMap.delete(token);
-    }
-    res.setHeader('Set-Cookie', 'iris_auth_token=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0');
+    res.setHeader('Set-Cookie', 'iris_auth_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
     return res.status(200).json({ success: true, message: 'Успешен изход.' });
   }
 
@@ -183,34 +207,25 @@ export default async function handler(req, res) {
 
     if (!isUserValid || !isPasswordValid) {
       recordFailedAttempt(ip);
-      const remainingAttempts = Math.max(0, MAX_FAILED_ATTEMPTS - (rateLimitMap.get(ip)?.attempts || 0));
+      // No remaining attempts displayed as requested by user
       return res.status(401).json({
-        error: 'Грешно потребителско име или парола.',
-        remainingAttempts: remainingAttempts > 0 ? remainingAttempts : 0
+        error: 'Грешно потребителско име или парола.'
       });
     }
 
     // Successful login: reset rate limit
     resetRateLimit(ip);
 
-    // Create secure 256-bit random session token
-    const token = crypto.randomBytes(32).toString('hex');
+    // Create cryptographically signed token
+    const token = createSessionToken(VALID_USERNAME);
     const expiresAt = Date.now() + SESSION_TTL_MS;
-
-    sessionsMap.set(token, {
-      user: VALID_USERNAME,
-      ip,
-      userAgent: req.headers['user-agent'] || '',
-      createdAt: Date.now(),
-      expiresAt
-    });
 
     console.log(`[Security] Successful login for user "${VALID_USERNAME}" from IP ${ip}`);
 
     // Set secure cookie
     res.setHeader(
       'Set-Cookie',
-      `iris_auth_token=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${SESSION_TTL_MS / 1000}`
+      `iris_auth_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_MS / 1000}`
     );
 
     return res.status(200).json({

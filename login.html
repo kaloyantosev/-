@@ -292,15 +292,19 @@
   <script>
     // 1. Check if user is already authenticated
     (async function checkExistingAuth() {
+      const token = localStorage.getItem('iris_auth_token') || sessionStorage.getItem('iris_auth_token');
+      if (!token) return;
+
       try {
-        const token = localStorage.getItem('iris_auth_token') || sessionStorage.getItem('iris_auth_token');
-        const headers = {};
-        if (token) headers['Authorization'] = 'Bearer ' + token;
-        
-        const res = await fetch('/api/auth?action=check', { headers });
+        const res = await fetch('/api/auth?action=check', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
         const data = await res.json();
         if (data && data.authenticated) {
           window.location.replace('/dashboard');
+        } else {
+          localStorage.removeItem('iris_auth_token');
+          sessionStorage.removeItem('iris_auth_token');
         }
       } catch (e) {
         // Ignore check error
@@ -381,15 +385,9 @@
             sessionStorage.setItem('iris_auth_token', data.token);
           }
           showAlert('Входът е успешен! Пренасочване...', true);
-          setTimeout(() => {
-            window.location.replace('/dashboard');
-          }, 400);
+          window.location.replace('/dashboard');
         } else {
-          let err = data.error || 'Неуспешен опит за вход.';
-          if (data.remainingAttempts !== undefined && data.remainingAttempts > 0) {
-            err += ` (Оставащи опити: ${data.remainingAttempts})`;
-          }
-          showAlert(err);
+          showAlert(data.error || 'Грешно потребителско име или парола.');
           passwordInput.value = '';
           passwordInput.focus();
         }

@@ -78,7 +78,7 @@ const server = http.createServer(async (req, res) => {
 
       try {
         const modulePath = API_ROUTES[matchedApiPath];
-        const module = await import(`${modulePath}?t=${Date.now()}`);
+        const module = await import(modulePath);
         if (typeof module.default === 'function') {
           await module.default(req, res);
         } else {
