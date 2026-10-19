@@ -98,7 +98,9 @@ export default async function handler(req, res) {
     const cleanCompName = (companyName && companyName !== '—')
       ? String(companyName).replace(/["'„“«»]/g, '').trim()
       : 'Търговец';
-    const emailSubject = `Подписан договор (${cleanCompName})`;
+    const emailSubject = partnerDisplayName
+      ? `Подписан договор (${cleanCompName}) от Партньор "${partnerDisplayName}"`
+      : `Подписан договор (${cleanCompName})`;
     const displayDate = formatBulgarianDate(contractDate);
 
     // Plain text content
