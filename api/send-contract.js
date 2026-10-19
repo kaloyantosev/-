@@ -77,25 +77,20 @@ export default async function handler(req, res) {
       affiliateRef = null
     } = data || {};
 
-    // Record affiliate attribution if present
+    // Record contract attribution (either to an affiliate or direct without partner)
     const refCode = affiliateRef || data.ref || data.affiliate || null;
     let partnerDisplayName = null;
-    if (refCode) {
-      try {
-        const attribution = await recordContractAttribution({
-          affiliateSlug: refCode,
-          companyName: companyName,
-          companyEik: companyEik
-        });
-        if (attribution && attribution.partnerName) {
-          partnerDisplayName = attribution.partnerName;
-        } else {
-          partnerDisplayName = refCode;
-        }
-      } catch (attErr) {
-        console.warn('Could not record contract attribution:', attErr);
-        partnerDisplayName = refCode;
+    try {
+      const attribution = await recordContractAttribution({
+        affiliateSlug: refCode,
+        companyName: companyName,
+        companyEik: companyEik
+      });
+      if (attribution && attribution.partnerName) {
+        partnerDisplayName = attribution.partnerName;
       }
+    } catch (attErr) {
+      console.warn('Could not record contract attribution:', attErr);
     }
 
     // Send emails directly to kaloyan.tosev@gmail.com until domain DNS is verified

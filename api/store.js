@@ -314,11 +314,36 @@ export async function createAffiliate({ name, slug }) {
  * Record a contract attribution
  */
 export async function recordContractAttribution({ affiliateSlug, companyName, companyEik }) {
-  if (!affiliateSlug) return null;
-  const cleanSlug = sanitizeSlug(affiliateSlug);
-  if (!cleanSlug) return null;
-
   const store = await loadStore();
+
+  if (!affiliateSlug) {
+    const newContract = {
+      id: 'cnt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+      affiliateSlug: null,
+      companyName: String(companyName || '—').trim(),
+      companyEik: String(companyEik || '—').trim(),
+      date: new Date().toISOString()
+    };
+    store.contracts.push(newContract);
+    await saveStore(store);
+    console.log('[Store] Direct contract recorded (no partner):', newContract);
+    return newContract;
+  }
+
+  const cleanSlug = sanitizeSlug(affiliateSlug);
+  if (!cleanSlug) {
+    const newContract = {
+      id: 'cnt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+      affiliateSlug: null,
+      companyName: String(companyName || '—').trim(),
+      companyEik: String(companyEik || '—').trim(),
+      date: new Date().toISOString()
+    };
+    store.contracts.push(newContract);
+    await saveStore(store);
+    console.log('[Store] Direct contract recorded (no partner):', newContract);
+    return newContract;
+  }
 
   // If partner does not exist yet, auto-register as custom affiliate
   let aff = store.affiliates.find(a => a.slug.toLowerCase() === cleanSlug.toLowerCase());
@@ -382,6 +407,31 @@ export async function getDashboardSummary({ month = '', fromDate = '', toDate = 
   const totalContractsAllTime = store.contracts.length;
   const periodContracts = affiliates.reduce((sum, a) => sum + a.contractCount, 0);
 
+  // Direct contracts without partner
+  const directContractsInPeriod = store.contracts.filter(c => {
+    if (c.affiliateSlug) return false;
+    const cDate = new Date(c.date);
+    if (isNaN(cDate.getTime())) return false;
+    if (month) {
+      const cMonth = `${cDate.getFullYear()}-${String(cDate.getMonth() + 1).padStart(2, '0')}`;
+      if (cMonth !== month) return false;
+    }
+    if (fromDate) {
+      const from = new Date(fromDate);
+      from.setHours(0, 0, 0, 0);
+      if (cDate < from) return false;
+    }
+    if (toDate) {
+      const to = new Date(toDate);
+      to.setHours(23, 59, 59, 999);
+      if (cDate > to) return false;
+    }
+    return true;
+  });
+
+  const directContractsCount = directContractsInPeriod.length;
+  const directContractsAllTime = store.contracts.filter(c => !c.affiliateSlug).length;
+
   // Top performing partner in period
   const topPartner = affiliates.length > 0 && affiliates[0].contractCount > 0
     ? { name: affiliates[0].name, slug: affiliates[0].slug, count: affiliates[0].contractCount }
@@ -421,6 +471,9 @@ export async function getDashboardSummary({ month = '', fromDate = '', toDate = 
     totalPartners,
     totalContractsAllTime,
     periodContracts,
+    directContractsCount,
+    directContractsAllTime,
+    directContractsList: directContractsInPeriod,
     topPartner,
     monthsList,
     cloudStatus

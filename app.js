@@ -45,11 +45,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (urlParams.get('ref')) {
       slug = urlParams.get('ref');
     }
+    if (urlParams.get('affiliate')) {
+      slug = urlParams.get('affiliate');
+    }
     if (slug) {
       const cleanSlug = slug.toLowerCase().trim();
-      localStorage.setItem('iris_affiliate_ref', cleanSlug);
       sessionStorage.setItem('iris_affiliate_ref', cleanSlug);
+      window.irisCurrentAffiliate = cleanSlug;
       console.log('[IRIS Pay] Affiliate partner detected:', cleanSlug);
+    } else {
+      // Direct visit without /slug: CLEAR any cached affiliate
+      localStorage.removeItem('iris_affiliate_ref');
+      sessionStorage.removeItem('iris_affiliate_ref');
+      window.irisCurrentAffiliate = null;
+      console.log('[IRIS Pay] Direct visit without partner');
     }
   } catch (e) {
     console.warn('Affiliate tracking error:', e);
@@ -1541,6 +1550,26 @@ document.addEventListener('DOMContentLoaded', () => {
       const websiteVal = getCombinedWebsites();
       const contactAddressVal = (document.getElementById('contactAddress')?.value || compAddress || '').trim();
 
+      // Check current affiliate ref strictly from URL / session
+      let currentAffRef = null;
+      try {
+        const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
+        const ignored = ['login', 'dashboard', 'index.html', 'api', 'assets', 'favicon.ico'];
+        if (rawPath && !ignored.includes(rawPath.toLowerCase()) && !rawPath.includes('/')) {
+          currentAffRef = rawPath.toLowerCase().trim();
+        } else {
+          const urlParams = new URLSearchParams(window.location.search);
+          const qRef = urlParams.get('ref') || urlParams.get('affiliate');
+          if (qRef) {
+            currentAffRef = qRef.toLowerCase().trim();
+          } else {
+            currentAffRef = window.irisCurrentAffiliate || null;
+          }
+        }
+      } catch (e) {
+        currentAffRef = null;
+      }
+
       // Asynchronous API call to /api/send-contract with DD.MM.YYYY formatted date and full vector PDF parameters
       const emailPayload = {
         targetEmail: 'sales@irisbgsf.com',
@@ -1556,7 +1585,7 @@ document.addEventListener('DOMContentLoaded', () => {
         contactPhone: phoneVal,
         contractDate: formattedDateStr,
         signatureImageBase64: sigBase64,
-        affiliateRef: localStorage.getItem('iris_affiliate_ref') || sessionStorage.getItem('iris_affiliate_ref') || null
+        affiliateRef: currentAffRef
       };
 
       try {
@@ -1571,6 +1600,11 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (err) {
         console.warn('Backend email API offline/dev fallback:', err);
       } finally {
+        // Clear any stored affiliate reference
+        localStorage.removeItem('iris_affiliate_ref');
+        sessionStorage.removeItem('iris_affiliate_ref');
+        window.irisCurrentAffiliate = null;
+
         // Hide loading screen overlay
         if (loadingOverlay) {
           loadingOverlay.style.display = 'none';
@@ -1581,19 +1615,51 @@ document.addEventListener('DOMContentLoaded', () => {
           submitBtn.innerHTML = submitBtn.dataset.originalText || 'Потвърди и изпрати договора';
         }
 
+        // Reset all form inputs and signatures on the page
+        try {
+          const formEl = document.getElementById('merchantContractForm');
+          if (formEl && typeof formEl.reset === 'function') {
+            formEl.reset();
+          }
+          if (ctx && canvas) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            hasDrawn = false;
+          }
+          isContractSigned = false;
+          isAppendixSigned = false;
+          isCompanyDataVerified = false;
+        } catch (rstErr) {
+          console.warn('Form reset error:', rstErr);
+        }
+
         // Show Confirmation / Success Modal
         if (successModalOverlay) {
           successModalOverlay.style.display = 'flex';
         }
 
         showToast('Договорът и Приложение 1 са изпратени успешно!', 'success');
-      }
-    });
-  }
 
-  if (modalCloseBtn && successModalOverlay) {
-    modalCloseBtn.addEventListener('click', () => {
-      successModalOverlay.style.display = 'none';
+        // Automatically reload and refresh the site after 5 seconds or upon closing the modal
+        const autoReloadTimer = setTimeout(() => {
+          window.location.reload();
+        }, 5000);
+
+        if (modalCloseBtn) {
+          modalCloseBtn.onclick = () => {
+            clearTimeout(autoReloadTimer);
+            window.location.reload();
+          };
+        }
+
+        if (successModalOverlay) {
+          successModalOverlay.onclick = (e) => {
+            if (e.target === successModalOverlay) {
+              clearTimeout(autoReloadTimer);
+              window.location.reload();
+            }
+          };
+        }
+      }
     });
   }
 
