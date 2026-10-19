@@ -2,8 +2,10 @@
  * Persistent Affiliate & Contract Attribution Store
  * IRIS Pay Document Portal
  * 
- * Supports both local environment and Vercel/AWS Lambda serverless environments
- * (handles read-only /var/task filesystem by utilizing /tmp).
+ * Supports:
+ * 1. Vercel KV / Upstash Redis (Cloud persistence across all serverless containers)
+ * 2. Fallback to /tmp in Lambda environments
+ * 3. Fallback to local data/affiliates.json in local development
  */
 
 import fs from 'fs';
@@ -19,24 +21,80 @@ const LOCAL_DATA_DIR = path.join(ROOT_DIR, 'data');
 const LOCAL_DATA_FILE = path.join(LOCAL_DATA_DIR, 'affiliates.json');
 const TMP_DATA_FILE = path.join(os.tmpdir(), 'iris_affiliates.json');
 
-// All demo/initial affiliate links removed as requested
 const DEFAULT_AFFILIATES = [];
 const DEFAULT_CONTRACTS = [];
 
-// In-memory cache for fast read/write within the container
 let cachedStore = null;
 
-const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+// Cloud Database configuration (Vercel KV or Upstash Redis)
+function getKvConfig() {
+  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (url && token) {
+    return { url: url.replace(/\/+$/, ''), token };
+  }
+  return null;
+}
+
+const KV_STORE_KEY = 'iris_affiliates_store_v1';
+
+async function fetchFromKv() {
+  const kv = getKvConfig();
+  if (!kv) return null;
+
+  try {
+    const res = await fetch(`${kv.url}/get/${KV_STORE_KEY}`, {
+      headers: { Authorization: `Bearer ${kv.token}` }
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (json && json.result) {
+      const parsed = typeof json.result === 'string' ? JSON.parse(json.result) : json.result;
+      return parsed;
+    }
+    return null;
+  } catch (err) {
+    console.warn('[Store] Warning fetching from Vercel KV:', err.message);
+    return null;
+  }
+}
+
+async function saveToKv(data) {
+  const kv = getKvConfig();
+  if (!kv) return false;
+
+  try {
+    const res = await fetch(`${kv.url}/set/${KV_STORE_KEY}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${kv.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(JSON.stringify(data))
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn('[Store] Warning saving to Vercel KV:', err.message);
+    return false;
+  }
+}
 
 /**
- * Load store data from /tmp (if modified), bundled local file, or default empty structure
+ * Load store data from Vercel KV, /tmp, or local file
  */
-export function loadStore() {
+export async function loadStore() {
+  // 1. Try Vercel KV cloud storage first if configured
+  const kvData = await fetchFromKv();
+  if (kvData && Array.isArray(kvData.affiliates)) {
+    cachedStore = kvData;
+    return cachedStore;
+  }
+
   if (cachedStore) {
     return cachedStore;
   }
 
-  // 1. Try /tmp file first (contains latest writes in serverless)
+  // 2. Try /tmp file
   try {
     if (fs.existsSync(TMP_DATA_FILE)) {
       const raw = fs.readFileSync(TMP_DATA_FILE, 'utf-8');
@@ -44,10 +102,10 @@ export function loadStore() {
       return cachedStore;
     }
   } catch (err) {
-    console.warn('[Store] Warning reading tmp data file:', err.message);
+    // ignore
   }
 
-  // 2. Try local project file
+  // 3. Try local project file
   try {
     if (fs.existsSync(LOCAL_DATA_FILE)) {
       const raw = fs.readFileSync(LOCAL_DATA_FILE, 'utf-8');
@@ -55,10 +113,9 @@ export function loadStore() {
       return cachedStore;
     }
   } catch (err) {
-    console.warn('[Store] Warning reading local data file:', err.message);
+    // ignore
   }
 
-  // 3. Fallback to empty default
   cachedStore = {
     affiliates: DEFAULT_AFFILIATES,
     contracts: DEFAULT_CONTRACTS,
@@ -68,37 +125,38 @@ export function loadStore() {
 }
 
 /**
- * Save store data safely without crashing on read-only filesystems (EROFS)
+ * Save store data safely to Vercel KV and disk fallback
  */
-export function saveStore(data) {
+export async function saveStore(data) {
   cachedStore = data;
   data.updatedAt = new Date().toISOString();
-  const serialized = JSON.stringify(data, null, 2);
 
-  // In serverless environments, /var/task is read-only (EROFS). Always write to /tmp.
-  if (IS_SERVERLESS) {
-    try {
-      fs.writeFileSync(TMP_DATA_FILE, serialized, 'utf-8');
-      return;
-    } catch (err) {
-      console.error('[Store] Error writing to tmp data file:', err);
-      return;
-    }
+  // 1. Save to Vercel KV cloud if configured
+  const savedKv = await saveToKv(data);
+  if (savedKv) {
+    console.log('[Store] Successfully persisted to Vercel KV cloud storage.');
   }
 
-  // In local development, try local directory first
-  try {
-    if (!fs.existsSync(LOCAL_DATA_DIR)) {
-      fs.mkdirSync(LOCAL_DATA_DIR, { recursive: true });
-    }
-    fs.writeFileSync(LOCAL_DATA_FILE, serialized, 'utf-8');
-  } catch (err) {
-    // If local write fails (e.g. read-only permission / EROFS), fall back to /tmp
-    console.warn('[Store] Local write failed with', err.code || err.message, '- falling back to tmpdir');
+  // 2. Backup to /tmp or local file
+  const serialized = JSON.stringify(data, null, 2);
+  const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+
+  if (isServerless) {
     try {
       fs.writeFileSync(TMP_DATA_FILE, serialized, 'utf-8');
-    } catch (tmpErr) {
-      console.error('[Store] Failed to write to tmp fallback:', tmpErr);
+    } catch (e) {
+      // ignore
+    }
+  } else {
+    try {
+      if (!fs.existsSync(LOCAL_DATA_DIR)) {
+        fs.mkdirSync(LOCAL_DATA_DIR, { recursive: true });
+      }
+      fs.writeFileSync(LOCAL_DATA_FILE, serialized, 'utf-8');
+    } catch (e) {
+      try {
+        fs.writeFileSync(TMP_DATA_FILE, serialized, 'utf-8');
+      } catch (err2) {}
     }
   }
 }
@@ -119,8 +177,8 @@ export function sanitizeSlug(input) {
 /**
  * Get all affiliates with dynamic contract counters based on filters
  */
-export function getAffiliatesData({ month = '', fromDate = '', toDate = '', search = '' } = {}) {
-  const store = loadStore();
+export async function getAffiliatesData({ month = '', fromDate = '', toDate = '', search = '' } = {}) {
+  const store = await loadStore();
   const searchLower = (search || '').trim().toLowerCase();
 
   return store.affiliates.map(aff => {
@@ -185,10 +243,10 @@ export function getAffiliatesData({ month = '', fromDate = '', toDate = '', sear
 }
 
 /**
- * Create a new affiliate partner (without email)
+ * Create a new affiliate partner
  */
-export function createAffiliate({ name, slug }) {
-  const store = loadStore();
+export async function createAffiliate({ name, slug }) {
+  const store = await loadStore();
   const cleanName = String(name || '').trim();
   const cleanSlug = sanitizeSlug(slug || name);
 
@@ -214,19 +272,19 @@ export function createAffiliate({ name, slug }) {
   };
 
   store.affiliates.push(newAff);
-  saveStore(store);
+  await saveStore(store);
   return newAff;
 }
 
 /**
  * Record a contract attribution
  */
-export function recordContractAttribution({ affiliateSlug, companyName, companyEik }) {
+export async function recordContractAttribution({ affiliateSlug, companyName, companyEik }) {
   if (!affiliateSlug) return null;
   const cleanSlug = sanitizeSlug(affiliateSlug);
   if (!cleanSlug) return null;
 
-  const store = loadStore();
+  const store = await loadStore();
 
   // If partner does not exist yet, auto-register as custom affiliate
   let aff = store.affiliates.find(a => a.slug.toLowerCase() === cleanSlug.toLowerCase());
@@ -250,17 +308,38 @@ export function recordContractAttribution({ affiliateSlug, companyName, companyE
   };
 
   store.contracts.push(newContract);
-  saveStore(store);
+  await saveStore(store);
   console.log(`[Store] Contract attribution recorded for ${aff.slug}:`, newContract);
   return newContract;
 }
 
 /**
+ * Delete a specific contract
+ */
+export async function deleteContract({ contractId }) {
+  if (!contractId) {
+    throw new Error('Липсва идентификатор (ID) на договора.');
+  }
+
+  const store = await loadStore();
+  const initialLength = store.contracts.length;
+  store.contracts = store.contracts.filter(c => c.id !== contractId);
+
+  if (store.contracts.length === initialLength) {
+    throw new Error('Договорът с това ID не е намерен.');
+  }
+
+  await saveStore(store);
+  console.log(`[Store] Deleted contract ${contractId}. Remaining: ${store.contracts.length}`);
+  return { success: true };
+}
+
+/**
  * Summary KPI stats for dashboard
  */
-export function getDashboardSummary({ month = '', fromDate = '', toDate = '' } = {}) {
-  const store = loadStore();
-  const affiliates = getAffiliatesData({ month, fromDate, toDate });
+export async function getDashboardSummary({ month = '', fromDate = '', toDate = '' } = {}) {
+  const store = await loadStore();
+  const affiliates = await getAffiliatesData({ month, fromDate, toDate });
 
   const totalPartners = store.affiliates.length;
   const totalContractsAllTime = store.contracts.length;

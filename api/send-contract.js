@@ -81,7 +81,7 @@ export default async function handler(req, res) {
     const refCode = affiliateRef || data.ref || data.affiliate || null;
     if (refCode) {
       try {
-        recordContractAttribution({
+        await recordContractAttribution({
           affiliateSlug: refCode,
           companyName: companyName,
           companyEik: companyEik
