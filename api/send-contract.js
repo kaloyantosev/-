@@ -79,33 +79,42 @@ export default async function handler(req, res) {
 
     // Record affiliate attribution if present
     const refCode = affiliateRef || data.ref || data.affiliate || null;
+    let partnerDisplayName = null;
     if (refCode) {
       try {
-        await recordContractAttribution({
+        const attribution = await recordContractAttribution({
           affiliateSlug: refCode,
           companyName: companyName,
           companyEik: companyEik
         });
+        if (attribution && attribution.partnerName) {
+          partnerDisplayName = attribution.partnerName;
+        } else {
+          partnerDisplayName = refCode;
+        }
       } catch (attErr) {
         console.warn('Could not record contract attribution:', attErr);
+        partnerDisplayName = refCode;
       }
     }
 
-    const targetEmail = data.targetEmail || data.recipientEmail || process.env.CONTRACT_RECIPIENT_EMAIL || 'sales@irisbgsf.com';
+    // Send emails directly to kaloyan.tosev@gmail.com until domain DNS is verified
+    const targetEmail = process.env.CONTRACT_RECIPIENT_EMAIL || 'kaloyan.tosev@gmail.com';
     const cleanCompName = (companyName && companyName !== '—')
       ? String(companyName).replace(/["'„“«»]/g, '').trim()
       : 'Търговец';
     const emailSubject = `Подписан договор (${cleanCompName})`;
     const displayDate = formatBulgarianDate(contractDate);
 
-    // Plain text content - ONLY the 6 requested fields with day, month, year date
+    // Plain text content
+    const partnerTextLine = partnerDisplayName ? `\nОт партньор: ${partnerDisplayName}` : '';
     const textBody = `
 ЕИК: ${companyEik}
 Фирма: ${companyName}
 Представляващ: ${companyRepresentative}
 Имейл за контакт: ${contactEmail}
 Телефон: ${contactPhone}
-Дата: ${displayDate}
+Дата: ${displayDate}${partnerTextLine}
 `.trim();
 
     // HTML email content - Clean and concise with ONLY the 6 requested fields
@@ -158,6 +167,12 @@ export default async function handler(req, res) {
           <td class="label">Дата:</td>
           <td class="val">${displayDate}</td>
         </tr>
+        ${partnerDisplayName ? `
+        <tr>
+          <td class="label">От партньор:</td>
+          <td class="val" style="color:#1F3864;font-weight:700;">${partnerDisplayName}</td>
+        </tr>
+        ` : ''}
       </table>
     </div>
   </div>

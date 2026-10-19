@@ -344,7 +344,10 @@ export async function recordContractAttribution({ affiliateSlug, companyName, co
   store.contracts.push(newContract);
   await saveStore(store);
   console.log(`[Store] Contract attribution recorded for ${aff.slug}:`, newContract);
-  return newContract;
+  return {
+    ...newContract,
+    partnerName: aff.name
+  };
 }
 
 /**

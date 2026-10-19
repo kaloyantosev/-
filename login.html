@@ -154,9 +154,10 @@
       background: none;
       border: none;
       cursor: pointer;
-      color: var(--text-muted);
-      font-size: 13px;
-      padding: 4px;
+      color: var(--primary-light);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 6px;
       user-select: none;
     }
 
@@ -270,7 +271,7 @@
               required 
               autocomplete="current-password"
             >
-            <button type="button" id="togglePasswordBtn" class="toggle-pwd" aria-label="Покажи/скрий парола">👁️</button>
+            <button type="button" id="togglePasswordBtn" class="toggle-pwd" aria-label="Покажи/скрий парола">Покажи</button>
           </div>
         </div>
 
@@ -281,7 +282,6 @@
       </form>
 
       <div class="security-notice">
-        <span class="security-icon">🔒</span>
         <span>
           Връзката е защитена с TLS/SHA-256 криптография и автоматична защита срещу неоторизиран достъп и brute-force опити.
         </span>
@@ -325,10 +325,10 @@
     togglePasswordBtn.addEventListener('click', () => {
       if (passwordInput.type === 'password') {
         passwordInput.type = 'text';
-        togglePasswordBtn.textContent = '🙈';
+        togglePasswordBtn.textContent = 'Скрий';
       } else {
         passwordInput.type = 'password';
-        togglePasswordBtn.textContent = '👁️';
+        togglePasswordBtn.textContent = 'Покажи';
       }
     });
 
