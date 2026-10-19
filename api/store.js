@@ -26,13 +26,36 @@ const DEFAULT_CONTRACTS = [];
 
 let cachedStore = null;
 
-// Cloud Database configuration (Vercel KV or Upstash Redis)
-function getKvConfig() {
-  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (url && token) {
-    return { url: url.replace(/\/+$/, ''), token };
+// Cloud Database configuration (Vercel KV or Upstash Redis with any prefix)
+export function getKvConfig() {
+  // 1. Direct standard keys
+  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+    return { url: process.env.KV_REST_API_URL.replace(/\/+$/, ''), token: process.env.KV_REST_API_TOKEN };
   }
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return { url: process.env.UPSTASH_REDIS_REST_URL.replace(/\/+$/, ''), token: process.env.UPSTASH_REDIS_REST_TOKEN };
+  }
+
+  // 2. Scan all process.env keys for any prefixed Upstash / KV variables (e.g. DATABASE_DOGOVORI_...)
+  const envKeys = Object.keys(process.env);
+
+  const urlKey = envKeys.find(k => 
+    (k.includes('REST_API_URL') || k.includes('REDIS_REST_URL') || (k.includes('UPSTASH') && k.includes('URL'))) &&
+    process.env[k] && String(process.env[k]).startsWith('http')
+  );
+
+  const tokenKey = envKeys.find(k => 
+    (k.includes('REST_API_TOKEN') || k.includes('REDIS_REST_TOKEN') || (k.includes('UPSTASH') && k.includes('TOKEN'))) &&
+    process.env[k] && String(process.env[k]).length > 10
+  );
+
+  if (urlKey && tokenKey) {
+    return {
+      url: String(process.env[urlKey]).replace(/\/+$/, ''),
+      token: String(process.env[tokenKey])
+    };
+  }
+
   return null;
 }
 
@@ -43,8 +66,13 @@ async function fetchFromKv() {
   if (!kv) return null;
 
   try {
-    const res = await fetch(`${kv.url}/get/${KV_STORE_KEY}`, {
-      headers: { Authorization: `Bearer ${kv.token}` }
+    const res = await fetch(`${kv.url}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${kv.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(["GET", KV_STORE_KEY])
     });
     if (!res.ok) return null;
     const json = await res.json();
@@ -64,15 +92,21 @@ async function saveToKv(data) {
   if (!kv) return false;
 
   try {
-    const res = await fetch(`${kv.url}/set/${KV_STORE_KEY}`, {
+    const serialized = JSON.stringify(data);
+    const res = await fetch(`${kv.url}`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${kv.token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(JSON.stringify(data))
+      body: JSON.stringify(["SET", KV_STORE_KEY, serialized])
     });
-    return res.ok;
+    if (!res.ok) {
+      const errTxt = await res.text();
+      console.warn('[Store] Upstash KV save error:', res.status, errTxt);
+      return false;
+    }
+    return true;
   } catch (err) {
     console.warn('[Store] Warning saving to Vercel KV:', err.message);
     return false;
@@ -373,11 +407,19 @@ export async function getDashboardSummary({ month = '', fromDate = '', toDate = 
     };
   });
 
+  const kvConfig = getKvConfig();
+  const cloudStatus = {
+    connected: Boolean(kvConfig),
+    provider: kvConfig ? 'Upstash Redis / Vercel KV' : 'Не е свързана (Local/Tmp)',
+    host: kvConfig ? kvConfig.url.split('//').pop().split('/')[0] : null
+  };
+
   return {
     totalPartners,
     totalContractsAllTime,
     periodContracts,
     topPartner,
-    monthsList
+    monthsList,
+    cloudStatus
   };
 }

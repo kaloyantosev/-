@@ -639,6 +639,7 @@
     </div>
 
     <div class="nav-actions">
+      <span id="cloudStatusBadge" class="user-pill" style="font-size:12px; font-weight:600;">☁️ Проверка на база данни...</span>
       <a href="/" target="_blank" class="btn-portal-link">🌐 Отвори сайта за договори</a>
       <span class="user-pill">👤 sales</span>
       <button id="logoutBtn" class="btn-logout">Изход</button>
@@ -1029,6 +1030,22 @@
       } else {
         activeFilterDesc.textContent = 'Показване: Всички времена';
         kpiPeriodSubtext.textContent = 'Всички времена';
+      }
+
+      // Update cloud status badge
+      const cloudBadge = document.getElementById('cloudStatusBadge');
+      if (cloudBadge && summary.cloudStatus) {
+        if (summary.cloudStatus.connected) {
+          cloudBadge.innerHTML = '🟢 База: Свързана (Upstash Redis)';
+          cloudBadge.style.background = '#DCFCE7';
+          cloudBadge.style.color = '#15803D';
+          cloudBadge.style.border = '1px solid #86EFAC';
+        } else {
+          cloudBadge.innerHTML = '🟠 База: Не е свързана към проекта';
+          cloudBadge.style.background = '#FEF3C7';
+          cloudBadge.style.color = '#B45309';
+          cloudBadge.style.border = '1px solid #FCD34D';
+        }
       }
     }
 
