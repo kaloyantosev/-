@@ -9,7 +9,7 @@
  */
 
 import { verifySession } from './auth.js';
-import { getAffiliatesData, createAffiliate, getDashboardSummary, deleteContract } from './store.js';
+import { getAffiliatesData, createAffiliate, getDashboardSummary, deleteContract, deleteAffiliate } from './store.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -31,12 +31,24 @@ export default async function handler(req, res) {
 
   const action = req.query?.action || (typeof req.body === 'object' ? req.body?.action : null);
 
-  // 2. DELETE (or POST with action=deleteContract): Delete a contract
-  if (req.method === 'DELETE' || action === 'deleteContract') {
+  // 2. DELETE (or POST with action=deleteContract / action=deleteAffiliate)
+  if (req.method === 'DELETE' || action === 'deleteContract' || action === 'deleteAffiliate') {
     try {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-      const contractId = req.query?.contractId || body?.contractId;
+      const reqAction = action || body?.action || req.query?.action;
 
+      if (reqAction === 'deleteAffiliate') {
+        const affiliateId = req.query?.affiliateId || body?.affiliateId;
+        const slug = req.query?.slug || body?.slug;
+
+        const result = await deleteAffiliate({ affiliateId, slug });
+        return res.status(200).json({
+          success: true,
+          message: `Партньорът „${result.deletedAffiliate}“ беше изтрит. ${result.reattributedContracts} договора бяха прехвърлени като договори без партньор.`
+        });
+      }
+
+      const contractId = req.query?.contractId || body?.contractId;
       if (!contractId) {
         return res.status(400).json({ error: 'Липсва ID на договора за изтриване.' });
       }
@@ -49,7 +61,7 @@ export default async function handler(req, res) {
       });
     } catch (err) {
       console.error('[Affiliates API DELETE error]:', err);
-      return res.status(400).json({ error: err.message || 'Грешка при изтриване на договора.' });
+      return res.status(400).json({ error: err.message || 'Грешка при изтриване.' });
     }
   }
 

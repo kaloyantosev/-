@@ -809,7 +809,10 @@
       <div class="modal-body">
         <div id="detailsContractsList" class="details-list"></div>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <button type="button" id="btnDeletePartner" style="display: none; background: #FFF5F5; color: #E53E3E; border: 1px solid #FEB2B2; padding: 7px 14px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">
+          Изтрий този партньор
+        </button>
         <button type="button" class="btn-cancel" id="btnCloseDetailsBtn">Затвори</button>
       </div>
     </div>
@@ -883,6 +886,7 @@
     const detailsContractsList = document.getElementById('detailsContractsList');
     const btnCloseDetailsModal = document.getElementById('btnCloseDetailsModal');
     const btnCloseDetailsBtn = document.getElementById('btnCloseDetailsBtn');
+    const btnDeletePartner = document.getElementById('btnDeletePartner');
 
     let currentAffiliates = [];
     let lastSummaryData = null;
@@ -1163,6 +1167,41 @@
       detailsModalTitle.textContent = `Договори за: ${name} (/${slug})`;
       detailsContractsList.innerHTML = '';
 
+      if (btnDeletePartner) {
+        btnDeletePartner.style.display = 'block';
+        btnDeletePartner.disabled = false;
+        btnDeletePartner.textContent = 'Изтрий този партньор';
+        btnDeletePartner.onclick = async () => {
+          const confirmed = confirm(`Сигурни ли сте, че искате да изтриете партньор „${name}“ (/${slug})?\n\nВсички съществуващи договори от този партньор ще бъдат запазени и прехвърлени автоматично към „Договори без партньор“.`);
+          if (!confirmed) return;
+
+          btnDeletePartner.disabled = true;
+          btnDeletePartner.textContent = 'Изтриване...';
+
+          try {
+            const res = await fetch(`/api/affiliates?action=deleteAffiliate&slug=${encodeURIComponent(slug)}`, {
+              method: 'DELETE',
+              headers: getAuthHeaders()
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+              showToast(data.message || `Партньорът беше изтрит.`);
+              detailsModal.style.display = 'none';
+              await loadAffiliatesData();
+            } else {
+              alert(data.error || 'Грешка при изтриване на партньора.');
+              btnDeletePartner.disabled = false;
+              btnDeletePartner.textContent = 'Изтрий този партньор';
+            }
+          } catch (err) {
+            console.error('Delete affiliate error:', err);
+            alert('Мрежова грешка при изтриване на партньора.');
+            btnDeletePartner.disabled = false;
+            btnDeletePartner.textContent = 'Изтрий този партньор';
+          }
+        };
+      }
+
       const contracts = aff?.contracts || [];
       if (contracts.length === 0) {
         detailsContractsList.innerHTML = `
@@ -1233,6 +1272,9 @@
     btnCloseDetailsBtn.addEventListener('click', () => { detailsModal.style.display = 'none'; });
 
     function openDirectContractsModal() {
+      if (btnDeletePartner) {
+        btnDeletePartner.style.display = 'none';
+      }
       detailsModalTitle.textContent = 'Договори без партньор (директно през сайта)';
       detailsContractsList.innerHTML = '';
 

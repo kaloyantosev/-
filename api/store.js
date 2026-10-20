@@ -316,7 +316,7 @@ export async function createAffiliate({ name, slug }) {
 export async function recordContractAttribution({ affiliateSlug, companyName, companyEik }) {
   const store = await loadStore();
 
-  if (!affiliateSlug) {
+  const createDirectContract = async (logReason) => {
     const newContract = {
       id: 'cnt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
       affiliateSlug: null,
@@ -326,38 +326,31 @@ export async function recordContractAttribution({ affiliateSlug, companyName, co
     };
     store.contracts.push(newContract);
     await saveStore(store);
-    console.log('[Store] Direct contract recorded (no partner):', newContract);
+    console.log(`[Store] ${logReason}:`, newContract);
     return newContract;
+  };
+
+  if (!affiliateSlug) {
+    return await createDirectContract('Direct contract recorded (no partner)');
   }
 
   const cleanSlug = sanitizeSlug(affiliateSlug);
   if (!cleanSlug) {
-    const newContract = {
-      id: 'cnt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
-      affiliateSlug: null,
-      companyName: String(companyName || '—').trim(),
-      companyEik: String(companyEik || '—').trim(),
-      date: new Date().toISOString()
-    };
-    store.contracts.push(newContract);
-    await saveStore(store);
-    console.log('[Store] Direct contract recorded (no partner):', newContract);
-    return newContract;
+    return await createDirectContract('Direct contract recorded (invalid slug)');
   }
 
-  // If partner does not exist yet, auto-register as custom affiliate
-  let aff = store.affiliates.find(a => a.slug.toLowerCase() === cleanSlug.toLowerCase());
+  // Look up partner ONLY in registered affiliates created from the affiliate portal
+  const aff = store.affiliates.find(
+    a => a.slug && a.slug.toLowerCase() === cleanSlug.toLowerCase() && a.active !== false
+  );
+
+  // If the partner does NOT exist in the portal, DO NOT create a new affiliate!
+  // Treat as an ordinary contract without partner as requested.
   if (!aff) {
-    aff = {
-      id: 'aff_' + Date.now(),
-      name: cleanSlug.charAt(0).toUpperCase() + cleanSlug.slice(1),
-      slug: cleanSlug,
-      createdAt: new Date().toISOString(),
-      active: true
-    };
-    store.affiliates.push(aff);
+    return await createDirectContract(`Affiliate slug "${cleanSlug}" is not registered in portal. Recorded as direct contract without partner`);
   }
 
+  // Partner is valid and registered in portal
   const newContract = {
     id: 'cnt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
     affiliateSlug: aff.slug,
@@ -368,10 +361,54 @@ export async function recordContractAttribution({ affiliateSlug, companyName, co
 
   store.contracts.push(newContract);
   await saveStore(store);
-  console.log(`[Store] Contract attribution recorded for ${aff.slug}:`, newContract);
+  console.log(`[Store] Contract attribution recorded for registered partner ${aff.slug}:`, newContract);
   return {
     ...newContract,
     partnerName: aff.name
+  };
+}
+
+/**
+ * Delete a registered affiliate partner.
+ * Existing contracts of this partner are preserved and safely re-attributed as direct contracts without partner.
+ */
+export async function deleteAffiliate({ affiliateId, slug }) {
+  if (!affiliateId && !slug) {
+    throw new Error('Липсва ID или slug на партньора за изтриване.');
+  }
+
+  const store = await loadStore();
+  const affIndex = store.affiliates.findIndex(a => 
+    (affiliateId && a.id === affiliateId) || 
+    (slug && a.slug.toLowerCase() === String(slug).toLowerCase())
+  );
+
+  if (affIndex === -1) {
+    throw new Error('Партньорът не е намерен.');
+  }
+
+  const targetAff = store.affiliates[affIndex];
+  const targetSlug = targetAff.slug.toLowerCase();
+
+  // Remove affiliate from store
+  store.affiliates.splice(affIndex, 1);
+
+  // Preserve contracts by converting them to direct contracts without partner
+  let reattributedCount = 0;
+  store.contracts = store.contracts.map(c => {
+    if (c.affiliateSlug && c.affiliateSlug.toLowerCase() === targetSlug) {
+      reattributedCount++;
+      return { ...c, affiliateSlug: null };
+    }
+    return c;
+  });
+
+  await saveStore(store);
+  console.log(`[Store] Deleted affiliate "${targetAff.name}" (/${targetAff.slug}). ${reattributedCount} contracts converted to direct.`);
+  return { 
+    success: true, 
+    deletedAffiliate: targetAff.name,
+    reattributedContracts: reattributedCount 
   };
 }
 

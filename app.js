@@ -1563,7 +1563,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (qRef) {
             currentAffRef = qRef.toLowerCase().trim();
           } else {
-            currentAffRef = window.irisCurrentAffiliate || null;
+            currentAffRef = null;
           }
         }
       } catch (e) {
