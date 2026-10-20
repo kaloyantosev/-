@@ -20,11 +20,11 @@
       "dest": "/dashboard.html"
     },
     {
-      "src": "/c/(.*)",
-      "dest": "/index.html"
+      "handle": "filesystem"
     },
     {
-      "handle": "filesystem"
+      "src": "/c/(.*)",
+      "dest": "/index.html"
     },
     {
       "src": "/([^/]+)",

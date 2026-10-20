@@ -111,7 +111,17 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // 3. Static Files Check
+  // 3. Static Files Check (including any subpath assets)
+  if (pathname.startsWith('/c/')) {
+    const subPath = pathname.substring(2);
+    const safeSubPath = path.normalize(decodeURIComponent(subPath)).replace(/^(\.\.[/\\])+/, '');
+    const subFilePath = path.join(__dirname, safeSubPath);
+    if (fs.existsSync(subFilePath) && fs.statSync(subFilePath).isFile()) {
+      serveFile(subFilePath, res);
+      return;
+    }
+  }
+
   const safePath = path.normalize(decodeURIComponent(pathname)).replace(/^(\.\.[/\\])+/, '');
   const filePath = path.join(__dirname, safePath);
 
