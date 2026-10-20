@@ -760,10 +760,10 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th style="width: 14%;">Комисионна</th>
-            <th style="width: 22%;">Бележка / Клиент</th>
+            <th style="width: 15%;">Комисионна</th>
+            <th style="width: 18%;">Създаден на</th>
             <th style="width: 32%;">Еднократен Линк</th>
-            <th style="width: 20%;">Статус</th>
+            <th style="width: 23%;">Статус</th>
             <th style="width: 12%; text-align: right;">Действия</th>
           </tr>
         </thead>
@@ -853,25 +853,9 @@
               id="customCommissionInput" 
               class="filter-input" 
               placeholder="напр. 0.35%" 
-              value="0.35%" 
+              value="" 
               required 
               style="width: 100%; height: 42px; font-weight: 700; font-size: 15px;"
-            >
-            <span style="font-size:11.5px; color:var(--text-muted); display:block; margin-top:4px;">
-              Стандартната такса в Приложение № 1 е 0.49%. Въведете новата такса (напр. 0.35% или 0.40%).
-            </span>
-          </div>
-
-          <div style="margin-bottom: 16px;">
-            <label style="display:block; font-size:13px; font-weight:600; color:var(--primary); margin-bottom:6px;">
-              Бележка / Име на клиент (по избор):
-            </label>
-            <input 
-              type="text" 
-              id="customNoteInput" 
-              class="filter-input" 
-              placeholder="напр. Оферта за Търговец ООД" 
-              style="width: 100%; height: 42px;"
             >
           </div>
 
@@ -1551,17 +1535,15 @@
     const btnCancelCustomFeeModal = document.getElementById('btnCancelCustomFeeModal');
     const createCustomFeeForm = document.getElementById('createCustomFeeForm');
     const customCommissionInput = document.getElementById('customCommissionInput');
-    const customNoteInput = document.getElementById('customNoteInput');
     const btnRefreshCustomLinks = document.getElementById('btnRefreshCustomLinks');
     const customLinksTableBody = document.getElementById('customLinksTableBody');
 
     if (btnOpenCustomFeeModal) {
       btnOpenCustomFeeModal.addEventListener('click', () => {
         createCustomFeeForm.reset();
-        customCommissionInput.value = '0.35%';
+        customCommissionInput.value = '';
         customFeeModal.style.display = 'flex';
         customCommissionInput.focus();
-        customCommissionInput.select();
       });
     }
 
@@ -1576,7 +1558,6 @@
       createCustomFeeForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const commission = customCommissionInput.value.trim();
-        const note = customNoteInput.value.trim();
 
         if (!commission) {
           alert('Моля, въведете размер на комисионната.');
@@ -1591,7 +1572,7 @@
           const res = await fetch('/api/custom-link', {
             method: 'POST',
             headers: getAuthHeaders(),
-            body: JSON.stringify({ commission, note })
+            body: JSON.stringify({ commission })
           });
 
           const data = await res.json();
@@ -1686,8 +1667,7 @@
                 <span style="font-weight: 700; color: #0F172A; font-size: 14.5px;">${escapeHtml(link.commission)}</span>
               </td>
               <td>
-                <div style="font-size: 13px; font-weight: 500; color: #334155;">${escapeHtml(link.note || '—')}</div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Създаден: ${createdDate}</div>
+                <div style="font-size: 13px; font-weight: 500; color: #334155;">${createdDate}</div>
               </td>
               <td>
                 <div style="display: flex; align-items: center; gap: 8px;">
