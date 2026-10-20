@@ -31,6 +31,7 @@ const MIME_TYPES = {
 const API_ROUTES = {
   '/api/auth': './api/auth.js',
   '/api/affiliates': './api/affiliates.js',
+  '/api/custom-link': './api/custom-link.js',
   '/api/send-contract': './api/send-contract.js',
   '/api/company': './api/company.js'
 };

@@ -33,12 +33,34 @@ document.addEventListener('DOMContentLoaded', () => {
     hiddenNativeDatePicker.value = todayYmd;
   }
 
+  // Detect custom commission one-time link token (?c=..., ?custom=..., /c/..., /c-...)
+  let detectedCustomToken = null;
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('c')) {
+      detectedCustomToken = urlParams.get('c').trim();
+    } else if (urlParams.get('custom')) {
+      detectedCustomToken = urlParams.get('custom').trim();
+    } else {
+      const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
+      const slashMatch = rawPath.match(/^c\/(.+)$/i);
+      const dashMatch = rawPath.match(/^c-(.+)$/i);
+      if (slashMatch) {
+        detectedCustomToken = slashMatch[1].trim();
+      } else if (dashMatch) {
+        detectedCustomToken = dashMatch[1].trim();
+      }
+    }
+  } catch (tErr) {
+    console.warn('Error parsing custom link token:', tErr);
+  }
+
   // Detect & persist affiliate referral from URL path (/slug) or parameter (?ref=slug)
   try {
     const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
     const ignored = ['login', 'dashboard', 'index.html', 'api', 'assets', 'favicon.ico'];
     let slug = null;
-    if (rawPath && !ignored.includes(rawPath.toLowerCase()) && !rawPath.includes('/')) {
+    if (rawPath && !ignored.includes(rawPath.toLowerCase()) && !rawPath.includes('/') && !rawPath.toLowerCase().startsWith('c-')) {
       slug = rawPath;
     }
     const urlParams = new URLSearchParams(window.location.search);
@@ -47,6 +69,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (urlParams.get('affiliate')) {
       slug = urlParams.get('affiliate');
+    }
+    // If a custom commission link is active, do not treat it as an affiliate slug
+    if (detectedCustomToken) {
+      slug = null;
     }
     if (slug) {
       const cleanSlug = slug.toLowerCase().trim();
@@ -62,6 +88,70 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   } catch (e) {
     console.warn('Affiliate tracking error:', e);
+  }
+
+  // Initialize and validate custom commission token if present
+  if (detectedCustomToken) {
+    window.irisCustomToken = detectedCustomToken;
+    console.log('[IRIS Pay] One-time custom commission token detected:', detectedCustomToken);
+
+    fetch(`/api/custom-link?token=${encodeURIComponent(detectedCustomToken)}`)
+      .then(async (res) => {
+        const banner = document.getElementById('customFeeNotificationBanner');
+        const commDisplay = document.getElementById('appCommissionDisplay');
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.valid && data.commission) {
+            window.irisCustomCommission = data.commission;
+            if (commDisplay) {
+              commDisplay.textContent = data.commission;
+              commDisplay.style.color = '#0F172A';
+              commDisplay.style.fontWeight = 'bold';
+            }
+            if (banner) {
+              banner.style.display = 'block';
+              banner.style.background = '#F0FDF4';
+              banner.style.border = '1px solid #BBF7D0';
+              banner.style.color = '#166534';
+              banner.innerHTML = `
+                <div style="display:flex;align-items:flex-start;gap:8px;">
+                  <span style="font-weight:700;font-size:15px;line-height:1;">✓</span>
+                  <div>
+                    <strong>Индивидуална оферта:</strong> Договорът е генериран със специална комисионна <strong>${data.commission}</strong> за иницииране на плащане (Приложение № 1).
+                  </div>
+                </div>
+              `;
+            }
+          }
+        } else if (res.status === 410) {
+          window.irisCustomTokenUsed = true;
+          if (banner) {
+            banner.style.display = 'block';
+            banner.style.background = '#FEF2F2';
+            banner.style.border = '1px solid #FECACA';
+            banner.style.color = '#991B1B';
+            banner.innerHTML = `
+              <div style="text-align: center; padding: 4px 0;">
+                <div style="font-size: 14.5px; font-weight: 700; margin-bottom: 4px;">Този еднократен линк вече е използван</div>
+                <div style="font-size: 12.5px;">Договорът за тази индивидуална комисионна вече е бил подписан и изпратен. Линкът е деактивиран и не може да се използва повторно.</div>
+              </div>
+            `;
+          }
+          const submitBtn = document.getElementById('submitContractBtn');
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
+            submitBtn.style.cursor = 'not-allowed';
+            submitBtn.textContent = 'Линкът вече е използван';
+          }
+        } else {
+          console.warn('[IRIS Pay] Custom token not valid or not found');
+        }
+      })
+      .catch((err) => {
+        console.warn('[IRIS Pay] Error verifying custom token:', err);
+      });
   }
 
   // =========================================================================
@@ -1570,6 +1660,16 @@ document.addEventListener('DOMContentLoaded', () => {
         currentAffRef = null;
       }
 
+      if (window.irisCustomTokenUsed) {
+        showToast('Този еднократен линк вече е използван!', 'error');
+        if (loadingOverlay) loadingOverlay.style.display = 'none';
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Линкът вече е използван';
+        }
+        return;
+      }
+
       // Asynchronous API call to /api/send-contract with DD.MM.YYYY formatted date and full vector PDF parameters
       const emailPayload = {
         targetEmail: 'sales@irisbgsf.com',
@@ -1585,7 +1685,8 @@ document.addEventListener('DOMContentLoaded', () => {
         contactPhone: phoneVal,
         contractDate: formattedDateStr,
         signatureImageBase64: sigBase64,
-        affiliateRef: currentAffRef
+        affiliateRef: currentAffRef,
+        customToken: window.irisCustomToken || null
       };
 
       try {
@@ -1604,6 +1705,8 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('iris_affiliate_ref');
         sessionStorage.removeItem('iris_affiliate_ref');
         window.irisCurrentAffiliate = null;
+        window.irisCustomToken = null;
+        window.irisCustomTokenUsed = true;
 
         // Hide loading screen overlay
         if (loadingOverlay) {

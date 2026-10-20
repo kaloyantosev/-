@@ -10,7 +10,7 @@
 import fs from 'fs';
 import path from 'path';
 import { generateContractPdf } from './pdfGenerator.js';
-import { recordContractAttribution } from './store.js';
+import { recordContractAttribution, getCustomLink, useCustomLink } from './store.js';
 
 // Vercel body parser config
 export const config = {
@@ -74,14 +74,33 @@ export default async function handler(req, res) {
       contractDate = '',
       signatureImageBase64 = null,
       pdfBase64 = null,
-      affiliateRef = null
+      affiliateRef = null,
+      customToken = null
     } = data || {};
+
+    // Verify and handle custom commission token if provided
+    let customCommission = null;
+    let validatedCustomLink = null;
+    if (customToken) {
+      try {
+        const link = await getCustomLink(customToken);
+        if (link && !link.used) {
+          customCommission = link.commission;
+          validatedCustomLink = link;
+        } else if (link && link.used) {
+          console.warn('[SendContract] Submitted with already used custom token:', customToken);
+        }
+      } catch (tokenErr) {
+        console.warn('[SendContract] Error checking custom token:', tokenErr);
+      }
+    }
 
     // Record contract attribution (either to an affiliate or direct without partner)
     const refCode = affiliateRef || data.ref || data.affiliate || null;
     let partnerDisplayName = null;
+    let attribution = null;
     try {
-      const attribution = await recordContractAttribution({
+      attribution = await recordContractAttribution({
         affiliateSlug: refCode,
         companyName: companyName,
         companyEik: companyEik
@@ -93,25 +112,41 @@ export default async function handler(req, res) {
       console.warn('Could not record contract attribution:', attErr);
     }
 
+    // Mark custom link as used
+    if (validatedCustomLink) {
+      try {
+        await useCustomLink({
+          token: validatedCustomLink.token,
+          companyName,
+          companyEik,
+          contractId: attribution?.id || null
+        });
+      } catch (useErr) {
+        console.warn('Error marking custom link as used:', useErr);
+      }
+    }
+
     // Send emails directly to kaloyan.tosev@gmail.com until domain DNS is verified
     const targetEmail = process.env.CONTRACT_RECIPIENT_EMAIL || 'kaloyan.tosev@gmail.com';
     const cleanCompName = (companyName && companyName !== '—')
       ? String(companyName).replace(/["'„“«»]/g, '').trim()
       : 'Търговец';
+    const commSubjectPart = customCommission ? ` - Индивидуална комисионна: ${customCommission}` : '';
     const emailSubject = partnerDisplayName
-      ? `Подписан договор (${cleanCompName}) от Партньор "${partnerDisplayName}"`
-      : `Подписан договор (${cleanCompName})`;
+      ? `Подписан договор (${cleanCompName}) от Партньор "${partnerDisplayName}"${commSubjectPart}`
+      : `Подписан договор (${cleanCompName})${commSubjectPart}`;
     const displayDate = formatBulgarianDate(contractDate);
 
     // Plain text content
     const partnerTextLine = partnerDisplayName ? `\nОт партньор: ${partnerDisplayName}` : '';
+    const customCommTextLine = customCommission ? `\nИндивидуална комисионна (Приложение 1): ${customCommission}` : '';
     const textBody = `
 ЕИК: ${companyEik}
 Фирма: ${companyName}
 Представляващ: ${companyRepresentative}
 Имейл за контакт: ${contactEmail}
 Телефон: ${contactPhone}
-Дата: ${displayDate}${partnerTextLine}
+Дата: ${displayDate}${partnerTextLine}${customCommTextLine}
 `.trim();
 
     // HTML email content - Clean and concise with ONLY the 6 requested fields
@@ -170,6 +205,12 @@ export default async function handler(req, res) {
           <td class="val" style="color:#1F3864;font-weight:700;">${partnerDisplayName}</td>
         </tr>
         ` : ''}
+        ${customCommission ? `
+        <tr>
+          <td class="label">Индивидуална комисионна:</td>
+          <td class="val" style="color:#D97706;font-weight:700;">${customCommission} (Приложение № 1)</td>
+        </tr>
+        ` : ''}
       </table>
     </div>
   </div>
@@ -200,7 +241,8 @@ export default async function handler(req, res) {
         contactEmail: (contactEmail && contactEmail !== '—') ? contactEmail : '',
         contactPhone: (contactPhone && contactPhone !== '—') ? contactPhone : '',
         contractDate: displayDate,
-        signatureImageBase64
+        signatureImageBase64,
+        customCommission
       }, assetsDir);
 
       if (generatedBytes && generatedBytes.length > 0) {

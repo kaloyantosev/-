@@ -35,6 +35,8 @@
         <p class="sidebar-sub">Данните се попълват в реално време на страниците на договора вдясно.</p>
       </div>
 
+      <div id="customFeeNotificationBanner" style="display:none; margin-bottom: 16px; padding: 12px 14px; border-radius: 8px; font-size: 13.5px; line-height: 1.4;"></div>
+
       <form id="merchantContractForm" onsubmit="return false;" novalidate>
         
         <!-- SECTION 1: Данни за фирмата Търговец -->
@@ -806,7 +808,7 @@
                 <div class="app-fees-list">
                   <p class="exact-p app-fee-item"><strong>1. Интеграционна такса – 0 EUR.</strong></p>
                   <p class="exact-p app-fee-item"><strong>2. Месечна такса за поддръжка-  0 EUR.</strong></p>
-                  <p class="exact-p app-fee-item"><strong>3. Такса за иницииране на плащане –  0.49% от стойността на транзакцията,</strong> платими до 10-то число на месеца, следващ месеца на осъществяване.</p>
+                  <p class="exact-p app-fee-item"><strong>3. Такса за иницииране на плащане –  <span id="appCommissionDisplay">0.49%</span> от стойността на транзакцията,</strong> платими до 10-то число на месеца, следващ месеца на осъществяване.</p>
                 </div>
 
                 <!-- Appendix Signatures strictly unsigned by IRIS, signed for Merchant -->

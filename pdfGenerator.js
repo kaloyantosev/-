@@ -16,7 +16,8 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
     contactEmail = 'office@example.bg',
     contactPhone = '0888 123 456',
     contractDate = '16.10.2026 г.',
-    signatureImageBase64 = null
+    signatureImageBase64 = null,
+    customCommission = null
   } = data || {};
 
   const contractPath = path.join(assetsDir, 'contract_template.pdf');
@@ -387,6 +388,39 @@ function stripPhoneAndEmailFromAddress(addr) {
 
   const p10 = pdfDoc.getPages()[9];
   const p10H = p10.getHeight();
+
+  // If custom commission provided, update line 3 of Appendix 1
+  if (customCommission) {
+    const cleanComm = String(customCommission).trim();
+    // White-out rectangle over line 1 of fee item 3
+    p10.drawRectangle({
+      x: 74.0,
+      y: p10H - 420.0,
+      width: 492.0,
+      height: 16.5,
+      color: rgb(1, 1, 1)
+    });
+
+    const part1 = `3. Такса за иницииране на плащане –  ${cleanComm} от стойността на транзакцията, `;
+    const part2 = 'платими до 10-то число';
+
+    p10.drawText(part1, {
+      x: 76.52,
+      y: p10H - 415.37,
+      font: fontBold,
+      size: 11.0,
+      color: rgb(0, 0, 0)
+    });
+
+    const wPart1 = fontBold.widthOfTextAtSize(part1, 11.0);
+    p10.drawText(part2, {
+      x: 76.52 + wPart1,
+      y: p10H - 415.37,
+      font: font,
+      size: 11.0,
+      color: rgb(0, 0, 0)
+    });
+  }
 
   // Provider slot remains strictly blank (provider signs after receiving the merchant contract)
 

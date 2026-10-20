@@ -120,19 +120,19 @@ export async function loadStore() {
   // 1. Try Vercel KV cloud storage first if configured
   const kvData = await fetchFromKv();
   if (kvData && Array.isArray(kvData.affiliates)) {
-    cachedStore = kvData;
+    cachedStore = ensureStoreArrays(kvData);
     return cachedStore;
   }
 
   if (cachedStore) {
-    return cachedStore;
+    return ensureStoreArrays(cachedStore);
   }
 
   // 2. Try /tmp file
   try {
     if (fs.existsSync(TMP_DATA_FILE)) {
       const raw = fs.readFileSync(TMP_DATA_FILE, 'utf-8');
-      cachedStore = JSON.parse(raw);
+      cachedStore = ensureStoreArrays(JSON.parse(raw));
       return cachedStore;
     }
   } catch (err) {
@@ -143,7 +143,7 @@ export async function loadStore() {
   try {
     if (fs.existsSync(LOCAL_DATA_FILE)) {
       const raw = fs.readFileSync(LOCAL_DATA_FILE, 'utf-8');
-      cachedStore = JSON.parse(raw);
+      cachedStore = ensureStoreArrays(JSON.parse(raw));
       return cachedStore;
     }
   } catch (err) {
@@ -153,9 +153,18 @@ export async function loadStore() {
   cachedStore = {
     affiliates: DEFAULT_AFFILIATES,
     contracts: DEFAULT_CONTRACTS,
+    customLinks: [],
     updatedAt: new Date().toISOString()
   };
   return cachedStore;
+}
+
+function ensureStoreArrays(st) {
+  if (!st || typeof st !== 'object') return st;
+  if (!Array.isArray(st.affiliates)) st.affiliates = [];
+  if (!Array.isArray(st.contracts)) st.contracts = [];
+  if (!Array.isArray(st.customLinks)) st.customLinks = [];
+  return st;
 }
 
 /**
@@ -515,4 +524,134 @@ export async function getDashboardSummary({ month = '', fromDate = '', toDate = 
     monthsList,
     cloudStatus
   };
+}
+
+/**
+ * Format commission string nicely (e.g. "0.35" -> "0.35%", "0.35%" -> "0.35%")
+ */
+export function formatCommissionText(val) {
+  let clean = String(val || '').trim();
+  if (!clean) return '0.49%';
+  clean = clean.replace(',', '.');
+  if (/^\d+(\.\d+)?$/.test(clean)) {
+    return clean + '%';
+  }
+  return clean;
+}
+
+/**
+ * Generate unique short token for one-time link
+ */
+export function generateCustomToken() {
+  const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+  let rand = '';
+  for (let i = 0; i < 7; i++) {
+    rand += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return rand;
+}
+
+/**
+ * Create a one-time custom commission link
+ */
+export async function createCustomLink({ commission, note = '' }) {
+  const store = await loadStore();
+  const cleanComm = formatCommissionText(commission);
+  const token = generateCustomToken();
+
+  const newLink = {
+    id: 'cl_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+    token,
+    commission: cleanComm,
+    note: String(note || '').trim(),
+    createdAt: new Date().toISOString(),
+    used: false,
+    usedAt: null,
+    usedByCompanyName: null,
+    usedByEik: null,
+    contractId: null
+  };
+
+  store.customLinks.push(newLink);
+  await saveStore(store);
+  console.log(`[Store] Created one-time custom commission link (${cleanComm}): token=${token}`);
+  return newLink;
+}
+
+/**
+ * Get custom link details by token
+ */
+export async function getCustomLink(token) {
+  if (!token) return null;
+  const store = await loadStore();
+  const rawToken = String(token).toLowerCase().trim();
+  const cleanToken = rawToken.replace(/^c-|^c_|^c\//, '').trim();
+
+  return (store.customLinks || []).find(l => {
+    const lTok = l.token.toLowerCase();
+    return lTok === rawToken || lTok === cleanToken || ('c-' + lTok) === rawToken;
+  }) || null;
+}
+
+/**
+ * Mark a custom link as used after contract is signed and submitted
+ */
+export async function useCustomLink({ token, companyName, companyEik, contractId }) {
+  if (!token) return null;
+  const store = await loadStore();
+  const rawToken = String(token).toLowerCase().trim();
+  const cleanToken = rawToken.replace(/^c-|^c_|^c\//, '').trim();
+
+  const link = (store.customLinks || []).find(l => {
+    const lTok = l.token.toLowerCase();
+    return lTok === rawToken || lTok === cleanToken || ('c-' + lTok) === rawToken;
+  });
+
+  if (!link || link.used) {
+    return null;
+  }
+
+  link.used = true;
+  link.usedAt = new Date().toISOString();
+  link.usedByCompanyName = String(companyName || '—').trim();
+  link.usedByEik = String(companyEik || '—').trim();
+  link.contractId = contractId || null;
+
+  await saveStore(store);
+  console.log(`[Store] Custom link ${link.token} (${link.commission}) successfully marked as used by ${companyName}.`);
+  return link;
+}
+
+/**
+ * List all custom commission links
+ */
+export async function listCustomLinks() {
+  const store = await loadStore();
+  return (store.customLinks || []).slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+/**
+ * Delete / cancel a custom link
+ */
+export async function deleteCustomLink({ id, token }) {
+  const store = await loadStore();
+  const initialLen = (store.customLinks || []).length;
+
+  store.customLinks = (store.customLinks || []).filter(l => {
+    if (id && l.id === id) return false;
+    if (token) {
+      const raw = String(token).toLowerCase().trim();
+      const clean = raw.replace(/^c-|^c_|^c\//, '').trim();
+      if (l.token.toLowerCase() === raw || l.token.toLowerCase() === clean) return false;
+    }
+    return true;
+  });
+
+  if (store.customLinks.length === initialLen) {
+    throw new Error('Линкът не е намерен.');
+  }
+
+  await saveStore(store);
+  console.log(`[Store] Deleted custom link (id=${id}, token=${token}). Remaining: ${store.customLinks.length}`);
+  return { success: true };
 }

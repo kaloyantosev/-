@@ -710,9 +710,14 @@
         <button id="btnResetFilters" class="btn-reset-filters">Изчисти филтрите</button>
       </div>
 
-      <button id="btnOpenCreateModal" class="btn-create-link">
-        <span>+ Генерирай нов Affiliate Link</span>
-      </button>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button id="btnOpenCreateModal" class="btn-create-link">
+          <span>+ Генерирай нов Affiliate Link</span>
+        </button>
+        <button id="btnOpenCustomFeeModal" class="btn-create-link" style="background: linear-gradient(135deg, #0D9488 0%, #059669 100%);">
+          <span>Създай друга комисионна</span>
+        </button>
+      </div>
     </section>
 
     <!-- Partners Table -->
@@ -735,6 +740,36 @@
         <tbody id="partnersTableBody">
           <tr class="empty-row">
             <td colspan="5">Зареждане на данни...</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Custom Commission Links Table -->
+    <section class="table-container" style="margin-top: 32px;">
+      <div class="table-header-title">
+        <div>
+          <h2>Еднократни линкове с индивидуална комисионна</h2>
+          <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;">
+            Всеки линк е валиден за попълване точно един път. След изпращане на договора линкът автоматично се деактивира.
+          </p>
+        </div>
+        <button id="btnRefreshCustomLinks" class="btn-reset-filters" style="height: 34px;">Обнови</button>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 14%;">Комисионна</th>
+            <th style="width: 22%;">Бележка / Клиент</th>
+            <th style="width: 32%;">Еднократен Линк</th>
+            <th style="width: 20%;">Статус</th>
+            <th style="width: 12%; text-align: right;">Действия</th>
+          </tr>
+        </thead>
+        <tbody id="customLinksTableBody">
+          <tr class="empty-row">
+            <td colspan="5">Зареждане на линкове...</td>
           </tr>
         </tbody>
       </table>
@@ -793,6 +828,63 @@
           <button type="button" class="btn-cancel" id="btnCancelCreateModal">Отказ</button>
           <button type="submit" class="btn-create-link" id="btnSubmitNewAff">
             <span>Създай и копирай линка</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Generate Custom Commission Link -->
+  <div id="customFeeModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Създай договор с друга комисионна</h3>
+        <button class="btn-close-modal" id="btnCloseCustomFeeModal">&times;</button>
+      </div>
+
+      <form id="createCustomFeeForm">
+        <div class="modal-body">
+          <div style="margin-bottom: 16px;">
+            <label style="display:block; font-size:13px; font-weight:600; color:var(--primary); margin-bottom:6px;">
+              Комисионна за иницииране на плащане (%): *
+            </label>
+            <input 
+              type="text" 
+              id="customCommissionInput" 
+              class="filter-input" 
+              placeholder="напр. 0.35%" 
+              value="0.35%" 
+              required 
+              style="width: 100%; height: 42px; font-weight: 700; font-size: 15px;"
+            >
+            <span style="font-size:11.5px; color:var(--text-muted); display:block; margin-top:4px;">
+              Стандартната такса в Приложение № 1 е 0.49%. Въведете новата такса (напр. 0.35% или 0.40%).
+            </span>
+          </div>
+
+          <div style="margin-bottom: 16px;">
+            <label style="display:block; font-size:13px; font-weight:600; color:var(--primary); margin-bottom:6px;">
+              Бележка / Име на клиент (по избор):
+            </label>
+            <input 
+              type="text" 
+              id="customNoteInput" 
+              class="filter-input" 
+              placeholder="напр. Оферта за Търговец ООД" 
+              style="width: 100%; height: 42px;"
+            >
+          </div>
+
+          <!-- Notice Box -->
+          <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 12px; font-size: 12.5px; color: #166534; line-height: 1.4;">
+            <strong>Важно:</strong> Линкът ще бъде валиден за попълване точно <strong>един път</strong>. След като клиентът подпише и изпрати договора, линкът автоматично се деактивира и не може да бъде отварян повторно.
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" id="btnCancelCustomFeeModal">Отказ</button>
+          <button type="submit" class="btn-create-link" id="btnSubmitCustomFee" style="background: linear-gradient(135deg, #0D9488 0%, #059669 100%);">
+            <span>Генерирай и копирай линка</span>
           </button>
         </div>
       </form>
@@ -1450,27 +1542,236 @@
       window.location.replace('/login');
     });
 
+    // =========================================================================
+    // Custom Commission One-Time Links Handler
+    // =========================================================================
+    const btnOpenCustomFeeModal = document.getElementById('btnOpenCustomFeeModal');
+    const customFeeModal = document.getElementById('customFeeModal');
+    const btnCloseCustomFeeModal = document.getElementById('btnCloseCustomFeeModal');
+    const btnCancelCustomFeeModal = document.getElementById('btnCancelCustomFeeModal');
+    const createCustomFeeForm = document.getElementById('createCustomFeeForm');
+    const customCommissionInput = document.getElementById('customCommissionInput');
+    const customNoteInput = document.getElementById('customNoteInput');
+    const btnRefreshCustomLinks = document.getElementById('btnRefreshCustomLinks');
+    const customLinksTableBody = document.getElementById('customLinksTableBody');
+
+    if (btnOpenCustomFeeModal) {
+      btnOpenCustomFeeModal.addEventListener('click', () => {
+        createCustomFeeForm.reset();
+        customCommissionInput.value = '0.35%';
+        customFeeModal.style.display = 'flex';
+        customCommissionInput.focus();
+        customCommissionInput.select();
+      });
+    }
+
+    function closeCustomFeeModal() {
+      if (customFeeModal) customFeeModal.style.display = 'none';
+    }
+
+    if (btnCloseCustomFeeModal) btnCloseCustomFeeModal.addEventListener('click', closeCustomFeeModal);
+    if (btnCancelCustomFeeModal) btnCancelCustomFeeModal.addEventListener('click', closeCustomFeeModal);
+
+    if (createCustomFeeForm) {
+      createCustomFeeForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const commission = customCommissionInput.value.trim();
+        const note = customNoteInput.value.trim();
+
+        if (!commission) {
+          alert('Моля, въведете размер на комисионната.');
+          return;
+        }
+
+        const submitBtn = document.getElementById('btnSubmitCustomFee');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Генериране...';
+
+        try {
+          const res = await fetch('/api/custom-link', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ commission, note })
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success && data.link) {
+            const origin = window.location.origin;
+            const fullUrl = `${origin}/c/${data.link.token}`;
+            await copyTextDirectly(fullUrl);
+            showToast(`Линкът с комисионна ${data.link.commission} е създаден и копиран!`);
+            closeCustomFeeModal();
+            await loadCustomLinksData();
+          } else {
+            alert(data.error || 'Възникна грешка при създаване на линка.');
+          }
+        } catch (err) {
+          console.error('Error creating custom link:', err);
+          alert('Мрежова грешка при създаване на линка.');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span>Генерирай и копирай линка</span>';
+        }
+      });
+    }
+
+    if (btnRefreshCustomLinks) {
+      btnRefreshCustomLinks.addEventListener('click', () => {
+        loadCustomLinksData();
+      });
+    }
+
+    async function loadCustomLinksData() {
+      if (!customLinksTableBody) return;
+
+      try {
+        const res = await fetch('/api/custom-link', {
+          headers: getAuthHeaders()
+        });
+
+        if (res.status === 401) return;
+
+        const data = await res.json();
+        const links = data.links || [];
+
+        if (!links || links.length === 0) {
+          customLinksTableBody.innerHTML = `
+            <tr class="empty-row">
+              <td colspan="5" style="color: var(--text-muted); padding: 24px; text-align: center;">Няма създадени еднократни линкове. Използвайте бутона "Създай друга комисионна" по-горе.</td>
+            </tr>
+          `;
+          return;
+        }
+
+        customLinksTableBody.innerHTML = links.map(link => {
+          const origin = window.location.origin;
+          const fullUrl = `${origin}/c/${link.token}`;
+          const isUsed = !!link.used;
+          const createdDate = link.createdAt ? formatDateBG(link.createdAt) : '—';
+
+          let statusBadge = '';
+          if (isUsed) {
+            const usedDate = link.usedAt ? formatDateBG(link.usedAt) : '';
+            const usedWho = link.usedByCompanyName ? ` от <strong>${escapeHtml(link.usedByCompanyName)}</strong>` : '';
+            const usedEik = link.usedByEik ? ` (ЕИК: ${escapeHtml(link.usedByEik)})` : '';
+            statusBadge = `
+              <span style="display:inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11.5px; font-weight: 600; background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1;">
+                Използван ${usedDate}${usedWho}${usedEik}
+              </span>
+            `;
+          } else {
+            statusBadge = `
+              <span style="display:inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11.5px; font-weight: 600; background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0;">
+                Активен (Очаква подпис)
+              </span>
+            `;
+          }
+
+          const actionHtml = isUsed ? `
+            <span style="font-size: 12px; color: var(--text-muted);">Деактивиран</span>
+          ` : `
+            <div style="display: flex; gap: 6px; justify-content: flex-end;">
+              <button class="btn-copy-custom" data-url="${escapeHtml(fullUrl)}" style="background: #F8FAFC; border: 1px solid var(--border); border-radius: 5px; padding: 5px 9px; font-size: 12px; font-weight: 600; color: var(--primary); cursor: pointer;">
+                Копирай
+              </button>
+              <button class="btn-delete-custom" data-token="${link.token}" style="background: #FFF5F5; border: 1px solid #FECACA; border-radius: 5px; padding: 5px 9px; font-size: 12px; font-weight: 600; color: #DC2626; cursor: pointer;">
+                Изтрий
+              </button>
+            </div>
+          `;
+
+          return `
+            <tr>
+              <td>
+                <span style="font-weight: 700; color: #0F172A; font-size: 14.5px;">${escapeHtml(link.commission)}</span>
+              </td>
+              <td>
+                <div style="font-size: 13px; font-weight: 500; color: #334155;">${escapeHtml(link.note || '—')}</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Създаден: ${createdDate}</div>
+              </td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <code style="font-size: 12px; background: #F1F5F9; padding: 3px 6px; border-radius: 4px; color: var(--primary); font-family: monospace;">${escapeHtml(fullUrl)}</code>
+                </div>
+              </td>
+              <td>${statusBadge}</td>
+              <td style="text-align: right;">${actionHtml}</td>
+            </tr>
+          `;
+        }).join('');
+
+        // Wire copy buttons
+        customLinksTableBody.querySelectorAll('.btn-copy-custom').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const url = e.currentTarget.dataset.url;
+            await copyTextDirectly(url);
+            const orig = e.currentTarget.textContent;
+            e.currentTarget.textContent = 'Копирано!';
+            showToast(`Линкът е копиран: ${url}`);
+            setTimeout(() => { e.currentTarget.textContent = orig; }, 2000);
+          });
+        });
+
+        // Wire delete buttons
+        customLinksTableBody.querySelectorAll('.btn-delete-custom').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const token = e.currentTarget.dataset.token;
+            if (!confirm('Сигурни ли сте, че искате да изтриете този еднократен линк?')) return;
+
+            try {
+              const dRes = await fetch(`/api/custom-link?token=${encodeURIComponent(token)}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+              });
+              if (dRes.ok) {
+                showToast('Линкът беше изтрит успешно.');
+                await loadCustomLinksData();
+              } else {
+                alert('Грешка при изтриване на линка.');
+              }
+            } catch (err) {
+              console.error('Delete custom link error:', err);
+              alert('Мрежова грешка при изтриване.');
+            }
+          });
+        });
+
+      } catch (err) {
+        console.error('Error loading custom links:', err);
+        customLinksTableBody.innerHTML = `
+          <tr class="empty-row">
+            <td colspan="5" style="color: #DC2626;">Грешка при зареждане на линковете.</td>
+          </tr>
+        `;
+      }
+    }
+
     // Close modals on backdrop click
     window.addEventListener('click', (e) => {
       if (e.target === createModal) closeCreateModal();
+      if (e.target === customFeeModal) closeCustomFeeModal();
       if (e.target === detailsModal) detailsModal.style.display = 'none';
     });
 
     // Initial Load
     loadAffiliatesData();
+    loadCustomLinksData();
 
     // Auto-refresh data when returning to the tab or periodically every 15s
     window.addEventListener('focus', () => {
       loadAffiliatesData();
+      loadCustomLinksData();
     });
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         loadAffiliatesData();
+        loadCustomLinksData();
       }
     });
     setInterval(() => {
       if (document.visibilityState === 'visible') {
         loadAffiliatesData();
+        loadCustomLinksData();
       }
     }, 15000);
   </script>
