@@ -764,7 +764,10 @@
 
   <script>
     // 1. Session verification & Admin Login handling
-    let currentAdminToken = localStorage.getItem('iris_auth_token') || sessionStorage.getItem('iris_auth_token');
+    // Always clear persistent storage on /admin so admin login is required on every visit
+    localStorage.removeItem('iris_auth_token');
+    localStorage.removeItem('iris_admin_token');
+    let currentAdminToken = null;
 
     const adminLoginSection = document.getElementById('adminLoginSection');
     const adminAppSection = document.getElementById('adminAppSection');
@@ -838,8 +841,7 @@
           const data = await res.json();
           if (res.ok && data.success && (data.role === 'admin' || data.user === 'admin')) {
             currentAdminToken = data.token;
-            localStorage.setItem('iris_auth_token', data.token);
-            sessionStorage.setItem('iris_auth_token', data.token);
+            sessionStorage.setItem('iris_admin_token', data.token);
             showAdminApp();
           } else {
             showAdminLogin(data.error || 'Грешно потребителско име или парола.');
@@ -855,7 +857,8 @@
       });
     }
 
-    checkAuth();
+    // Always require fresh admin login on every visit to /admin
+    showAdminLogin();
 
     // 2. Elements & Tabs
     const adminLogoutBtn = document.getElementById('adminLogoutBtn');
@@ -1198,7 +1201,9 @@
     adminLogoutBtn.addEventListener('click', async () => {
       await fetch('/api/auth?action=logout', { method: 'POST', headers: getAuthHeaders() }).catch(() => {});
       localStorage.removeItem('iris_auth_token');
+      localStorage.removeItem('iris_admin_token');
       sessionStorage.removeItem('iris_auth_token');
+      sessionStorage.removeItem('iris_admin_token');
       currentAdminToken = null;
       if (adminLoginPass) adminLoginPass.value = '';
       showAdminLogin('Успешно излязохте от административния панел.');

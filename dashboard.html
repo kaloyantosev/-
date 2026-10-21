@@ -953,8 +953,9 @@
   <div id="toastNotification" class="toast"></div>
 
   <script>
-    // 1. Session verification & Token handling
-    const token = localStorage.getItem('iris_auth_token') || sessionStorage.getItem('iris_auth_token');
+    // 1. Session verification & Token handling (Session only, no persistent auto-login)
+    localStorage.removeItem('iris_auth_token'); // Clear legacy persistent token
+    const token = sessionStorage.getItem('iris_auth_token');
     if (!token) {
       window.location.replace('/login');
     }

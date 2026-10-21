@@ -354,30 +354,9 @@
   </div>
 
   <script>
-    // 1. Check if user is already authenticated
-    (async function checkExistingAuth() {
-      const token = localStorage.getItem('iris_auth_token') || sessionStorage.getItem('iris_auth_token');
-      if (!token) return;
-
-      try {
-        const res = await fetch('/api/auth?action=check', {
-          headers: { 'Authorization': 'Bearer ' + token }
-        });
-        const data = await res.json();
-        if (data && data.authenticated) {
-          if (data.role === 'admin') {
-            window.location.replace('/admin');
-          } else {
-            window.location.replace('/dashboard');
-          }
-        } else {
-          localStorage.removeItem('iris_auth_token');
-          sessionStorage.removeItem('iris_auth_token');
-        }
-      } catch (e) {
-        // Ignore check error
-      }
-    })();
+    // 1. Clear any existing tokens on login page so fresh authentication is always required
+    localStorage.removeItem('iris_auth_token');
+    sessionStorage.removeItem('iris_auth_token');
 
     // 2. Elements
     const loginForm = document.getElementById('loginForm');
@@ -510,7 +489,6 @@
 
           // Direct login (Admin role)
           if (data.token) {
-            localStorage.setItem('iris_auth_token', data.token);
             sessionStorage.setItem('iris_auth_token', data.token);
           }
           showAlert('Входът е успешен! Пренасочване...', true);
@@ -558,7 +536,6 @@
 
         if (res.ok && data.success) {
           if (data.token) {
-            localStorage.setItem('iris_auth_token', data.token);
             sessionStorage.setItem('iris_auth_token', data.token);
           }
           showAlert('Успешна автентикация! Пренасочване...', true);
