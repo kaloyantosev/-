@@ -252,6 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(async (res) => {
         const banner = document.getElementById('customFeeNotificationBanner');
         const commDisplay = document.getElementById('appCommissionDisplay');
+        const commDisplayEn = document.getElementById('appCommissionDisplayEn');
 
         if (res.ok) {
           const data = await res.json();
@@ -260,6 +261,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (commDisplay) {
               commDisplay.textContent = data.commission;
               commDisplay.style.color = '#059669';
+            }
+            if (commDisplayEn) {
+              commDisplayEn.textContent = data.commission;
+              commDisplayEn.style.color = '#059669';
             }
 
             if (data.partnerSlug) {
@@ -321,6 +326,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const badgeContract = document.getElementById('badgeContract');
   const badgeAppendix = document.getElementById('badgeAppendix');
   const contractMerchantSigSlot = document.getElementById('contractMerchantSigSlot');
+  const contractMerchantTermsSigSlot = document.getElementById('contractMerchantTermsSigSlot');
+  const contractMerchantTermsSigSlotRo = document.getElementById('contractMerchantTermsSigSlotRo');
   const appendixMerchantSigSlot = document.getElementById('appendixMerchantSigSlot');
   const typedSigInput = document.getElementById('typedSigInput');
   const sigFileInput = document.getElementById('sigFileInput');
@@ -455,6 +462,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (contractMerchantSigSlot) {
       contractMerchantSigSlot.innerHTML = '<span style="font-size: 11px; color: #94A3B8; font-style: italic;">[ Semnătura va apărea aici după aplicare ]</span>';
     }
+    if (contractMerchantTermsSigSlot) {
+      contractMerchantTermsSigSlot.innerHTML = '<span style="font-size: 11px; color: #94A3B8; font-style: italic;">[ Semnătura va apărea aici după aplicare ]</span>';
+    }
+    if (contractMerchantTermsSigSlotRo) {
+      contractMerchantTermsSigSlotRo.innerHTML = '<span style="font-size: 11px; color: #94A3B8; font-style: italic;">[ Semnătura va apărea aici după aplicare ]</span>';
+    }
     if (appendixMerchantSigSlot) {
       appendixMerchantSigSlot.innerHTML = '<span style="font-size: 11px; color: #94A3B8; font-style: italic;">[ Semnătura va apărea aici după aplicare ]</span>';
     }
@@ -510,6 +523,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const imgHtml = `<img src="${sigData}" alt="Semnătură Comerciant" class="sig-preview-img-box">`;
       if (contractMerchantSigSlot) contractMerchantSigSlot.innerHTML = imgHtml;
+      if (contractMerchantTermsSigSlot) contractMerchantTermsSigSlot.innerHTML = imgHtml;
+      if (contractMerchantTermsSigSlotRo) contractMerchantTermsSigSlotRo.innerHTML = imgHtml;
       if (appendixMerchantSigSlot) appendixMerchantSigSlot.innerHTML = imgHtml;
 
       showToast('Semnătura a fost aplicată pe Contract și Anexa 1!');
