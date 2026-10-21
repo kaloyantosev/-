@@ -1661,8 +1661,8 @@
 
     if (customCommissionInput) {
       customCommissionInput.addEventListener('input', (e) => {
-        // Strip out non-numeric characters except dot
-        e.target.value = e.target.value.replace(/[^0-9.]/g, '');
+        // Allow numeric and decimal points (convert comma to dot)
+        e.target.value = e.target.value.replace(',', '.').replace(/[^0-9.]/g, '');
       });
     }
 
@@ -1677,9 +1677,7 @@
     if (createCustomFeeForm) {
       createCustomFeeForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        let rawVal = (customCommissionInput?.value || '').trim();
-        // Remove leading 0s, dots, or % if the user typed them
-        rawVal = rawVal.replace(/^0+/, '').replace(/^\.+/, '').replace(/%+$/, '').trim();
+        let rawVal = (customCommissionInput?.value || '').trim().replace(',', '.').replace('%', '').trim();
 
         if (!rawVal) {
           alert('Моля, въведете число за комисионната (напр. 35 за 0.35%).');
@@ -1687,7 +1685,21 @@
           return;
         }
 
-        const commission = `0.${rawVal}%`;
+        let num = parseFloat(rawVal);
+        if (isNaN(num) || num <= 0) {
+          alert('Моля, въведете валидно число за комисионната.');
+          customCommissionInput.focus();
+          return;
+        }
+
+        let commission;
+        if (rawVal.startsWith('0.')) {
+          commission = `${rawVal}%`;
+        } else if (rawVal.startsWith('.')) {
+          commission = `0${rawVal}%`;
+        } else {
+          commission = `0.${rawVal}%`;
+        }
 
         const submitBtn = document.getElementById('btnSubmitCustomFee');
         submitBtn.disabled = true;

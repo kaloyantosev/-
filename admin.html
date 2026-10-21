@@ -341,12 +341,156 @@
       padding: 12px 16px;
       margin-bottom: 10px;
     }
+
+    /* Admin Login Screen */
+    .admin-login-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #F1F5F9;
+      padding: 24px;
+    }
+    .admin-login-card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 14px;
+      padding: 38px 34px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    }
+    .admin-login-brand {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .admin-login-brand img {
+      height: 42px;
+      margin-bottom: 12px;
+    }
+    .admin-login-brand h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0F172A;
+      margin: 0 0 6px 0;
+    }
+    .admin-login-brand p {
+      font-size: 13px;
+      color: #64748B;
+      margin: 0;
+    }
+    .admin-login-field {
+      margin-bottom: 18px;
+    }
+    .admin-login-field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1E293B;
+      margin-bottom: 6px;
+    }
+    .admin-login-field input {
+      width: 100%;
+      height: 44px;
+      border: 1px solid #CBD5E1;
+      border-radius: 8px;
+      padding: 0 14px;
+      font-size: 14px;
+      color: #0F172A;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .admin-login-field input:focus {
+      border-color: #2563EB;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    .btn-admin-submit-login {
+      width: 100%;
+      height: 44px;
+      background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
+      color: #FFFFFF;
+      font-size: 14.5px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    .btn-admin-submit-login:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+    .btn-admin-submit-login:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .admin-login-error {
+      display: none;
+      background: #FEF2F2;
+      border: 1px solid #FECACA;
+      color: #991B1B;
+      font-size: 13px;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .admin-login-footer {
+      margin-top: 22px;
+      text-align: center;
+      font-size: 12.5px;
+      color: #64748B;
+    }
+    .admin-login-footer a {
+      color: #2563EB;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .admin-login-footer a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Top Nav -->
-  <header class="admin-navbar">
+  <!-- ADMIN LOGIN VIEW (shown if not logged in as admin) -->
+  <div id="adminLoginSection" class="admin-login-wrapper" style="display: none;">
+    <div class="admin-login-card">
+      <div class="admin-login-brand">
+        <img src="/assets/iris-logo.svg" alt="IRIS Logo">
+        <h2>Администраторски достъп</h2>
+        <p>Контролен панел на IRIS Pay</p>
+      </div>
+
+      <div id="adminLoginError" class="admin-login-error"></div>
+
+      <form id="adminLoginForm">
+        <div class="admin-login-field">
+          <label for="adminLoginUser">Потребителско име:</label>
+          <input type="text" id="adminLoginUser" value="admin" required autocomplete="username">
+        </div>
+
+        <div class="admin-login-field">
+          <label for="adminLoginPass">Парола:</label>
+          <input type="password" id="adminLoginPass" placeholder="••••••••••••" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" id="btnAdminLoginSubmit" class="btn-admin-submit-login">
+          Вход в административния панел
+        </button>
+      </form>
+
+      <div class="admin-login-footer">
+        <a href="/">← Към сайта за договори</a> &nbsp;|&nbsp; <a href="/login">Sales вход</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN APPLICATION VIEW (shown when authenticated) -->
+  <div id="adminAppSection" style="display: none;">
+    <!-- Top Nav -->
+    <header class="admin-navbar">
     <div class="admin-brand">
       <img src="/assets/iris-logo.svg" alt="IRIS Logo" style="height: 34px;">
       <span style="font-weight: 800; font-size: 16px;">Контролен Панел</span>
@@ -614,38 +758,103 @@
       </div>
     </div>
   </main>
+  </div>
 
   <div id="adminToast" class="admin-toast"></div>
 
   <script>
-    // 1. Session verification & Token handling
-    const token = localStorage.getItem('iris_auth_token') || sessionStorage.getItem('iris_auth_token');
-    if (!token) {
-      window.location.replace('/login');
+    // 1. Session verification & Admin Login handling
+    let currentAdminToken = localStorage.getItem('iris_auth_token') || sessionStorage.getItem('iris_auth_token');
+
+    const adminLoginSection = document.getElementById('adminLoginSection');
+    const adminAppSection = document.getElementById('adminAppSection');
+    const adminLoginForm = document.getElementById('adminLoginForm');
+    const adminLoginUser = document.getElementById('adminLoginUser');
+    const adminLoginPass = document.getElementById('adminLoginPass');
+    const adminLoginError = document.getElementById('adminLoginError');
+    const btnAdminLoginSubmit = document.getElementById('btnAdminLoginSubmit');
+
+    function showAdminLogin(errorMsg = '') {
+      if (adminAppSection) adminAppSection.style.display = 'none';
+      if (adminLoginSection) adminLoginSection.style.display = 'flex';
+      if (adminLoginError) {
+        if (errorMsg) {
+          adminLoginError.textContent = errorMsg;
+          adminLoginError.style.display = 'block';
+        } else {
+          adminLoginError.style.display = 'none';
+        }
+      }
+      setTimeout(() => { if (adminLoginPass) adminLoginPass.focus(); }, 100);
+    }
+
+    function showAdminApp() {
+      if (adminLoginSection) adminLoginSection.style.display = 'none';
+      if (adminAppSection) adminAppSection.style.display = 'block';
+      loadAdminOverview();
     }
 
     function getAuthHeaders() {
       const headers = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = 'Bearer ' + token;
+      if (currentAdminToken) headers['Authorization'] = 'Bearer ' + currentAdminToken;
       return headers;
     }
 
     async function checkAuth() {
-      if (!token) {
-        window.location.replace('/login');
+      if (!currentAdminToken) {
+        showAdminLogin();
         return;
       }
       try {
         const res = await fetch('/api/auth?action=check', { headers: getAuthHeaders() });
         const data = await res.json();
-        if (!data || !data.authenticated || (data.role !== 'admin' && data.user !== 'admin')) {
-          alert('Нямате администраторски права за достъп.');
-          window.location.replace('/login');
+        if (res.ok && data && data.authenticated && (data.role === 'admin' || data.user === 'admin')) {
+          showAdminApp();
+        } else {
+          showAdminLogin('Моля, влезте с администраторски профил.');
         }
       } catch (err) {
-        window.location.replace('/login');
+        showAdminLogin();
       }
     }
+
+    if (adminLoginForm) {
+      adminLoginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = (adminLoginUser.value || '').trim();
+        const password = adminLoginPass.value;
+
+        btnAdminLoginSubmit.disabled = true;
+        btnAdminLoginSubmit.textContent = 'Проверка на данните...';
+        adminLoginError.style.display = 'none';
+
+        try {
+          const res = await fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success && (data.role === 'admin' || data.user === 'admin')) {
+            currentAdminToken = data.token;
+            localStorage.setItem('iris_auth_token', data.token);
+            sessionStorage.setItem('iris_auth_token', data.token);
+            showAdminApp();
+          } else {
+            showAdminLogin(data.error || 'Грешно потребителско име или парола.');
+            adminLoginPass.value = '';
+            adminLoginPass.focus();
+          }
+        } catch (err) {
+          showAdminLogin('Мрежова грешка при свързване със сървъра.');
+        } finally {
+          btnAdminLoginSubmit.disabled = false;
+          btnAdminLoginSubmit.textContent = 'Вход в административния панел';
+        }
+      });
+    }
+
     checkAuth();
 
     // 2. Elements & Tabs
@@ -990,7 +1199,9 @@
       await fetch('/api/auth?action=logout', { method: 'POST', headers: getAuthHeaders() }).catch(() => {});
       localStorage.removeItem('iris_auth_token');
       sessionStorage.removeItem('iris_auth_token');
-      window.location.replace('/login');
+      currentAdminToken = null;
+      if (adminLoginPass) adminLoginPass.value = '';
+      showAdminLogin('Успешно излязохте от административния панел.');
     });
 
     // Helpers

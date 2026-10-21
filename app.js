@@ -28,6 +28,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (contractDateInput) {
     contractDateInput.value = todayDmy;
+    const formattedDate = formatBulgarianDate(todayDmy);
+    document.querySelectorAll('.live-field[data-field="date"]').forEach(el => {
+      el.textContent = formattedDate;
+      el.classList.add('filled');
+      el.classList.remove('underlined');
+    });
   }
   if (hiddenNativeDatePicker) {
     hiddenNativeDatePicker.value = todayYmd;
@@ -134,35 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
               `;
             }
           }
-        } else if (res.status === 410) {
-          window.irisCustomTokenUsed = true;
-          if (banner) {
-            banner.style.display = 'block';
-            banner.style.background = '#FEF2F2';
-            banner.style.border = '1px solid #FECACA';
-            banner.style.color = '#991B1B';
-            banner.innerHTML = `
-              <div style="text-align: center; padding: 4px 0;">
-                <div style="font-size: 14.5px; font-weight: 700; margin-bottom: 4px;">Този еднократен линк вече е използван</div>
-                <div style="font-size: 12.5px;">Договорът за тази индивидуална комисионна вече е бил подписан и изпратен. Линкът е деактивиран и не може да се използва повторно.</div>
-              </div>
-            `;
-          }
-          const submitBtn = document.getElementById('submitContractBtn');
-          if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.style.opacity = '0.5';
-            submitBtn.style.cursor = 'not-allowed';
-            submitBtn.textContent = 'Линкът вече е използван';
-          }
-        } else {
-          console.warn('[IRIS Pay] Custom token not valid or not found');
-        }
-      })
-      .catch((err) => {
-        console.warn('[IRIS Pay] Error verifying custom token:', err);
-      });
-  }
         } else if (res.status === 410) {
           window.irisCustomTokenUsed = true;
           if (banner) {

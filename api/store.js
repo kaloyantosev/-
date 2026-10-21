@@ -578,11 +578,20 @@ export async function createCustomLink({ commission, note = '', partnerSlug = nu
   const token = generateCustomToken();
 
   let matchedPartner = null;
+  let resolvedSlug = null;
+  let resolvedName = null;
   if (partnerSlug) {
-    const cleanSlug = sanitizeSlug(partnerSlug);
+    const cleanSlug = String(partnerSlug).toLowerCase().trim();
     matchedPartner = (store.affiliates || []).find(
-      a => a.slug && a.slug.toLowerCase() === cleanSlug.toLowerCase() && a.active !== false
+      a => a.slug && (a.slug.toLowerCase() === cleanSlug || a.slug.toLowerCase() === sanitizeSlug(cleanSlug)) && a.active !== false
     );
+    if (matchedPartner) {
+      resolvedSlug = matchedPartner.slug;
+      resolvedName = matchedPartner.name;
+    } else {
+      resolvedSlug = sanitizeSlug(cleanSlug);
+      resolvedName = partnerSlug;
+    }
   }
 
   const newLink = {
@@ -590,8 +599,8 @@ export async function createCustomLink({ commission, note = '', partnerSlug = nu
     token,
     commission: cleanComm,
     note: String(note || '').trim(),
-    partnerSlug: matchedPartner ? matchedPartner.slug : null,
-    partnerName: matchedPartner ? matchedPartner.name : null,
+    partnerSlug: resolvedSlug,
+    partnerName: resolvedName,
     createdAt: new Date().toISOString(),
     used: false,
     usedAt: null,
