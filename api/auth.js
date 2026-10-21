@@ -94,10 +94,11 @@ export function createSessionToken(username, role = 'sales') {
 /**
  * Creates a signed 2FA Challenge Ticket.
  */
-export function create2FaTicket(email, code) {
+export function create2FaTicket(email, code, role = 'sales') {
   const codeHash = crypto.createHmac('sha256', SERVER_SALT).update(String(code).trim()).digest('hex');
   const payload = {
     email,
+    role,
     codeHash,
     exp: Date.now() + 10 * 60 * 1000, // 10 minutes
     nonce: crypto.randomBytes(12).toString('hex')
@@ -137,7 +138,7 @@ export function verify2FaTicket(ticket, code) {
       return { valid: false, error: 'Грешен код за сигурност. Моля, проверете отново.' };
     }
 
-    return { valid: true, email: payload.email };
+    return { valid: true, email: payload.email, role: payload.role || (payload.email === 'admin' ? 'admin' : 'sales') };
   } catch (err) {
     return { valid: false, error: 'Грешка при проверка на кода.' };
   }
@@ -146,10 +147,17 @@ export function verify2FaTicket(ticket, code) {
 /**
  * Send 2FA email notification via Resend API
  */
-async function send2FaEmail({ to, code }) {
+async function send2FaEmail({ to, code, role = 'sales' }) {
   const apiKey = process.env.RESEND_API_KEY;
+  const isAdmin = role === 'admin';
+  const roleSuffix = isAdmin ? ' (Достъп до Админ панел)' : '';
+  const emailSubject = `Код за сигурност: ${code} - IRIS Pay Сайт за Договори${roleSuffix}`;
+  const descText = isAdmin 
+    ? 'Вашият еднократен 6-цифрен код за администраторски достъп до контролния панел (Admin) е:'
+    : 'Вашият еднократен 6-цифрен код за двуфакторна автентикация (2FA) при вход е:';
+
   if (!apiKey) {
-    console.warn(`[2FA Security Code Dev Fallback] -> To: ${to} | Code: ${code}`);
+    console.warn(`[2FA Security Code Dev Fallback] -> To: ${to} | Role: ${role} | Code: ${code} | Subject: ${emailSubject}`);
     return true;
   }
 
@@ -172,10 +180,11 @@ async function send2FaEmail({ to, code }) {
 <body>
   <div class="card">
     <div class="header">
-      <h1>IRIS Pay Портал</h1>
+      <h1>IRIS Pay Сайт за Договори</h1>
+      ${isAdmin ? '<div style="font-size: 13px; color: #BFDBFE; margin-top: 6px; font-weight: 600;">Администраторски достъп</div>' : ''}
     </div>
     <div class="content">
-      <p class="p-desc">Вашият еднократен 6-цифрен код за двуфакторна автентикация (2FA) при вход е:</p>
+      <p class="p-desc">${descText}</p>
       <div class="code-box">${code}</div>
       <p class="notice">Кодът е валиден 10 минути. Ако не сте заявили вход в системата, моля игнорирайте това съобщение.</p>
     </div>
@@ -194,8 +203,8 @@ async function send2FaEmail({ to, code }) {
       body: JSON.stringify({
         from: process.env.EMAIL_FROM || 'IRIS Pay Security <onboarding@resend.dev>',
         to: [to],
-        subject: `Код за сигурност: ${code} - IRIS Pay Портал`,
-        text: `Вашият код за двуфакторна автентикация в IRIS Pay Портал е: ${code} (валиден 10 минути).`,
+        subject: emailSubject,
+        text: `Вашият код за сигурност в IRIS Pay Сайт за Договори е: ${code} (валиден 10 минути).`,
         html
       })
     });
@@ -309,7 +318,9 @@ export default async function handler(req, res) {
 
     // Success! Reset rate limit and issue full session token
     resetRateLimit(ip);
-    const token = createSessionToken(VALID_SALES_EMAIL, 'sales');
+    const role = verification.role || (verification.email === 'admin' ? 'admin' : 'sales');
+    const user = verification.email || (role === 'admin' ? 'admin' : VALID_SALES_EMAIL);
+    const token = createSessionToken(user, role);
     const expiresAt = Date.now() + SESSION_TTL_MS;
 
     res.setHeader(
@@ -320,11 +331,11 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       token,
-      user: VALID_SALES_EMAIL,
-      role: 'sales',
+      user,
+      role,
       expiresAt,
-      redirect: '/dashboard',
-      message: 'Успешен вход в системата.'
+      redirect: role === 'admin' ? '/admin' : '/dashboard',
+      message: role === 'admin' ? 'Успешен администраторски вход.' : 'Успешен вход в системата.'
     });
   }
 
@@ -344,9 +355,11 @@ export default async function handler(req, res) {
     if (parts.length !== 2) return res.status(400).json({ error: 'Невалидна 2FA сесия.' });
 
     let email = VALID_SALES_EMAIL;
+    let role = 'sales';
     try {
       const payload = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf-8'));
       if (payload && payload.email) email = payload.email;
+      if (payload && payload.role) role = payload.role;
     } catch (e) {}
 
     const newCode = String(Math.floor(100000 + Math.random() * 900000));
@@ -355,9 +368,9 @@ export default async function handler(req, res) {
       const settings = await getSettings();
       if (settings?.twoFaEmail) targetEmail = settings.twoFaEmail;
     } catch (e) {}
-    await send2FaEmail({ to: targetEmail, code: newCode });
+    await send2FaEmail({ to: targetEmail, code: newCode, role });
 
-    const newTicket = create2FaTicket(email, newCode);
+    const newTicket = create2FaTicket(email, newCode, role);
     return res.status(200).json({
       success: true,
       ticket: newTicket,
@@ -391,23 +404,27 @@ export default async function handler(req, res) {
 
     if (isAdminUser && isAdminPassValid) {
       resetRateLimit(ip);
-      const token = createSessionToken(ADMIN_USERNAME, 'admin');
-      const expiresAt = Date.now() + SESSION_TTL_MS;
 
-      console.log(`[Security] Successful ADMIN login from IP ${ip}`);
-      res.setHeader(
-        'Set-Cookie',
-        `iris_auth_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_MS / 1000}`
-      );
+      // Generate 6-digit 2FA code for admin
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      let target2FaEmail = process.env.AUTH_2FA_EMAIL || 'kaloyan.tosev@gmail.com';
+      try {
+        const settings = await getSettings();
+        if (settings?.twoFaEmail) target2FaEmail = settings.twoFaEmail;
+      } catch (e) {}
+
+      console.log(`[Security] Admin login step 1 passed for ${inputUser}. Sending 2FA code to ${target2FaEmail}`);
+      await send2FaEmail({ to: target2FaEmail, code, role: 'admin' });
+
+      const ticket = create2FaTicket('admin', code, 'admin');
 
       return res.status(200).json({
         success: true,
-        token,
-        user: ADMIN_USERNAME,
+        require2fa: true,
         role: 'admin',
-        expiresAt,
-        redirect: '/admin',
-        message: 'Успешен администраторски вход.'
+        ticket,
+        targetEmail: target2FaEmail,
+        message: 'Паролата е потвърдена. Изпратен е 6-цифрен код за сигурност за администраторски достъп.'
       });
     }
 

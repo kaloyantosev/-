@@ -27,8 +27,8 @@
 
     /* Top Navigation */
     .admin-navbar {
-      background: var(--admin-navy);
-      color: #FFFFFF;
+      background: #FFFFFF;
+      color: #1E293B;
       height: 64px;
       display: flex;
       align-items: center;
@@ -37,13 +37,15 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      border-bottom: 1px solid var(--admin-border);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
     }
 
     .admin-brand {
       display: flex;
       align-items: center;
       gap: 14px;
+      color: #0F172A;
     }
 
     .admin-badge-role {
@@ -64,9 +66,9 @@
     }
 
     .btn-nav-link {
-      background: rgba(255,255,255,0.1);
-      color: #FFFFFF;
-      border: 1px solid rgba(255,255,255,0.15);
+      background: #F1F5F9;
+      color: #334155;
+      border: 1px solid #CBD5E1;
       border-radius: 6px;
       padding: 6px 14px;
       font-size: 13px;
@@ -76,7 +78,8 @@
     }
 
     .btn-nav-link:hover {
-      background: rgba(255,255,255,0.2);
+      background: #E2E8F0;
+      color: #0F172A;
     }
 
     .btn-nav-logout {
@@ -126,6 +129,15 @@
       border-bottom: 2px solid var(--admin-border);
       margin-bottom: 24px;
       overflow-x: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #CBD5E1 transparent;
+    }
+    .admin-tabs-bar::-webkit-scrollbar {
+      height: 6px;
+    }
+    .admin-tabs-bar::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 4px;
     }
 
     .admin-tab-btn {
@@ -465,6 +477,7 @@
 
       <div id="adminLoginError" class="admin-login-error"></div>
 
+      <!-- STEP 1: USERNAME & PASSWORD -->
       <form id="adminLoginForm">
         <div class="admin-login-field">
           <label for="adminLoginUser">Потребителско име:</label>
@@ -479,6 +492,28 @@
         <button type="submit" id="btnAdminLoginSubmit" class="btn-admin-submit-login">
           Вход в административния панел
         </button>
+      </form>
+
+      <!-- STEP 2: 2FA VERIFICATION CODE -->
+      <form id="admin2FaForm" style="display: none;">
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; margin-bottom: 18px; text-align: center;">
+          <div style="font-size: 13px; color: #475569; margin-bottom: 4px;">Изпратен е 6-цифрен код за сигурност към:</div>
+          <strong id="admin2FaTargetEmail" style="color: #0F172A; font-size: 14px;">kaloyan.tosev@gmail.com</strong>
+        </div>
+
+        <div class="admin-login-field">
+          <label for="admin2FaCode">Код за потвърждение (6 цифри):</label>
+          <input type="text" id="admin2FaCode" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="123456" style="text-align: center; font-size: 24px; letter-spacing: 6px; font-weight: 700; font-family: monospace;" required autocomplete="one-time-code">
+        </div>
+
+        <button type="submit" id="btnAdmin2FaSubmit" class="btn-admin-submit-login">
+          Потвърди и влез в админ панела
+        </button>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px;">
+          <button type="button" id="btnAdmin2FaBack" style="background: none; border: none; color: #64748B; font-size: 13px; font-weight: 600; cursor: pointer; padding: 0;">← Назад</button>
+          <button type="button" id="btnAdmin2FaResend" style="background: none; border: none; color: #2563EB; font-size: 13px; font-weight: 600; cursor: pointer; padding: 0;">Изпрати нов код</button>
+        </div>
       </form>
 
       <div class="admin-login-footer">
@@ -531,17 +566,17 @@
 
     <!-- Navigation Tabs -->
     <div class="admin-tabs-bar">
-      <button class="admin-tab-btn active" data-tab="tab-settings">⚙️ Настройки на сайта & такси</button>
-      <button class="admin-tab-btn" data-tab="tab-emails">📧 Имейли & 2FA</button>
-      <button class="admin-tab-btn" data-tab="tab-dashboard-layout">📊 Разместване на Dashboard</button>
-      <button class="admin-tab-btn" data-tab="tab-contracts">📋 Всички договори</button>
+      <button class="admin-tab-btn active" data-tab="tab-contracts">📋 Всички договори</button>
       <button class="admin-tab-btn" data-tab="tab-partners">🤝 Партньори</button>
       <button class="admin-tab-btn" data-tab="tab-links">🔗 Еднократни линкове</button>
       <button class="admin-tab-btn" data-tab="tab-backup">💾 Бекъп & Възстановяване</button>
+      <button class="admin-tab-btn" data-tab="tab-settings">⚙️ Настройки на сайта & такси</button>
+      <button class="admin-tab-btn" data-tab="tab-emails">📧 Имейли & 2FA</button>
+      <button class="admin-tab-btn" data-tab="tab-dashboard-layout">📊 Разместване на Dashboard</button>
     </div>
 
     <!-- TAB 1: Site & Fee Settings -->
-    <div id="tab-settings" class="tab-pane">
+    <div id="tab-settings" class="tab-pane" style="display: none;">
       <div class="admin-panel-card">
         <h2 class="card-heading">Такси и параметри по Приложение № 1</h2>
         <p class="card-desc">Тези стойности се зареждат по подразбиране в договора и Приложение № 1 за нови клиенти.</p>
@@ -664,7 +699,7 @@
     </div>
 
     <!-- TAB 4: Contracts Master List -->
-    <div id="tab-contracts" class="tab-pane" style="display: none;">
+    <div id="tab-contracts" class="tab-pane">
       <div class="admin-panel-card">
         <h2 class="card-heading">Всички подписани договори в базата</h2>
         <p class="card-desc">Пълен списък на договорите, докарани през директния сайт или от партньори.</p>
@@ -768,6 +803,7 @@
     localStorage.removeItem('iris_auth_token');
     localStorage.removeItem('iris_admin_token');
     let currentAdminToken = null;
+    let adminCurrentTicket = null;
 
     const adminLoginSection = document.getElementById('adminLoginSection');
     const adminAppSection = document.getElementById('adminAppSection');
@@ -777,9 +813,21 @@
     const adminLoginError = document.getElementById('adminLoginError');
     const btnAdminLoginSubmit = document.getElementById('btnAdminLoginSubmit');
 
+    const admin2FaForm = document.getElementById('admin2FaForm');
+    const admin2FaCode = document.getElementById('admin2FaCode');
+    const btnAdmin2FaSubmit = document.getElementById('btnAdmin2FaSubmit');
+    const btnAdmin2FaBack = document.getElementById('btnAdmin2FaBack');
+    const btnAdmin2FaResend = document.getElementById('btnAdmin2FaResend');
+    const admin2FaTargetEmail = document.getElementById('admin2FaTargetEmail');
+
     function showAdminLogin(errorMsg = '') {
       if (adminAppSection) adminAppSection.style.display = 'none';
       if (adminLoginSection) adminLoginSection.style.display = 'flex';
+      if (adminLoginForm) adminLoginForm.style.display = 'block';
+      if (admin2FaForm) admin2FaForm.style.display = 'none';
+      adminCurrentTicket = null;
+      if (admin2FaCode) admin2FaCode.value = '';
+
       if (adminLoginError) {
         if (errorMsg) {
           adminLoginError.textContent = errorMsg;
@@ -803,24 +851,6 @@
       return headers;
     }
 
-    async function checkAuth() {
-      if (!currentAdminToken) {
-        showAdminLogin();
-        return;
-      }
-      try {
-        const res = await fetch('/api/auth?action=check', { headers: getAuthHeaders() });
-        const data = await res.json();
-        if (res.ok && data && data.authenticated && (data.role === 'admin' || data.user === 'admin')) {
-          showAdminApp();
-        } else {
-          showAdminLogin('Моля, влезте с администраторски профил.');
-        }
-      } catch (err) {
-        showAdminLogin();
-      }
-    }
-
     if (adminLoginForm) {
       adminLoginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -839,10 +869,21 @@
           });
 
           const data = await res.json();
-          if (res.ok && data.success && (data.role === 'admin' || data.user === 'admin')) {
-            currentAdminToken = data.token;
-            sessionStorage.setItem('iris_admin_token', data.token);
-            showAdminApp();
+          if (res.ok && data.success) {
+            if (data.require2fa) {
+              adminCurrentTicket = data.ticket;
+              if (admin2FaTargetEmail && data.targetEmail) {
+                admin2FaTargetEmail.textContent = data.targetEmail;
+              }
+              adminLoginForm.style.display = 'none';
+              admin2FaForm.style.display = 'block';
+              admin2FaCode.value = '';
+              setTimeout(() => admin2FaCode.focus(), 100);
+            } else if (data.token && (data.role === 'admin' || data.user === 'admin')) {
+              currentAdminToken = data.token;
+              sessionStorage.setItem('iris_admin_token', data.token);
+              showAdminApp();
+            }
           } else {
             showAdminLogin(data.error || 'Грешно потребителско име или парола.');
             adminLoginPass.value = '';
@@ -855,6 +896,97 @@
           btnAdminLoginSubmit.textContent = 'Вход в административния панел';
         }
       });
+    }
+
+    // Step 2: 2FA Form submission
+    if (admin2FaForm) {
+      admin2FaForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const code = (admin2FaCode.value || '').trim();
+        if (!code || code.length !== 6) {
+          adminLoginError.textContent = 'Моля, въведете пълен 6-цифрен код.';
+          adminLoginError.style.display = 'block';
+          admin2FaCode.focus();
+          return;
+        }
+
+        btnAdmin2FaSubmit.disabled = true;
+        btnAdmin2FaSubmit.textContent = 'Верификация...';
+        adminLoginError.style.display = 'none';
+
+        try {
+          const res = await fetch('/api/auth?action=verify-2fa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ticket: adminCurrentTicket, code })
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success && data.token) {
+            currentAdminToken = data.token;
+            sessionStorage.setItem('iris_admin_token', data.token);
+            showAdminApp();
+          } else {
+            adminLoginError.textContent = data.error || 'Невалиден или изтекъл код.';
+            adminLoginError.style.display = 'block';
+            admin2FaCode.select();
+          }
+        } catch (err) {
+          adminLoginError.textContent = 'Мрежова грешка при проверка на кода.';
+          adminLoginError.style.display = 'block';
+        } finally {
+          btnAdmin2FaSubmit.disabled = false;
+          btnAdmin2FaSubmit.textContent = 'Потвърди и влез в админ панела';
+        }
+      });
+
+      if (admin2FaCode) {
+        admin2FaCode.addEventListener('input', () => {
+          admin2FaCode.value = admin2FaCode.value.replace(/\D/g, '').slice(0, 6);
+          if (admin2FaCode.value.length === 6) {
+            admin2FaForm.requestSubmit();
+          }
+        });
+      }
+
+      if (btnAdmin2FaBack) {
+        btnAdmin2FaBack.addEventListener('click', () => {
+          admin2FaForm.style.display = 'none';
+          adminLoginForm.style.display = 'block';
+          adminLoginError.style.display = 'none';
+          adminLoginPass.value = '';
+          adminLoginPass.focus();
+        });
+      }
+
+      if (btnAdmin2FaResend) {
+        btnAdmin2FaResend.addEventListener('click', async () => {
+          btnAdmin2FaResend.disabled = true;
+          btnAdmin2FaResend.textContent = 'Изпращане...';
+          adminLoginError.style.display = 'none';
+          try {
+            const res = await fetch('/api/auth?action=resend-2fa', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ticket: adminCurrentTicket })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+              if (data.ticket) adminCurrentTicket = data.ticket;
+              showToast('Нов код беше изпратен успешно.');
+            } else {
+              adminLoginError.textContent = data.error || 'Грешка при изпращане на нов код.';
+              adminLoginError.style.display = 'block';
+            }
+          } catch (err) {
+            adminLoginError.textContent = 'Мрежова грешка при изпращане на код.';
+            adminLoginError.style.display = 'block';
+          } finally {
+            btnAdmin2FaResend.disabled = false;
+            btnAdmin2FaResend.textContent = 'Изпрати нов код';
+          }
+        });
+      }
     }
 
     // Always require fresh admin login on every visit to /admin
