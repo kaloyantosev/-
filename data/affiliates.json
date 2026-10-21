@@ -1,8 +1,133 @@
 {
-  "affiliates": [],
-  "contracts": [],
-  "updatedAt": "2026-10-21T08:42:33.786Z",
-  "customLinks": [],
+  "affiliates": [
+    {
+      "id": "aff_1792581055344",
+      "name": "SmartBill România",
+      "slug": "smartbill-mvi0h6jx",
+      "country": "ro",
+      "createdAt": "2026-10-21T11:10:55.344Z",
+      "active": true
+    },
+    {
+      "id": "aff_1792581080768",
+      "name": "SmartBill România",
+      "slug": "smartbill-mvi0hq66",
+      "country": "ro",
+      "createdAt": "2026-10-21T11:11:20.768Z",
+      "active": true
+    },
+    {
+      "id": "aff_1792581114040",
+      "name": "SmartBill România",
+      "slug": "smartbill-mvi0ifue",
+      "country": "ro",
+      "createdAt": "2026-10-21T11:11:54.040Z",
+      "active": true
+    },
+    {
+      "id": "aff_1792581145840",
+      "name": "SmartBill România",
+      "slug": "smartbill-mvi0j4ds",
+      "country": "ro",
+      "createdAt": "2026-10-21T11:12:25.840Z",
+      "active": true
+    }
+  ],
+  "contracts": [
+    {
+      "id": "cnt_1792581114052_3lt1k",
+      "affiliateSlug": "smartbill-mvi0ifue",
+      "companyName": "București Tech SRL",
+      "companyEik": "RO12345678",
+      "commission": "0.20%",
+      "country": "ro",
+      "date": "2026-10-21T11:11:54.052Z"
+    },
+    {
+      "id": "cnt_1792581114053_ksos9",
+      "affiliateSlug": null,
+      "companyName": "Cluj Retail SRL",
+      "companyEik": "RO98765432",
+      "commission": "0.25%",
+      "country": "ro",
+      "date": "2026-10-21T11:11:54.053Z"
+    },
+    {
+      "id": "cnt_1792581145838_4osda",
+      "affiliateSlug": null,
+      "companyName": "Българска Компания ООД",
+      "companyEik": "201234567",
+      "commission": "0.49%",
+      "country": "bg",
+      "date": "2026-10-21T11:12:25.838Z"
+    },
+    {
+      "id": "cnt_1792581145851_2jlpp",
+      "affiliateSlug": "smartbill-mvi0j4ds",
+      "companyName": "București Tech SRL",
+      "companyEik": "RO12345678",
+      "commission": "0.20%",
+      "country": "ro",
+      "date": "2026-10-21T11:12:25.851Z"
+    },
+    {
+      "id": "cnt_1792581145852_ytjn0",
+      "affiliateSlug": null,
+      "companyName": "Cluj Retail SRL",
+      "companyEik": "RO98765432",
+      "commission": "0.25%",
+      "country": "ro",
+      "date": "2026-10-21T11:12:25.852Z"
+    }
+  ],
+  "updatedAt": "2026-10-21T11:12:25.852Z",
+  "customLinks": [
+    {
+      "id": "cl_1792581080780_p6dln",
+      "token": "7f42nje",
+      "commission": "0.20%",
+      "note": "",
+      "partnerSlug": "smartbill-mvi0hq66",
+      "partnerName": "SmartBill România",
+      "country": "ro",
+      "createdAt": "2026-10-21T11:11:20.780Z",
+      "used": false,
+      "usedAt": null,
+      "usedByCompanyName": null,
+      "usedByEik": null,
+      "contractId": null
+    },
+    {
+      "id": "cl_1792581114050_xpfgn",
+      "token": "28k4337",
+      "commission": "0.20%",
+      "note": "",
+      "partnerSlug": "smartbill-mvi0ifue",
+      "partnerName": "SmartBill România",
+      "country": "ro",
+      "createdAt": "2026-10-21T11:11:54.050Z",
+      "used": false,
+      "usedAt": null,
+      "usedByCompanyName": null,
+      "usedByEik": null,
+      "contractId": null
+    },
+    {
+      "id": "cl_1792581145850_oa2cc",
+      "token": "eeqa5uy",
+      "commission": "0.20%",
+      "note": "",
+      "partnerSlug": "smartbill-mvi0j4ds",
+      "partnerName": "SmartBill România",
+      "country": "ro",
+      "createdAt": "2026-10-21T11:12:25.850Z",
+      "used": false,
+      "usedAt": null,
+      "usedByCompanyName": null,
+      "usedByEik": null,
+      "contractId": null
+    }
+  ],
   "settings": {
     "standardCommission": "0.49%",
     "integrationFee": "0 EUR",

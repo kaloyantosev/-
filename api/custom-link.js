@@ -76,7 +76,8 @@ export default async function handler(req, res) {
   // 2. PROTECTED GET: List all custom links
   if (req.method === 'GET') {
     try {
-      const links = await listCustomLinks();
+      const country = req.query?.country || null;
+      const links = await listCustomLinks(country);
       return res.status(200).json({
         success: true,
         links
@@ -91,13 +92,13 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-      const { commission, note = '', partnerSlug = null } = body || {};
+      const { commission, note = '', partnerSlug = null, country = 'bg' } = body || {};
 
       if (!commission || !String(commission).trim()) {
         return res.status(400).json({ error: 'Комисионната е задължителна (напр. 0.35%).' });
       }
 
-      const link = await createCustomLink({ commission, note, partnerSlug });
+      const link = await createCustomLink({ commission, note, partnerSlug, country });
       return res.status(201).json({
         success: true,
         link,
@@ -105,6 +106,7 @@ export default async function handler(req, res) {
         partnerSlug: link.partnerSlug,
         partnerName: link.partnerName,
         commission: link.commission,
+        country: link.country,
         message: `Успешно генериран еднократен линк с комисионна ${link.commission}`
       });
     } catch (err) {

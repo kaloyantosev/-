@@ -437,3 +437,6 @@ function stripPhoneAndEmailFromAddress(addr) {
   const pdfBytes = await pdfDoc.save();
   return pdfBytes;
 }
+
+export { generateContractRoPdf } from './pdfGeneratorRo.js';
+

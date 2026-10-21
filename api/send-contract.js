@@ -9,7 +9,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { generateContractPdf } from './pdfGenerator.js';
+import { generateContractPdf, generateContractRoPdf } from './pdfGenerator.js';
 import { recordContractAttribution, getCustomLink, useCustomLink, getSettings } from './store.js';
 
 // Vercel body parser config
@@ -65,6 +65,7 @@ export default async function handler(req, res) {
       companyEik = '—',
       companyAddress = '',
       companyRepresentative = '—',
+      companyRepresentativePin = '',
       bankName = '',
       bankIban = '',
       website = '',
@@ -75,8 +76,12 @@ export default async function handler(req, res) {
       signatureImageBase64 = null,
       pdfBase64 = null,
       affiliateRef = null,
-      customToken = null
+      customToken = null,
+      country = 'bg'
     } = data || {};
+
+    const targetCountry = String(country || 'bg').toLowerCase();
+    const isRo = targetCountry === 'ro';
 
     // Verify and handle custom commission token if provided
     let customCommission = null;
@@ -104,7 +109,8 @@ export default async function handler(req, res) {
         affiliateSlug: refCode,
         companyName: companyName,
         companyEik: companyEik,
-        commission: customCommission
+        commission: customCommission,
+        country: targetCountry
       });
       if (attribution && attribution.partnerName) {
         partnerDisplayName = attribution.partnerName;
@@ -135,23 +141,27 @@ export default async function handler(req, res) {
     } catch (e) {}
     const cleanCompName = (companyName && companyName !== '—')
       ? String(companyName).replace(/["'„“«»]/g, '').trim()
-      : 'Търговец';
+      : (isRo ? 'Comerciant' : 'Търговец');
     const commSubjectPart = customCommission ? ` - Индивидуална комисионна: ${customCommission}` : '';
+    const countrySubjectTag = isRo ? '[România / Румъния] ' : '';
     const emailSubject = partnerDisplayName
-      ? `Подписан договор (${cleanCompName}) от Партньор "${partnerDisplayName}"${commSubjectPart}`
-      : `Подписан договор (${cleanCompName})${commSubjectPart}`;
-    const displayDate = formatBulgarianDate(contractDate);
+      ? `${countrySubjectTag}Подписан договор (${cleanCompName}) от Партньор "${partnerDisplayName}"${commSubjectPart}`
+      : `${countrySubjectTag}Подписан договор (${cleanCompName})${commSubjectPart}`;
+    const displayDate = isRo
+      ? (String(contractDate || '').trim() || new Date().toISOString().slice(0, 10))
+      : formatBulgarianDate(contractDate);
 
     // Plain text content
     const partnerTextLine = partnerDisplayName ? `\nОт партньор: ${partnerDisplayName}` : '';
     const customCommTextLine = customCommission ? `\nИндивидуална комисионна (Приложение 1): ${customCommission}` : '';
+    const countryLine = isRo ? '\nПазар / Държава: Румъния (România)' : '';
     const textBody = `
-ЕИК: ${companyEik}
+${isRo ? 'CUI / ЕИК' : 'ЕИК'}: ${companyEik}
 Фирма: ${companyName}
 Представляващ: ${companyRepresentative}
 Имейл за контакт: ${contactEmail}
 Телефон: ${contactPhone}
-Дата: ${displayDate}${partnerTextLine}${customCommTextLine}
+Дата: ${displayDate}${countryLine}${partnerTextLine}${customCommTextLine}
 `.trim();
 
     // HTML email content - Clean and concise with ONLY the 6 requested fields
@@ -204,6 +214,12 @@ export default async function handler(req, res) {
           <td class="label">Дата:</td>
           <td class="val">${displayDate}</td>
         </tr>
+        ${isRo ? `
+        <tr>
+          <td class="label">Пазар / Държава:</td>
+          <td class="val" style="color:#0D9488;font-weight:700;">Румъния (România)</td>
+        </tr>
+        ` : ''}
         ${partnerDisplayName ? `
         <tr>
           <td class="label">От партньор:</td>
@@ -223,7 +239,7 @@ export default async function handler(req, res) {
 </html>
 `.trim();
 
-    // Generate pristine 10-page vector PDF (contract + appendix 1)
+    // Generate pristine vector PDF (contract + appendix 1)
     let finalPdfBase64 = null;
     try {
       const candidates = [
@@ -234,11 +250,12 @@ export default async function handler(req, res) {
       let assetsDir = candidates.find(d => fs.existsSync(path.join(d, 'contract_template.pdf')));
       if (!assetsDir) assetsDir = path.join(process.cwd(), 'assets');
 
-      const generatedBytes = await generateContractPdf({
+      const pdfParams = {
         companyName: (companyName && companyName !== '—') ? companyName : '',
         companyEik: (companyEik && companyEik !== '—') ? companyEik : '',
         companyAddress: companyAddress || '',
         companyRepresentative: (companyRepresentative && companyRepresentative !== '—') ? companyRepresentative : '',
+        companyRepresentativePin: companyRepresentativePin || '',
         bankName: bankName || '',
         bankIban: bankIban || '',
         website: website || '',
@@ -248,11 +265,15 @@ export default async function handler(req, res) {
         contractDate: displayDate,
         signatureImageBase64,
         customCommission
-      }, assetsDir);
+      };
+
+      const generatedBytes = isRo
+        ? await generateContractRoPdf(pdfParams, assetsDir)
+        : await generateContractPdf(pdfParams, assetsDir);
 
       if (generatedBytes && generatedBytes.length > 0) {
         finalPdfBase64 = Buffer.from(generatedBytes).toString('base64');
-        console.log('[Vector PDF] Generated pristine vector PDF successfully. Size:', generatedBytes.length);
+        console.log(`[Vector PDF] Generated pristine ${isRo ? 'Romanian' : 'Bulgarian'} vector PDF. Size:`, generatedBytes.length);
       }
     } catch (genErr) {
       console.warn('[Vector PDF] Generation error, falling back to passed pdfBase64:', genErr);
@@ -282,8 +303,10 @@ export default async function handler(req, res) {
     if (finalPdfBase64 && finalPdfBase64.length > 50) {
       const safeCompName = (companyName && companyName !== '—')
         ? String(companyName).replace(/["'„“«»<>:\/\\|?*]/g, '').trim()
-        : 'Търговец';
-      const pdfFilename = `Договор (${safeCompName}).pdf`;
+        : (isRo ? 'Comerciant' : 'Търговец');
+      const pdfFilename = isRo
+        ? `Contract_IRISPay_RO_${safeCompName}.pdf`
+        : `Договор (${safeCompName}).pdf`;
 
       attachments.push({
         filename: pdfFilename,

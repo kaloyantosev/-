@@ -12,6 +12,30 @@
       "dest": "/api/$1"
     },
     {
+      "src": "/ro/login",
+      "dest": "/ro/login.html"
+    },
+    {
+      "src": "/ro/dashboard",
+      "dest": "/ro/dashboard.html"
+    },
+    {
+      "src": "/ro/c/(.*)",
+      "dest": "/ro/index.html"
+    },
+    {
+      "src": "/ro/([^/]+)/([^/]+)",
+      "dest": "/ro/index.html"
+    },
+    {
+      "src": "/ro/([^/]+)",
+      "dest": "/ro/index.html"
+    },
+    {
+      "src": "/ro/?$",
+      "dest": "/ro/index.html"
+    },
+    {
       "src": "/login",
       "dest": "/login.html"
     },

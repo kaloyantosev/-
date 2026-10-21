@@ -233,14 +233,26 @@ export function sanitizeSlug(input) {
 /**
  * Get all affiliates with dynamic contract counters based on filters
  */
-export async function getAffiliatesData({ month = '', fromDate = '', toDate = '', search = '' } = {}) {
+export async function getAffiliatesData({ month = '', fromDate = '', toDate = '', search = '', country = 'bg' } = {}) {
   const store = await loadStore();
   const searchLower = (search || '').trim().toLowerCase();
+  const targetCountry = String(country || 'bg').toLowerCase();
 
-  return store.affiliates.map(aff => {
-    // Filter contracts for this affiliate
+  // Filter affiliates by country ('ro' vs 'bg' where undefined/null is treated as 'bg')
+  const matchedAffiliates = store.affiliates.filter(a => {
+    if (targetCountry === 'all') return true;
+    return targetCountry === 'ro' ? a.country === 'ro' : a.country !== 'ro';
+  });
+
+  return matchedAffiliates.map(aff => {
+    // Filter contracts for this affiliate matching country and period
     const affContracts = store.contracts.filter(c => {
       if (!c.affiliateSlug || c.affiliateSlug.toLowerCase() !== aff.slug.toLowerCase()) return false;
+      if (targetCountry !== 'all') {
+        const cIsRo = c.country === 'ro';
+        if (targetCountry === 'ro' && !cIsRo) return false;
+        if (targetCountry !== 'ro' && cIsRo) return false;
+      }
 
       const cDate = new Date(c.date);
       if (isNaN(cDate.getTime())) return false;
@@ -269,19 +281,26 @@ export async function getAffiliatesData({ month = '', fromDate = '', toDate = ''
     });
 
     // Total all-time contracts
-    const totalAllTime = store.contracts.filter(
-      c => c.affiliateSlug && c.affiliateSlug.toLowerCase() === aff.slug.toLowerCase()
-    ).length;
+    const totalAllTime = store.contracts.filter(c => {
+      if (!c.affiliateSlug || c.affiliateSlug.toLowerCase() !== aff.slug.toLowerCase()) return false;
+      if (targetCountry === 'all') return true;
+      return targetCountry === 'ro' ? c.country === 'ro' : c.country !== 'ro';
+    }).length;
 
     // Latest contract date
     const latestContract = store.contracts
-      .filter(c => c.affiliateSlug && c.affiliateSlug.toLowerCase() === aff.slug.toLowerCase())
+      .filter(c => {
+        if (!c.affiliateSlug || c.affiliateSlug.toLowerCase() !== aff.slug.toLowerCase()) return false;
+        if (targetCountry === 'all') return true;
+        return targetCountry === 'ro' ? c.country === 'ro' : c.country !== 'ro';
+      })
       .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
 
     return {
       id: aff.id,
       name: aff.name,
       slug: aff.slug,
+      country: aff.country || 'bg',
       createdAt: aff.createdAt,
       active: aff.active !== false,
       contractCount: affContracts.length,
@@ -301,10 +320,11 @@ export async function getAffiliatesData({ month = '', fromDate = '', toDate = ''
 /**
  * Create a new affiliate partner
  */
-export async function createAffiliate({ name, slug }) {
+export async function createAffiliate({ name, slug, country = 'bg' }) {
   const store = await loadStore();
   const cleanName = String(name || '').trim();
   const cleanSlug = sanitizeSlug(slug || name);
+  const targetCountry = String(country || 'bg').toLowerCase();
 
   if (!cleanName) {
     throw new Error('Името на партньора е задължително.');
@@ -313,8 +333,12 @@ export async function createAffiliate({ name, slug }) {
     throw new Error('Кодът/линкът трябва да съдържа поне 2 символа (букви, цифри, тире).');
   }
 
-  // Check for duplicate slug
-  const exists = store.affiliates.find(a => a.slug.toLowerCase() === cleanSlug.toLowerCase());
+  // Check for duplicate slug within same country
+  const exists = store.affiliates.find(a => {
+    const aCountry = a.country === 'ro' ? 'ro' : 'bg';
+    return aCountry === targetCountry && a.slug.toLowerCase() === cleanSlug.toLowerCase();
+  });
+
   if (exists) {
     throw new Error(`Линк с код "${cleanSlug}" вече съществува за партньор "${exists.name}".`);
   }
@@ -323,6 +347,7 @@ export async function createAffiliate({ name, slug }) {
     id: 'aff_' + Date.now(),
     name: cleanName,
     slug: cleanSlug,
+    country: targetCountry,
     createdAt: new Date().toISOString(),
     active: true
   };
@@ -335,9 +360,11 @@ export async function createAffiliate({ name, slug }) {
 /**
  * Record a contract attribution
  */
-export async function recordContractAttribution({ affiliateSlug, companyName, companyEik, commission = null }) {
+export async function recordContractAttribution({ affiliateSlug, companyName, companyEik, commission = null, country = 'bg' }) {
   const store = await loadStore();
-  const cleanComm = commission ? formatCommissionText(commission) : '0.49%';
+  const targetCountry = String(country || 'bg').toLowerCase();
+  const defaultComm = targetCountry === 'ro' ? '0.25%' : '0.49%';
+  const cleanComm = commission ? formatCommissionText(commission) : defaultComm;
 
   const createDirectContract = async (logReason) => {
     const newContract = {
@@ -346,6 +373,7 @@ export async function recordContractAttribution({ affiliateSlug, companyName, co
       companyName: String(companyName || '—').trim(),
       companyEik: String(companyEik || '—').trim(),
       commission: cleanComm,
+      country: targetCountry,
       date: new Date().toISOString()
     };
     store.contracts.push(newContract);
@@ -363,15 +391,15 @@ export async function recordContractAttribution({ affiliateSlug, companyName, co
     return await createDirectContract('Direct contract recorded (invalid slug)');
   }
 
-  // Look up partner ONLY in registered affiliates created from the affiliate portal
-  const aff = store.affiliates.find(
-    a => a.slug && a.slug.toLowerCase() === cleanSlug.toLowerCase() && a.active !== false
-  );
+  // Look up partner ONLY in registered affiliates for this country
+  const aff = store.affiliates.find(a => {
+    const aCountry = a.country === 'ro' ? 'ro' : 'bg';
+    return aCountry === targetCountry && a.slug && a.slug.toLowerCase() === cleanSlug.toLowerCase() && a.active !== false;
+  });
 
-  // If the partner does NOT exist in the portal, DO NOT create a new affiliate!
-  // Treat as an ordinary contract without partner as requested.
+  // If the partner does NOT exist in the portal, treat as direct contract without partner
   if (!aff) {
-    return await createDirectContract(`Affiliate slug "${cleanSlug}" is not registered in portal. Recorded as direct contract without partner`);
+    return await createDirectContract(`Affiliate slug "${cleanSlug}" is not registered in portal for country ${targetCountry}. Recorded as direct contract without partner`);
   }
 
   // Partner is valid and registered in portal
@@ -381,12 +409,13 @@ export async function recordContractAttribution({ affiliateSlug, companyName, co
     companyName: String(companyName || '—').trim(),
     companyEik: String(companyEik || '—').trim(),
     commission: cleanComm,
+    country: targetCountry,
     date: new Date().toISOString()
   };
 
   store.contracts.push(newContract);
   await saveStore(store);
-  console.log(`[Store] Contract attribution recorded for registered partner ${aff.slug}:`, newContract);
+  console.log(`[Store] Contract attribution recorded for registered partner ${aff.slug} (${targetCountry}):`, newContract);
   return {
     ...newContract,
     partnerName: aff.name
@@ -462,17 +491,32 @@ export async function deleteContract(arg) {
 /**
  * Summary KPI stats for dashboard
  */
-export async function getDashboardSummary({ month = '', fromDate = '', toDate = '' } = {}) {
+export async function getDashboardSummary({ month = '', fromDate = '', toDate = '', country = 'bg' } = {}) {
   const store = await loadStore();
-  const affiliates = await getAffiliatesData({ month, fromDate, toDate });
+  const targetCountry = String(country || 'bg').toLowerCase();
+  const affiliates = await getAffiliatesData({ month, fromDate, toDate, country: targetCountry });
 
-  const totalPartners = store.affiliates.length;
-  const totalContractsAllTime = store.contracts.length;
+  const totalPartners = store.affiliates.filter(a => {
+    if (targetCountry === 'all') return true;
+    return targetCountry === 'ro' ? a.country === 'ro' : a.country !== 'ro';
+  }).length;
+
+  const totalContractsAllTime = store.contracts.filter(c => {
+    if (targetCountry === 'all') return true;
+    return targetCountry === 'ro' ? c.country === 'ro' : c.country !== 'ro';
+  }).length;
+
   const periodContracts = affiliates.reduce((sum, a) => sum + a.contractCount, 0);
 
   // Direct contracts without partner
   const directContractsInPeriod = store.contracts.filter(c => {
     if (c.affiliateSlug) return false;
+    if (targetCountry !== 'all') {
+      const cIsRo = c.country === 'ro';
+      if (targetCountry === 'ro' && !cIsRo) return false;
+      if (targetCountry !== 'ro' && cIsRo) return false;
+    }
+
     const cDate = new Date(c.date);
     if (isNaN(cDate.getTime())) return false;
     if (month) {
@@ -493,7 +537,11 @@ export async function getDashboardSummary({ month = '', fromDate = '', toDate = 
   });
 
   const directContractsCount = directContractsInPeriod.length;
-  const directContractsAllTime = store.contracts.filter(c => !c.affiliateSlug).length;
+  const directContractsAllTime = store.contracts.filter(c => {
+    if (c.affiliateSlug) return false;
+    if (targetCountry === 'all') return true;
+    return targetCountry === 'ro' ? c.country === 'ro' : c.country !== 'ro';
+  }).length;
 
   // Top performing partner in period
   const topPartner = affiliates.length > 0 && affiliates[0].contractCount > 0
@@ -502,7 +550,10 @@ export async function getDashboardSummary({ month = '', fromDate = '', toDate = 
 
   // Distinct months available in data
   const monthsSet = new Set();
-  store.contracts.forEach(c => {
+  store.contracts.filter(c => {
+    if (targetCountry === 'all') return true;
+    return targetCountry === 'ro' ? c.country === 'ro' : c.country !== 'ro';
+  }).forEach(c => {
     const d = new Date(c.date);
     if (!isNaN(d.getTime())) {
       monthsSet.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
@@ -513,13 +564,20 @@ export async function getDashboardSummary({ month = '', fromDate = '', toDate = 
     'Януари', 'Февруари', 'Март', 'Април', 'Май', 'Юни',
     'Юли', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември'
   ];
+  const monthNamesRO = [
+    'Ianuarie', 'Februarie', 'Martie', 'Aprilie', 'Mai', 'Iunie',
+    'Iulie', 'August', 'Septembrie', 'Octombrie', 'Noiembrie', 'Decembrie'
+  ];
 
   const monthsList = Array.from(monthsSet).sort().reverse().map(ym => {
     const [y, m] = ym.split('-');
     const mIdx = parseInt(m, 10) - 1;
+    const label = targetCountry === 'ro'
+      ? `${monthNamesRO[mIdx]} ${y}`
+      : `${monthNamesBG[mIdx]} ${y} г.`;
     return {
       value: ym,
-      label: `${monthNamesBG[mIdx]} ${y} г.`
+      label
     };
   });
 
@@ -572,9 +630,11 @@ export function generateCustomToken() {
 /**
  * Create a one-time custom commission link (direct or partner-specific)
  */
-export async function createCustomLink({ commission, note = '', partnerSlug = null }) {
+export async function createCustomLink({ commission, note = '', partnerSlug = null, country = 'bg' }) {
   const store = await loadStore();
-  const cleanComm = formatCommissionText(commission);
+  const targetCountry = String(country || 'bg').toLowerCase();
+  const defaultComm = targetCountry === 'ro' ? '0.25%' : '0.49%';
+  const cleanComm = commission ? formatCommissionText(commission) : defaultComm;
   const token = generateCustomToken();
 
   let matchedPartner = null;
@@ -583,7 +643,10 @@ export async function createCustomLink({ commission, note = '', partnerSlug = nu
   if (partnerSlug) {
     const cleanSlug = String(partnerSlug).toLowerCase().trim();
     matchedPartner = (store.affiliates || []).find(
-      a => a.slug && (a.slug.toLowerCase() === cleanSlug || a.slug.toLowerCase() === sanitizeSlug(cleanSlug)) && a.active !== false
+      a => {
+        const aCountry = a.country === 'ro' ? 'ro' : 'bg';
+        return aCountry === targetCountry && a.slug && (a.slug.toLowerCase() === cleanSlug || a.slug.toLowerCase() === sanitizeSlug(cleanSlug)) && a.active !== false;
+      }
     );
     if (matchedPartner) {
       resolvedSlug = matchedPartner.slug;
@@ -601,6 +664,7 @@ export async function createCustomLink({ commission, note = '', partnerSlug = nu
     note: String(note || '').trim(),
     partnerSlug: resolvedSlug,
     partnerName: resolvedName,
+    country: targetCountry,
     createdAt: new Date().toISOString(),
     used: false,
     usedAt: null,
@@ -611,7 +675,7 @@ export async function createCustomLink({ commission, note = '', partnerSlug = nu
 
   store.customLinks.push(newLink);
   await saveStore(store);
-  console.log(`[Store] Created one-time custom commission link (${cleanComm}): token=${token}, partner=${newLink.partnerSlug || 'none'}`);
+  console.log(`[Store] Created one-time custom commission link (${cleanComm}, ${targetCountry}): token=${token}, partner=${newLink.partnerSlug || 'none'}`);
   return newLink;
 }
 
@@ -660,11 +724,20 @@ export async function useCustomLink({ token, companyName, companyEik, contractId
 }
 
 /**
- * List all custom commission links
+ * List all custom commission links (optionally filtered by country)
  */
-export async function listCustomLinks() {
+export async function listCustomLinks(arg = null) {
   const store = await loadStore();
-  return (store.customLinks || []).slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const rawCountry = (typeof arg === 'object' && arg !== null) ? arg.country : arg;
+  const targetCountry = rawCountry ? String(rawCountry).toLowerCase() : null;
+
+  return (store.customLinks || [])
+    .filter(l => {
+      if (!targetCountry || targetCountry === 'all') return true;
+      return targetCountry === 'ro' ? l.country === 'ro' : l.country !== 'ro';
+    })
+    .slice()
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 
 /**
@@ -711,16 +784,24 @@ export async function updateSettings(newSettings) {
   return store.settings;
 }
 
-
 /**
- * Get all contracts with partner info
+ * Get all contracts with partner info (optionally filtered by country)
  */
-export async function getAllContracts() {
+export async function getAllContracts(arg = null) {
   const store = await loadStore();
+  const rawCountry = (typeof arg === 'object' && arg !== null) ? arg.country : arg;
+  const targetCountry = rawCountry ? String(rawCountry).toLowerCase() : null;
   const affMap = new Map((store.affiliates || []).map(a => [a.slug.toLowerCase(), a.name]));
 
-  return (store.contracts || []).slice().map(c => ({
-    ...c,
-    partnerName: c.affiliateSlug ? (affMap.get(c.affiliateSlug.toLowerCase()) || c.affiliateSlug) : null
-  })).sort((a, b) => new Date(b.date) - new Date(a.date));
+  return (store.contracts || [])
+    .filter(c => {
+      if (!targetCountry || targetCountry === 'all') return true;
+      return targetCountry === 'ro' ? c.country === 'ro' : c.country !== 'ro';
+    })
+    .slice()
+    .map(c => ({
+      ...c,
+      partnerName: c.affiliateSlug ? (affMap.get(c.affiliateSlug.toLowerCase()) || c.affiliateSlug) : null
+    }))
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
 }

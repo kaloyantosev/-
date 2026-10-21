@@ -97,6 +97,21 @@ const server = http.createServer(async (req, res) => {
   }
 
   // 2. Direct Named Pages
+  if (pathname === '/ro/login' || pathname === '/ro/login/') {
+    serveFile(path.join(__dirname, 'ro', 'login.html'), res);
+    return;
+  }
+
+  if (pathname === '/ro/dashboard' || pathname === '/ro/dashboard/') {
+    serveFile(path.join(__dirname, 'ro', 'dashboard.html'), res);
+    return;
+  }
+
+  if (pathname === '/ro' || pathname === '/ro/' || pathname === '/ro/index.html') {
+    serveFile(path.join(__dirname, 'ro', 'index.html'), res);
+    return;
+  }
+
   if (pathname === '/login' || pathname === '/login/') {
     serveFile(path.join(__dirname, 'login.html'), res);
     return;
@@ -136,11 +151,15 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // 4. Dynamic Affiliate Referral Slugs: e.g. /tech-academy, /elvada, /partner-slug
-  // If the path doesn't have an extension and isn't an API path, serve index.html (which parses the slug in app.js)
+  // 4. Dynamic Affiliate Referral Slugs: e.g. /tech-academy, /ro/smartbill, /c/token, /ro/c/token
+  // If the path doesn't have an extension and isn't an API path, serve index.html or ro/index.html
   const ext = path.extname(pathname);
   if (!ext && !pathname.startsWith('/api/')) {
-    serveFile(path.join(__dirname, 'index.html'), res);
+    if (pathname.startsWith('/ro/') || pathname === '/ro') {
+      serveFile(path.join(__dirname, 'ro', 'index.html'), res);
+    } else {
+      serveFile(path.join(__dirname, 'index.html'), res);
+    }
     return;
   }
 
@@ -169,9 +188,12 @@ function serveFile(filePath, res) {
 server.listen(PORT, () => {
   console.log(`=======================================================`);
   console.log(`IRIS Pay Document Portal is running on port ${PORT}`);
-  console.log(`- Main form:      http://localhost:${PORT}/`);
-  console.log(`- Login page:     http://localhost:${PORT}/login`);
-  console.log(`- Dashboard:      http://localhost:${PORT}/dashboard`);
-  console.log(`- Example slug:   http://localhost:${PORT}/tech-academy`);
+  console.log(`- BG Signing:     http://localhost:${PORT}/`);
+  console.log(`- BG Login:       http://localhost:${PORT}/login`);
+  console.log(`- BG Dashboard:   http://localhost:${PORT}/dashboard`);
+  console.log(`- RO Signing:     http://localhost:${PORT}/ro`);
+  console.log(`- RO Login:       http://localhost:${PORT}/ro/login`);
+  console.log(`- RO Dashboard:   http://localhost:${PORT}/ro/dashboard`);
+  console.log(`- Admin Panel:    http://localhost:${PORT}/admin`);
   console.log(`=======================================================`);
 });

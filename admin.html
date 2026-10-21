@@ -532,8 +532,10 @@
       <span class="admin-badge-role">Admin</span>
     </div>
     <div class="admin-nav-actions">
-      <a href="/dashboard" class="btn-nav-link" target="_blank">Към Dashboard ↗</a>
-      <a href="/" class="btn-nav-link" target="_blank">Към Портала за договори ↗</a>
+      <a href="/dashboard" class="btn-nav-link" target="_blank" title="Български Dashboard">🇧🇬 Dashboard ↗</a>
+      <a href="/ro/dashboard" class="btn-nav-link" target="_blank" title="Румънски Dashboard">🇷🇴 Dashboard ↗</a>
+      <a href="/" class="btn-nav-link" target="_blank" title="Български сайт за договори">🇧🇬 Договори ↗</a>
+      <a href="/ro" class="btn-nav-link" target="_blank" title="Румънски сайт за договори">🇷🇴 Договори ↗</a>
       <button id="adminLogoutBtn" class="btn-nav-logout">Изход</button>
     </div>
   </header>
@@ -573,6 +575,17 @@
       <button class="admin-tab-btn" data-tab="tab-settings">⚙️ Настройки на сайта & такси</button>
       <button class="admin-tab-btn" data-tab="tab-emails">📧 Имейли & 2FA</button>
       <button class="admin-tab-btn" data-tab="tab-dashboard-layout">📊 Разместване на Dashboard</button>
+    </div>
+
+    <!-- Country / Market Filter Switcher -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; background: #FFFFFF; border: 1px solid var(--admin-border); padding: 12px 18px; border-radius: 8px; flex-wrap: wrap; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 13px; font-weight: 700; color: #1E293B;">Филтър по пазар:</span>
+        <button type="button" class="btn-country-filter active" data-country="all" style="padding: 6px 14px; font-size: 12.5px; font-weight: 600; border-radius: 6px; border: 1px solid #CBD5E1; background: #1E293B; color: #FFFFFF; cursor: pointer; transition: all 0.2s;">🌐 Всички</button>
+        <button type="button" class="btn-country-filter" data-country="bg" style="padding: 6px 14px; font-size: 12.5px; font-weight: 600; border-radius: 6px; border: 1px solid #CBD5E1; background: #F8FAFC; color: #334155; cursor: pointer; transition: all 0.2s;">🇧🇬 България</button>
+        <button type="button" class="btn-country-filter" data-country="ro" style="padding: 6px 14px; font-size: 12.5px; font-weight: 600; border-radius: 6px; border: 1px solid #CBD5E1; background: #F8FAFC; color: #334155; cursor: pointer; transition: all 0.2s;">🇷🇴 Румъния</button>
+      </div>
+      <div id="filterCountNotice" style="font-size: 12.5px; color: #64748B; font-weight: 600;">Показване: Всички пазари</div>
     </div>
 
     <!-- TAB 1: Site & Fee Settings -->
@@ -708,8 +721,9 @@
           <table class="admin-table">
             <thead>
               <tr>
+                <th>Пазар</th>
                 <th>Фирма</th>
-                <th>ЕИК</th>
+                <th>ЕИК / CUI</th>
                 <th>Партньор</th>
                 <th>Комисионна</th>
                 <th>Дата</th>
@@ -717,7 +731,7 @@
               </tr>
             </thead>
             <tbody id="adminContractsTableBody">
-              <tr><td colspan="6" style="text-align:center; padding: 24px;">Зареждане...</td></tr>
+              <tr><td colspan="7" style="text-align:center; padding: 24px;">Зареждане...</td></tr>
             </tbody>
           </table>
         </div>
@@ -734,6 +748,7 @@
           <table class="admin-table">
             <thead>
               <tr>
+                <th>Пазар</th>
                 <th>Партньор</th>
                 <th>Код / Slug</th>
                 <th>Създаден</th>
@@ -741,7 +756,7 @@
               </tr>
             </thead>
             <tbody id="adminPartnersTableBody">
-              <tr><td colspan="4" style="text-align:center; padding: 24px;">Зареждане...</td></tr>
+              <tr><td colspan="5" style="text-align:center; padding: 24px;">Зареждане...</td></tr>
             </tbody>
           </table>
         </div>
@@ -758,6 +773,7 @@
           <table class="admin-table">
             <thead>
               <tr>
+                <th>Пазар</th>
                 <th>Комисионна</th>
                 <th>Линк</th>
                 <th>Партньор</th>
@@ -767,7 +783,7 @@
               </tr>
             </thead>
             <tbody id="adminCustomLinksTableBody">
-              <tr><td colspan="6" style="text-align:center; padding: 24px;">Зареждане...</td></tr>
+              <tr><td colspan="7" style="text-align:center; padding: 24px;">Зареждане...</td></tr>
             </tbody>
           </table>
         </div>
@@ -1018,6 +1034,53 @@
 
     // 3. Load Overview Data
     let adminData = null;
+    let selectedCountryFilter = 'all';
+
+    // Market / Country filter switcher
+    document.querySelectorAll('.btn-country-filter').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.btn-country-filter').forEach(b => {
+          b.classList.remove('active');
+          b.style.background = '#F8FAFC';
+          b.style.color = '#334155';
+        });
+        btn.classList.add('active');
+        btn.style.background = '#1E293B';
+        btn.style.color = '#FFFFFF';
+
+        selectedCountryFilter = btn.dataset.country || 'all';
+        const noticeEl = document.getElementById('filterCountNotice');
+        if (noticeEl) {
+          if (selectedCountryFilter === 'bg') noticeEl.textContent = 'Показване: Само България (BG)';
+          else if (selectedCountryFilter === 'ro') noticeEl.textContent = 'Показване: Само Румъния (RO)';
+          else noticeEl.textContent = 'Показване: Всички пазари';
+        }
+
+        if (adminData) {
+          updateStatsForCountry(selectedCountryFilter);
+          renderContractsTable(adminData.contracts || []);
+          renderPartnersTable(adminData.affiliates || []);
+          renderCustomLinksTable(adminData.customLinks || []);
+        }
+      });
+    });
+
+    function updateStatsForCountry(country) {
+      if (!adminData) return;
+      const isTarget = (item) => {
+        if (country === 'all') return true;
+        return country === 'ro' ? item.country === 'ro' : item.country !== 'ro';
+      };
+
+      const filteredPartners = (adminData.affiliates || []).filter(isTarget);
+      const filteredContracts = (adminData.contracts || []).filter(isTarget);
+      const filteredLinks = (adminData.customLinks || []).filter(isTarget);
+
+      document.getElementById('statPartners').textContent = filteredPartners.length;
+      document.getElementById('statContracts').textContent = filteredContracts.length;
+      document.getElementById('statActiveLinks').textContent = filteredLinks.filter(l => !l.used).length;
+      document.getElementById('statUsedLinks').textContent = filteredLinks.filter(l => l.used).length;
+    }
 
     async function loadAdminOverview() {
       try {
@@ -1031,12 +1094,7 @@
         if (!data || !data.success) return;
 
         adminData = data;
-
-        // Update stats
-        document.getElementById('statPartners').textContent = data.stats.totalPartners || 0;
-        document.getElementById('statContracts').textContent = data.stats.totalContracts || 0;
-        document.getElementById('statActiveLinks').textContent = data.stats.activeCustomLinks || 0;
-        document.getElementById('statUsedLinks').textContent = data.stats.usedCustomLinks || 0;
+        updateStatsForCountry(selectedCountryFilter);
 
         // Populate Settings
         const s = data.settings || {};
@@ -1079,23 +1137,36 @@
       const tbody = document.getElementById('adminContractsTableBody');
       if (!tbody) return;
 
-      if (!contracts || contracts.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 24px; color: #64748B;">Няма намерени договори.</td></tr>';
+      const filtered = (contracts || []).filter(c => {
+        if (selectedCountryFilter === 'all') return true;
+        return selectedCountryFilter === 'ro' ? c.country === 'ro' : c.country !== 'ro';
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 24px; color: #64748B;">Няма намерени договори за избрания пазар.</td></tr>';
         return;
       }
 
-      tbody.innerHTML = contracts.map(c => `
+      tbody.innerHTML = filtered.map(c => {
+        const isRo = c.country === 'ro';
+        const flagBadge = isRo
+          ? '<span style="background:#EFF6FF; color:#1E40AF; border:1px solid #BFDBFE; font-size:11px; font-weight:700; padding:2px 7px; border-radius:4px; white-space:nowrap;">🇷🇴 RO</span>'
+          : '<span style="background:#F0FDF4; color:#166534; border:1px solid #BBF7D0; font-size:11px; font-weight:700; padding:2px 7px; border-radius:4px; white-space:nowrap;">🇧🇬 BG</span>';
+
+        return `
         <tr>
+          <td>${flagBadge}</td>
           <td><strong>${escapeHtml(c.companyName)}</strong></td>
           <td>${escapeHtml(c.companyEik)}</td>
           <td>${c.partnerName ? `<span style="color:#2E75B6; font-weight:600;">${escapeHtml(c.partnerName)}</span>` : '<span style="color:#64748B;">Директен (без партньор)</span>'}</td>
-          <td><span style="font-weight:700; background:#EFF6FF; border:1px solid #BFDBFE; padding:2px 7px; border-radius:4px;">${escapeHtml(c.commission || '0.49%')}</span></td>
+          <td><span style="font-weight:700; background:#EFF6FF; border:1px solid #BFDBFE; padding:2px 7px; border-radius:4px;">${escapeHtml(c.commission || (isRo ? '0.25%' : '0.49%'))}</span></td>
           <td>${formatDate(c.date)}</td>
           <td style="text-align: right;">
             <button class="btn-danger-sm btn-del-contract" data-id="${c.id}" data-company="${escapeHtml(c.companyName)}">Изтрий</button>
           </td>
         </tr>
-      `).join('');
+      `;
+      }).join('');
 
       tbody.querySelectorAll('.btn-del-contract').forEach(btn => {
         btn.addEventListener('click', async (e) => {
@@ -1119,21 +1190,35 @@
       const tbody = document.getElementById('adminPartnersTableBody');
       if (!tbody) return;
 
-      if (!affiliates || affiliates.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 24px; color: #64748B;">Няма регистрирани партньори.</td></tr>';
+      const filtered = (affiliates || []).filter(a => {
+        if (selectedCountryFilter === 'all') return true;
+        return selectedCountryFilter === 'ro' ? a.country === 'ro' : a.country !== 'ro';
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 24px; color: #64748B;">Няма регистрирани партньори за избрания пазар.</td></tr>';
         return;
       }
 
-      tbody.innerHTML = affiliates.map(a => `
+      tbody.innerHTML = filtered.map(a => {
+        const isRo = a.country === 'ro';
+        const flagBadge = isRo
+          ? '<span style="background:#EFF6FF; color:#1E40AF; border:1px solid #BFDBFE; font-size:11px; font-weight:700; padding:2px 7px; border-radius:4px; white-space:nowrap;">🇷🇴 RO</span>'
+          : '<span style="background:#F0FDF4; color:#166534; border:1px solid #BBF7D0; font-size:11px; font-weight:700; padding:2px 7px; border-radius:4px; white-space:nowrap;">🇧🇬 BG</span>';
+        const pathDisplay = isRo ? `/ro/${escapeHtml(a.slug)}` : `/${escapeHtml(a.slug)}`;
+
+        return `
         <tr>
+          <td>${flagBadge}</td>
           <td><strong>${escapeHtml(a.name)}</strong></td>
-          <td><code>/${escapeHtml(a.slug)}</code></td>
+          <td><code>${pathDisplay}</code></td>
           <td>${formatDate(a.createdAt)}</td>
           <td style="text-align: right;">
             <button class="btn-danger-sm btn-del-affiliate" data-slug="${a.slug}" data-name="${escapeHtml(a.name)}">Изтрий</button>
           </td>
         </tr>
-      `).join('');
+      `;
+      }).join('');
 
       tbody.querySelectorAll('.btn-del-affiliate').forEach(btn => {
         btn.addEventListener('click', async (e) => {
@@ -1157,16 +1242,31 @@
       const tbody = document.getElementById('adminCustomLinksTableBody');
       if (!tbody) return;
 
-      if (!links || links.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 24px; color: #64748B;">Няма създадени еднократни линкове.</td></tr>';
+      const filtered = (links || []).filter(l => {
+        if (selectedCountryFilter === 'all') return true;
+        return selectedCountryFilter === 'ro' ? l.country === 'ro' : l.country !== 'ro';
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 24px; color: #64748B;">Няма създадени еднократни линкове за избрания пазар.</td></tr>';
         return;
       }
 
-      tbody.innerHTML = links.map(l => {
+      tbody.innerHTML = filtered.map(l => {
+        const isRo = l.country === 'ro';
         const origin = window.location.origin;
-        const fullUrl = l.partnerSlug ? `${origin}/${l.partnerSlug}/${l.token}` : `${origin}/c/${l.token}`;
-        const pathDisplay = l.partnerSlug ? `/${l.partnerSlug}/${l.token}` : `/c/${l.token}`;
+        const prefix = isRo ? '/ro' : '';
+        const fullUrl = l.partnerSlug
+          ? `${origin}${prefix}/${l.partnerSlug}/${l.token}`
+          : `${origin}${prefix}/c/${l.token}`;
+        const pathDisplay = l.partnerSlug
+          ? `${prefix}/${l.partnerSlug}/${l.token}`
+          : `${prefix}/c/${l.token}`;
         const isUsed = !!l.used;
+
+        const flagBadge = isRo
+          ? '<span style="background:#EFF6FF; color:#1E40AF; border:1px solid #BFDBFE; font-size:11px; font-weight:700; padding:2px 7px; border-radius:4px; white-space:nowrap;">🇷🇴 RO</span>'
+          : '<span style="background:#F0FDF4; color:#166534; border:1px solid #BBF7D0; font-size:11px; font-weight:700; padding:2px 7px; border-radius:4px; white-space:nowrap;">🇧🇬 BG</span>';
 
         let statusText = isUsed
           ? `<span style="color:#64748B; font-size:11.5px;">Използван на ${formatDate(l.usedAt)} от ${escapeHtml(l.usedByCompanyName || '—')}</span>`
@@ -1174,6 +1274,7 @@
 
         return `
           <tr>
+            <td>${flagBadge}</td>
             <td><strong>${escapeHtml(l.commission)}</strong></td>
             <td>
               <div style="display:flex; align-items:center; gap:6px;">

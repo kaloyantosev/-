@@ -76,17 +76,18 @@ export default async function handler(req, res) {
   // 3. GET: List affiliates & statistics
   if (req.method === 'GET') {
     try {
-      const { month = '', fromDate = '', toDate = '', search = '' } = req.query || {};
+      const { month = '', fromDate = '', toDate = '', search = '', country = 'bg' } = req.query || {};
 
-      const affiliates = await getAffiliatesData({ month, fromDate, toDate, search });
-      const summary = await getDashboardSummary({ month, fromDate, toDate });
+      const affiliates = await getAffiliatesData({ month, fromDate, toDate, search, country });
+      const summary = await getDashboardSummary({ month, fromDate, toDate, country });
 
       return res.status(200).json({
         success: true,
         summary,
         affiliates,
         user: session.user,
-        role: session.role
+        role: session.role,
+        country
       });
     } catch (err) {
       console.error('[Affiliates API GET error]:', err);
@@ -98,18 +99,19 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-      const { name, slug } = body || {};
+      const { name, slug, country = 'bg' } = body || {};
 
       if (!name || !String(name).trim()) {
         return res.status(400).json({ error: 'Името на партньора е задължително.' });
       }
 
-      const created = await createAffiliate({ name, slug });
+      const created = await createAffiliate({ name, slug, country });
+      const linkPrefix = created.country === 'ro' ? '/ro/' : '/';
 
       return res.status(201).json({
         success: true,
         affiliate: created,
-        message: `Успешно генериран нов affiliate link: /${created.slug}`
+        message: `Успешно генериран нов affiliate link: ${linkPrefix}${created.slug}`
       });
     } catch (err) {
       console.error('[Affiliates API POST error]:', err);
