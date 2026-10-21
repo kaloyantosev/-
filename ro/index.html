@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IRIS Pay România | Semnare electronică contract</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,600&family=Great+Vibes&family=Homemade+Apple&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" href="/assets/iris-logo.svg" type="image/svg+xml">
+  <style>
+    .country-header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #EFF6FF;
+      color: #1E40AF;
+      border: 1px solid #BFDBFE;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+
+    .bilingual-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 12px;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .bilingual-col-en {
+      color: #475569;
+      border-right: 1px dashed #CBD5E1;
+      padding-right: 12px;
+    }
+
+    .bilingual-col-ro {
+      color: #0F172A;
+    }
+
+    .bilingual-header-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1.5px solid #1F3864;
+    }
+
+    .bilingual-header-en {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #1F3864;
+    }
+
+    .bilingual-header-ro {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #1F3864;
+    }
+
+    .live-field {
+      font-weight: 600;
+      color: #1F3864;
+      transition: all 0.2s;
+    }
+
+    .live-field.underlined {
+      text-decoration: underline;
+      color: #64748B;
+    }
+
+    .live-field.filled {
+      text-decoration: none;
+      color: #0F172A;
+      background: #F0FDF4;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    .sig-preview-img-box {
+      max-height: 48px;
+      max-width: 130px;
+      object-fit: contain;
+      display: block;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP HEADER / BRAND BAR -->
+  <header class="top-nav">
+    <div class="nav-container">
+      <div class="nav-left">
+        <img src="/assets/iris-logo.svg" alt="IRIS Pay Logo" class="brand-logo">
+        <div class="brand-divider"></div>
+        <span class="portal-main-title">Portal de semnare a contractului</span>
+        <span class="country-header-badge">🇷🇴 România</span>
+      </div>
+      <div class="nav-right">
+        <span class="portal-bnb-badge">Instituție licențiată de BNR / BNB</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN 2-COLUMN WORKSPACE -->
+  <main class="main-layout">
+    
+    <!-- LEFT PANEL: Data Input Form -->
+    <aside class="form-sidebar">
+      <div class="sidebar-header">
+        <h2>Contract IRIS Pay România</h2>
+        <p class="sidebar-sub">Datele se completează în timp real pe paginile contractului din dreapta.</p>
+      </div>
+
+      <div id="customFeeNotificationBanner" style="display:none; margin-bottom: 16px; padding: 12px 14px; border-radius: 8px; font-size: 13.5px; line-height: 1.4;"></div>
+
+      <form id="merchantContractForm" onsubmit="return false;" novalidate>
+        
+        <!-- SECTION 1: Date Comerciant -->
+        <div class="form-section-card">
+          <div class="card-title-row">
+            <span class="card-step-badge">1</span>
+            <h3>Date despre Comerciant (Persoană Juridică)</h3>
+          </div>
+
+          <div class="input-row">
+            <div class="input-group col-half">
+              <label for="companyEik">CUI / CIF <span class="req">*</span></label>
+              <div class="eik-field-container">
+                <input type="text" id="companyEik" placeholder="ex. RO12345678 sau 12345678" maxlength="14" required autocomplete="off">
+              </div>
+            </div>
+            <div class="input-group col-half">
+              <label for="contractDate">Data contractului <span class="req">*</span></label>
+              <div class="dmy-date-input-wrapper">
+                <input type="text" id="contractDate" placeholder="ZZ.LL.AAAA" maxlength="10" autocomplete="off" required>
+                <input type="date" id="hiddenNativeDatePicker" tabindex="-1" aria-hidden="true" style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;">
+                <button type="button" class="btn-calendar-trigger" id="btnCalendarTrigger" title="Alege data din calendar">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="companyInputsWrapper" class="company-inputs-box">
+            <div class="input-group">
+              <label for="companyName">Denumirea companiei <span class="req">*</span></label>
+              <input type="text" id="companyName" placeholder="ex. Tech Retail S.R.L." required autocomplete="organization">
+            </div>
+
+            <div class="input-group">
+              <label for="companyAddress">Sediu social și adresă de corespondență <span class="req">*</span></label>
+              <input type="text" id="companyAddress" placeholder="ex. București, Str. Principală nr. 10, Sector 1" required>
+            </div>
+
+            <div class="input-group">
+              <label for="companyRepresentative">Reprezentat de (Nume administrator / împuternicit) <span class="req">*</span></label>
+              <input type="text" id="companyRepresentative" placeholder="ex. Ion Popescu" required autocomplete="name">
+            </div>
+
+            <div class="input-group">
+              <label for="companyRepresentativePin">CNP Administrator / Reprezentant <span class="req">*</span></label>
+              <input type="text" id="companyRepresentativePin" placeholder="ex. 1850101123456" maxlength="13" required autocomplete="off">
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: Cont Bancar (Art. 4) -->
+        <div class="form-section-card">
+          <div class="card-title-row">
+            <span class="card-step-badge">2</span>
+            <h3>Cont Bancar (Art. 4)</h3>
+          </div>
+
+          <div class="input-group">
+            <label for="bankName">Bancă / Instituție de plată <span class="req">*</span></label>
+            <select id="bankName" name="bankName" required class="form-select-styled">
+              <option value="" disabled selected>Selectați banca comercială...</option>
+              <option value="Banca Transilvania">Banca Transilvania</option>
+              <option value="BCR (Banca Comercială Română)">BCR (Banca Comercială Română)</option>
+              <option value="BRD Groupe Société Générale">BRD Groupe Société Générale</option>
+              <option value="ING Bank România">ING Bank România</option>
+              <option value="Raiffeisen Bank România">Raiffeisen Bank România</option>
+              <option value="UniCredit Bank România">UniCredit Bank România</option>
+              <option value="CEC Bank">CEC Bank</option>
+              <option value="Alpha Bank România">Alpha Bank România</option>
+              <option value="Revolut Bank">Revolut Bank</option>
+              <option value="Libra Internet Bank">Libra Internet Bank</option>
+              <option value="OTP Bank România">OTP Bank România</option>
+              <option value="Garanti BBVA">Garanti BBVA</option>
+              <option value="custom">Altă bancă / instituție de plată...</option>
+            </select>
+            <div id="customBankInputWrapper" style="display:none; margin-top:8px;">
+              <input type="text" id="customBankInput" placeholder="Introduceți denumirea băncii / instituției...">
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="bankIban">Cont IBAN al Comerciantului <span class="req">*</span></label>
+            <input type="text" id="bankIban" placeholder="RO00 BTRL 0000 0000 0000 0000" maxlength="34" required>
+          </div>
+
+          <div class="input-group" id="merchantWebsiteGroup">
+            <div class="label-with-inline-action">
+              <label for="merchantWebsite">Website (dacă există)</label>
+              <label class="inline-checkbox" for="noWebsiteCheckbox">
+                <input type="checkbox" id="noWebsiteCheckbox">
+                <span>fără website</span>
+              </label>
+            </div>
+            <input type="url" id="merchantWebsite" placeholder="https://www.magazin.ro">
+
+            <div style="margin-top: 8px;">
+              <label class="inline-checkbox" for="extraWebsitesCheckbox">
+                <input type="checkbox" id="extraWebsitesCheckbox">
+                <span>Adaugă încă un website</span>
+              </label>
+            </div>
+
+            <div id="extraWebsitesWrapper" style="display: none; margin-top: 8px; flex-direction: column; gap: 8px;">
+              <input type="url" class="extra-website-input" id="extraWebsite1" placeholder="Al doilea site: https://shop2.ro">
+              <input type="url" class="extra-website-input" id="extraWebsite2" placeholder="Al treilea site: https://shop3.ro">
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: Corespondență și Contact (Art. 13) -->
+        <div class="form-section-card">
+          <div class="card-title-row">
+            <span class="card-step-badge">3</span>
+            <h3>Corespondență și Contact (Art. 13)</h3>
+          </div>
+
+          <div class="input-group">
+            <div class="label-with-inline-action">
+              <label for="contactAddress">Adresă pentru corespondență <span class="req">*</span></label>
+              <label class="inline-checkbox" for="sameAddressCheckbox">
+                <input type="checkbox" id="sameAddressCheckbox">
+                <span>aceeași adresă ca sediul social</span>
+              </label>
+            </div>
+            <input type="text" id="contactAddress" placeholder="ex. București, Str. Principală nr. 10, Sector 1" required>
+          </div>
+
+          <div class="input-row">
+            <div class="input-group col-half">
+              <label for="contactEmail">E-mail de contact <span class="req">*</span></label>
+              <input type="email" id="contactEmail" placeholder="office@companie.ro" required autocomplete="email">
+              <span class="field-error-msg" id="contactEmailError" style="display:none;">Format invalid de e-mail (ex. nume@companie.ro)</span>
+            </div>
+            <div class="input-group col-half">
+              <label for="contactPhone">Telefon de contact <span class="req">*</span></label>
+              <input type="tel" id="contactPhone" placeholder="0712 345 678" required autocomplete="tel">
+              <span class="field-error-msg" id="contactPhoneError" style="display:none;">Format invalid de telefon (ex. 0712 345 678 sau +40 712 345 678)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 4: Semnătură Electronică -->
+        <div class="form-section-card" id="signatureSectionCard">
+          <div class="card-title-row">
+            <span class="card-step-badge">4</span>
+            <div>
+              <h3>Semnătură Electronică</h3>
+              <p class="section-subtext">Semnătura se va aplica automat pe Contract și pe Anexa 1</p>
+            </div>
+          </div>
+
+          <div class="sig-mode-tabs">
+            <button type="button" class="sig-tab-btn active" data-mode="draw">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+              Desenare
+            </button>
+            <button type="button" class="sig-tab-btn" data-mode="type">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+              Text
+            </button>
+            <button type="button" class="sig-tab-btn" data-mode="upload">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Fișier
+            </button>
+          </div>
+
+          <!-- TAB 1: Draw Signature -->
+          <div class="sig-tab-content active" id="sigContentDraw">
+            <div class="canvas-wrapper">
+              <canvas id="sigCanvas" width="450" height="140"></canvas>
+              <div class="canvas-watermark">Semnați aici folosind mouse-ul sau ecranul tactil</div>
+            </div>
+            <div class="canvas-actions">
+              <button type="button" class="btn-subtle" id="clearCanvasBtn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Șterge
+              </button>
+              <div class="inline-canvas-statuses">
+                <div class="doc-sign-status-box" id="statusBoxContract">
+                  <span class="status-icon pending">●</span>
+                  <span class="status-doc-title">Contract:</span>
+                  <span class="status-badge" id="badgeContract">Nesemnat</span>
+                </div>
+                <div class="doc-sign-status-box" id="statusBoxAppendix">
+                  <span class="status-icon pending">●</span>
+                  <span class="status-doc-title">Anexa 1:</span>
+                  <span class="status-badge" id="badgeAppendix">Nesemnat</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: Type Signature -->
+          <div class="sig-tab-content" id="sigContentType">
+            <div class="input-group">
+              <label for="typedSigInput">Numele dumneavoastră pentru vizualizare:</label>
+              <input type="text" id="typedSigInput" placeholder="Ion Popescu">
+            </div>
+            <div class="font-preview-list">
+              <div class="font-card active" data-font="Homemade Apple">
+                <span class="font-name-label">Stil 1 (Scris de mână)</span>
+                <span class="font-sample style-script" id="sample1">Ion Popescu</span>
+              </div>
+              <div class="font-card" data-font="Great Vibes">
+                <span class="font-name-label">Stil 2 (Caligrafic)</span>
+                <span class="font-sample style-vibes" id="sample2">Ion Popescu</span>
+              </div>
+              <div class="font-card" data-font="Playfair Display">
+                <span class="font-name-label">Stil 3 (Clasic)</span>
+                <span class="font-sample style-serif" id="sample3">Ion Popescu</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: Upload Image -->
+          <div class="sig-tab-content" id="sigContentUpload">
+            <div class="upload-dropzone" id="sigDropzone">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <p class="dropzone-text">Selectați o imagine cu semnătura (PNG, JPG)</p>
+              <input type="file" id="sigFileInput" accept="image/png, image/jpeg" style="display:none;">
+              <button type="button" class="btn-subtle" onclick="document.getElementById('sigFileInput').click()">Alege fișier</button>
+            </div>
+            <div id="uploadPreviewWrapper" style="display:none; text-align:center; margin-top:10px;">
+              <img id="uploadPreviewImg" alt="Semnătură încărcată" style="max-height:70px; border:1px solid #e2e8f0; padding:4px; border-radius:4px;">
+            </div>
+          </div>
+
+          <div class="apply-signature-box">
+            <div class="signature-buttons-row">
+              <button type="button" class="btn-primary-compact" id="applySignatureBtn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>Semnează Contractul și Anexa</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 5: Confirmare și Trimitere -->
+        <div class="form-section-card confirmation-card">
+          <div class="card-title-row">
+            <span class="card-step-badge">5</span>
+            <h3>Confirmare și Trimitere</h3>
+          </div>
+
+          <div class="consent-checkbox-list">
+            <div class="checkbox-wrapper consent-item">
+              <input type="checkbox" id="agreeTermsCheckbox" required>
+              <label for="agreeTermsCheckbox">
+                Am luat la cunoștință și sunt de acord ca în relațiile noastre să se aplice <a href="https://irisbgsf.com" target="_blank" rel="noopener noreferrer" style="color: #192b6c; font-weight: 600; text-decoration: underline;">Termenii și Condițiile Generale IRIS Pay</a> privind utilizarea Serviciului Terminal de Plată. <span class="req">*</span>
+              </label>
+            </div>
+
+            <div class="checkbox-wrapper consent-item">
+              <input type="checkbox" id="confirmDataCheckbox" required>
+              <label for="confirmDataCheckbox">
+                Declar pe propria răspundere că datele furnizate sunt exacte și actuale și că sunt împuternicit să reprezint Comerciantul menționat. <span class="req">*</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="submit-action-wrapper">
+            <button type="submit" class="btn-submit-main" id="submitContractBtn">
+              <span class="submit-btn-text">Trimite</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+            <p class="submit-footnote">După trimitere, documentul este verificat de echipa IRIS Pay și semnat bilateral.</p>
+          </div>
+        </div>
+
+      </form>
+    </aside>
+
+    <!-- RIGHT PANEL: Continuous Bilingual Document Preview -->
+    <section class="document-panel">
+      <!-- Toolbar -->
+      <div class="doc-toolbar">
+        <div class="doc-view-switch">
+          <button type="button" class="doc-view-btn active" id="viewMainDocBtn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <span>Contract & Anexa 1 (Bilingv RO / EN)</span>
+          </button>
+        </div>
+
+        <div class="doc-actions">
+          <button type="button" class="btn-action-icon" id="zoomOutBtn" title="Micșorează">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </button>
+          <span class="zoom-level" id="zoomLevelDisplay">100%</span>
+          <button type="button" class="btn-action-icon" id="zoomInBtn" title="Mărește">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Viewport: Stack of Bilingual A4 Sheets -->
+      <div class="doc-viewport" id="docViewport">
+        <div class="pages-stack" id="mainDocContainer">
+
+          <!-- SHEET 1: Preamble, Dates, Parties -->
+          <div class="doc-page-card" id="pageCard1">
+            <div class="page-top-tab">
+              <span class="page-tab-badge">PAGINA 1 DIN 3 • CONTRACT-CADRU & PĂRȚI</span>
+            </div>
+            <div class="a4-sheet" id="docSheet1">
+              <div class="page-content-area">
+                
+                <div class="bilingual-header-row">
+                  <div class="bilingual-header-en">
+                    FRAMEWORK AGREEMENT FOR PAYMENT SERVICES THROUGH PAYMENT INITIATION
+                  </div>
+                  <div class="bilingual-header-ro">
+                    CONTRACT-CADRU PENTRU EFECTUAREA DE PLĂȚI PRIN SERVICIUL DE INIȚIERE A PLĂȚILOR
+                  </div>
+                </div>
+
+                <div class="bilingual-row">
+                  <div class="bilingual-col-en">
+                    Today <strong class="live-field" data-field="date">.........................</strong>, in Bucharest, between:
+                  </div>
+                  <div class="bilingual-col-ro">
+                    Astăzi <strong class="live-field" data-field="date">.........................</strong>, în București, între:
+                  </div>
+                </div>
+
+                <div class="bilingual-row">
+                  <div class="bilingual-col-en">
+                    1. <strong>IRIS Solutions EAD</strong>, registered in the CRRNPLE at the Registry Agency, with UIC 208455895, with headquarters and address of management: Sofia, 78 Hristo Smirnenski Blvd., fl. 4, represented by Executive Director Galya Dimitrova Dimitrova or proxy Dimitar Yoshkov Hristov, hereinafter referred to as "Provider", on the one hand,
+                  </div>
+                  <div class="bilingual-col-ro">
+                    1. <strong>IRIS Solutions EAD</strong>, înregistrată în CRRNPLE la Agenția Registrului, având CUI 208455895, cu sediul social și adresa de conducere: Sofia, b-dul Hristo Smirnenski nr. 78, et. 4, reprezentată de Directorul Executiv Galya Dimitrova Dimitrova sau prin împuternicitul său Dimitar Yoshkov Hristov, denumită în continuare „Furnizor”, pe de o parte,
+                  </div>
+                </div>
+
+                <div class="bilingual-row">
+                  <div class="bilingual-col-en">and</div>
+                  <div class="bilingual-col-ro">și</div>
+                </div>
+
+                <div class="bilingual-row">
+                  <div class="bilingual-col-en">
+                    2. <strong class="live-field" data-field="companyName">.......................................................................</strong>, registered in the CRRNPLE at the Registry Agency, with UIC/CUI <strong class="live-field" data-field="companyEik">..................................</strong>, with headquarters and address of management: <span class="live-field" data-field="companyAddress">...................................................................................................</span>, represented by <span class="live-field" data-field="companyRepresentative">...................................................................</span>, with PIN/CNP <span class="live-field" data-field="companyRepresentativePin">...............................</span>, telephone: <span class="live-field" data-field="contactPhone">...............................</span>, hereby referred to as "Merchant", on the other hand.
+                  </div>
+                  <div class="bilingual-col-ro">
+                    2. <strong class="live-field" data-field="companyName">.......................................................................</strong>, înregistrat în CRRNPLE la Agenția Registrului, având CUI <strong class="live-field" data-field="companyEik">..................................</strong>, cu sediul social și adresa de conducere: <span class="live-field" data-field="companyAddress">...................................................................................................</span>, reprezentată de <span class="live-field" data-field="companyRepresentative">...................................................................</span>, cu CNP <span class="live-field" data-field="companyRepresentativePin">...............................</span>, telefon: <span class="live-field" data-field="contactPhone">...............................</span>, denumită în continuare „Comerciantul”, pe de altă parte.
+                  </div>
+                </div>
+
+                <div class="bilingual-row" style="margin-top: 14px; font-weight: 600;">
+                  <div class="bilingual-col-en">Together referred to as "Parties", agreed as follows:</div>
+                  <div class="bilingual-col-ro">Denumite împreună „Părțile”, au convenit următoarele:</div>
+                </div>
+
+                <div class="bilingual-row">
+                  <div class="bilingual-col-en">
+                    <strong>Art. 1 Definitions & Art. 2 Scope:</strong> The Provider provides payment initiation software solutions allowing Customers to execute instant payments directly from their bank accounts to the Merchant's accounts.
+                  </div>
+                  <div class="bilingual-col-ro">
+                    <strong>Art. 1 Definiții și Art. 2 Obiect:</strong> Furnizorul oferă soluții software de inițiere a plăților, permițând Clienților să efectueze plăți instant direct din conturile lor bancare către contul Comerciantului.
+                  </div>
+                </div>
+
+              </div>
+              <div class="page-footer">
+                <span class="page-footer-right">Pagina 1 din 3</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="page-gap-divider">
+            <span class="gap-line"></span>
+            <span class="gap-badge">Pagina 2</span>
+            <span class="gap-line"></span>
+          </div>
+
+          <!-- SHEET 2: Art. 4 Bank, Art. 5 Rep, Art. 13 Notices, Art. 16 Signatures -->
+          <div class="doc-page-card" id="pageCard2">
+            <div class="page-top-tab">
+              <span class="page-tab-badge">PAGINA 2 DIN 3 • DETALII BANCARE, CONTACT & SEMNĂTURI</span>
+            </div>
+            <div class="a4-sheet" id="docSheet2">
+              <div class="page-content-area">
+
+                <div class="bilingual-row">
+                  <div class="bilingual-col-en">
+                    <strong style="color: #1F3864;">Art. 4. Bank Account Details of the Merchant:</strong><br>
+                    • Bank/Payment institution: <span class="live-field underlined" data-field="bankName">…........................................</span><br>
+                    • IBAN: <span class="live-field underlined" data-field="bankIban" style="font-weight:700;">….........................................................................</span><br>
+                    • Authorized website/location: <span class="live-field underlined" data-field="merchantWebsite">........................................................</span>
+                  </div>
+                  <div class="bilingual-col-ro">
+                    <strong style="color: #1F3864;">Art. 4. Detalii cont bancar al Comerciantului:</strong><br>
+                    • Bancă/Instituție de plată: <span class="live-field underlined" data-field="bankName">…........................................</span><br>
+                    • IBAN: <span class="live-field underlined" data-field="bankIban" style="font-weight:700;">….........................................................................</span><br>
+                    • Website / Locație autorizată: <span class="live-field underlined" data-field="merchantWebsite">........................................................</span>
+                  </div>
+                </div>
+
+                <div class="bilingual-row">
+                  <div class="bilingual-col-en">
+                    <strong style="color: #1F3864;">Art. 5. Authorized Representative:</strong><br>
+                    Name: <span class="live-field" data-field="companyRepresentative">........................</span><br>
+                    CNP: <span class="live-field" data-field="companyRepresentativePin">........................</span><br>
+                    Email: <span class="live-field" data-field="contactEmail">........................</span><br>
+                    Phone Number: <span class="live-field" data-field="contactPhone">........................</span>
+                  </div>
+                  <div class="bilingual-col-ro">
+                    <strong style="color: #1F3864;">Art. 5. Reprezentant autorizat:</strong><br>
+                    Nume: <span class="live-field" data-field="companyRepresentative">........................</span><br>
+                    CNP: <span class="live-field" data-field="companyRepresentativePin">........................</span><br>
+                    Email: <span class="live-field" data-field="contactEmail">........................</span><br>
+                    Număr de telefon: <span class="live-field" data-field="contactPhone">........................</span>
+                  </div>
+                </div>
+
+                <div class="bilingual-row">
+                  <div class="bilingual-col-en">
+                    <strong style="color: #1F3864;">Art. 13. Correspondence and Notices:</strong><br>
+                    Address: <span class="live-field" data-field="contactAddress">...................................................................................</span><br>
+                    E-mail: <span class="live-field" data-field="contactEmail">........................</span> | Tel: <span class="live-field" data-field="contactPhone">........................</span>
+                  </div>
+                  <div class="bilingual-col-ro">
+                    <strong style="color: #1F3864;">Art. 13. Corespondență și Notificări:</strong><br>
+                    Adresa: <span class="live-field" data-field="contactAddress">...................................................................................</span><br>
+                    E-mail: <span class="live-field" data-field="contactEmail">........................</span> | Tel: <span class="live-field" data-field="contactPhone">........................</span>
+                  </div>
+                </div>
+
+                <div style="margin-top: 24px; padding-top: 14px; border-top: 1.5px solid #1F3864;">
+                  <div style="font-weight: 700; font-size: 12px; margin-bottom: 12px; color: #1F3864;">
+                    SEMNĂTURI CONTRACT / SIGNATURES
+                  </div>
+
+                  <div class="bilingual-row" style="align-items: flex-start;">
+                    <div class="bilingual-col-en" style="border: 1px solid #E2E8F0; padding: 12px; border-radius: 6px;">
+                      <div style="font-weight: 700; color: #1F3864; font-size: 11.5px; margin-bottom: 4px;">For the Provider / Pentru Furnizor:</div>
+                      <div style="font-size: 10.5px; color: #64748B;">IRIS Solutions EAD</div>
+                      <div style="margin-top: 8px; font-weight: 700; color: #047857; font-size: 11px;">[ Semnat Electronic IRIS Solutions ]</div>
+                    </div>
+
+                    <div class="bilingual-col-ro" style="border: 1px solid #E2E8F0; padding: 12px; border-radius: 6px;">
+                      <div style="font-weight: 700; color: #1F3864; font-size: 11.5px; margin-bottom: 4px;">For the Merchant / Pentru Comerciant:</div>
+                      <div style="font-size: 10.5px; color: #64748B;"><span class="live-field" data-field="companyName">Comerciant</span></div>
+                      <div id="contractMerchantSigSlot" style="min-height: 48px; display: flex; align-items: center; margin-top: 6px;">
+                        <span style="font-size: 11px; color: #94A3B8; font-style: italic;">[ Semnătura va apărea aici după aplicare ]</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              <div class="page-footer">
+                <span class="page-footer-right">Pagina 2 din 3</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="page-gap-divider">
+            <span class="gap-line"></span>
+            <span class="gap-badge">Anexa 1</span>
+            <span class="gap-line"></span>
+          </div>
+
+          <!-- SHEET 3: Annex 1 (Fee Schedule) -->
+          <div class="doc-page-card" id="pageCard3">
+            <div class="page-top-tab">
+              <span class="page-tab-badge">PAGINA 3 DIN 3 • ANEXA 1 (TAXE ȘI COMISIOANE)</span>
+            </div>
+            <div class="a4-sheet" id="docSheet3">
+              <div class="page-content-area">
+
+                <div class="bilingual-header-row">
+                  <div class="bilingual-header-en">ANNEX NO. 1 - FEES AND PARAMETERS</div>
+                  <div class="bilingual-header-ro">ANEXA NR. 1 - TAXE ȘI PARAMETRI</div>
+                </div>
+
+                <div style="background: #F8FAFC; border: 1.5px solid #CBD5E1; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                  <div style="font-size: 11.5px; color: #64748B; margin-bottom: 6px; text-transform: uppercase; font-weight: 700;">
+                    Comision de inițiere a plății (Art. 3 din Anexa 1):
+                  </div>
+                  <div style="display: flex; align-items: baseline; gap: 10px;">
+                    <span id="appCommissionDisplay" style="font-size: 32px; font-weight: 800; color: #1F3864;">0.25%</span>
+                    <span style="font-size: 13px; color: #475569;">din valoarea fiecărei tranzacții</span>
+                  </div>
+                  <div style="font-size: 11px; color: #64748B; margin-top: 6px;">
+                    Taxa se plătește până la data de 10 a lunii următoare lunii implementării serviciului.
+                  </div>
+                </div>
+
+                <div class="bilingual-row">
+                  <div class="bilingual-col-en">
+                    • Integration fee: <strong>0 EUR</strong><br>
+                    • Monthly maintenance fee: <strong>0 EUR</strong><br>
+                    • Settlement currency: RON / EUR
+                  </div>
+                  <div class="bilingual-col-ro">
+                    • Taxă de integrare: <strong>0 EUR</strong><br>
+                    • Taxă lunară de mentenanță: <strong>0 EUR</strong><br>
+                    • Monedă de decontare: RON / EUR
+                  </div>
+                </div>
+
+                <div style="margin-top: 24px; padding-top: 14px; border-top: 1.5px solid #1F3864;">
+                  <div style="font-weight: 700; font-size: 12px; margin-bottom: 12px; color: #1F3864;">
+                    SEMNĂTURĂ ANEXA 1 / ANNEX 1 SIGNATURE
+                  </div>
+
+                  <div class="bilingual-row">
+                    <div class="bilingual-col-en" style="border: 1px solid #E2E8F0; padding: 12px; border-radius: 6px;">
+                      <div style="font-weight: 700; color: #1F3864; font-size: 11.5px; margin-bottom: 4px;">For the Provider:</div>
+                      <div style="font-size: 10.5px; color: #64748B;">IRIS Solutions EAD</div>
+                      <div style="margin-top: 8px; font-weight: 700; color: #047857; font-size: 11px;">[ Semnat Electronic ]</div>
+                    </div>
+
+                    <div class="bilingual-col-ro" style="border: 1px solid #E2E8F0; padding: 12px; border-radius: 6px;">
+                      <div style="font-weight: 700; color: #1F3864; font-size: 11.5px; margin-bottom: 4px;">Pentru Comerciant:</div>
+                      <div style="font-size: 10.5px; color: #64748B;"><span class="live-field" data-field="companyName">Comerciant</span></div>
+                      <div id="appendixMerchantSigSlot" style="min-height: 48px; display: flex; align-items: center; margin-top: 6px;">
+                        <span style="font-size: 11px; color: #94A3B8; font-style: italic;">[ Semnătura va apărea aici după aplicare ]</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              <div class="page-footer">
+                <span class="page-footer-right">Pagina 3 din 3</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Loading Screen Overlay -->
+  <div id="loadingScreenOverlay" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.85); z-index:9999; align-items:center; justify-content:center; flex-direction:column; color:#FFFFFF;">
+    <div style="width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.2); border-top-color: #00bff2; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px;"></div>
+    <div style="font-size: 18px; font-weight: 700; margin-bottom: 6px;">Generare și trimitere contract...</div>
+    <div style="font-size: 13.5px; color: #94A3B8;">Vă rugăm să așteptați câteva momente.</div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastNotification" class="toast"></div>
+
+  <script src="/ro/app.js"></script>
+</body>
+</html>

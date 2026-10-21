@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IRIS Pay România | Portal Parteneri și Statistici</title>
+  <link rel="icon" href="/assets/iris-logo.svg" type="image/svg+xml">
+  <style>
+    :root {
+      --primary: #1F3864;
+      --primary-hover: #182D50;
+      --primary-light: #2E75B6;
+      --accent: #00A3E0;
+      --bg: #F4F7FB;
+      --card-bg: #FFFFFF;
+      --text: #262626;
+      --text-muted: #595959;
+      --border: #D9E1F2;
+      --border-light: #E9ECEF;
+      --success-bg: #DEF7EC;
+      --success-text: #03543F;
+      --success-border: #BCF0DA;
+      --badge-bg: #E8F0FE;
+      --badge-text: #1F3864;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .top-navbar {
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .nav-logo {
+      height: 38px;
+    }
+
+    .brand-divider {
+      height: 24px;
+      width: 1px;
+      background: var(--border);
+    }
+
+    .nav-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .country-tag {
+      background: #EFF6FF;
+      color: #1E40AF;
+      border: 1px solid #BFDBFE;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 6px;
+    }
+
+    .nav-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-pill {
+      background: var(--badge-bg);
+      color: var(--primary);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #D0E1FD;
+    }
+
+    .btn-portal-link {
+      background: #FFFFFF;
+      color: var(--primary-light);
+      border: 1px solid var(--border);
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-portal-link:hover {
+      background: #F4F7FB;
+      border-color: var(--primary-light);
+    }
+
+    .btn-logout {
+      background: #FFF1F0;
+      color: #CF1322;
+      border: 1px solid #FFA39E;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-logout:hover {
+      background: #FFCCC7;
+    }
+
+    /* Main Container */
+    .dashboard-container {
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 28px 24px;
+      flex: 1;
+    }
+
+    /* Actions Bar */
+    .actions-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .page-heading h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .page-heading p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+    }
+
+    .actions-buttons-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary-action {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 10px rgba(31, 56, 100, 0.2);
+      transition: all 0.2s;
+    }
+
+    .btn-primary-action:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(31, 56, 100, 0.3);
+    }
+
+    .btn-secondary-action {
+      background: #FFFFFF;
+      color: #0F172A;
+      border: 1.5px solid #CBD5E1;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s;
+    }
+
+    .btn-secondary-action:hover {
+      border-color: #94A3B8;
+      background: #F8FAFC;
+    }
+
+    /* KPI Cards Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .metric-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .metric-card:hover {
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .metric-title {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .metric-subtext {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Filters Bar */
+    .filters-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .filters-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .filters-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .filters-grid {
+      display: grid;
+      grid-template-columns: 2fr 1.5fr 1.5fr 3fr auto;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .filter-item label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .filter-input {
+      width: 100%;
+      height: 38px;
+      padding: 8px 12px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      outline: none;
+      background: #FFFFFF;
+      color: var(--text);
+    }
+
+    .filter-input:focus {
+      border-color: var(--primary-light);
+    }
+
+    .btn-reset-filters {
+      height: 38px;
+      background: #F4F7FB;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0 14px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .btn-reset-filters:hover {
+      background: #E2E8F0;
+      color: var(--text);
+    }
+
+    /* Partners Table Section */
+    .table-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      margin-bottom: 28px;
+    }
+
+    .table-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .table-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .partners-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+
+    .partners-table th {
+      background: #F8FAFC;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-align: left;
+      padding: 12px 18px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .partners-table td {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+
+    .partners-table tr:hover td {
+      background: #FBFDFF;
+    }
+
+    .partner-name-cell {
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .link-pill {
+      display: inline-block;
+      background: #F1F5F9;
+      color: #334155;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: monospace;
+      border: 1px solid #E2E8F0;
+      max-width: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .btn-copy-link {
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      color: var(--primary-light);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-copy-link:hover {
+      background: #F0F7FF;
+      border-color: var(--primary-light);
+    }
+
+    .contracts-count-badge {
+      display: inline-block;
+      background: #F1F5F9;
+      color: #475569;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 12.5px;
+    }
+
+    .contracts-count-badge.has-contracts {
+      background: var(--success-bg);
+      color: var(--success-text);
+      border: 1px solid var(--success-border);
+    }
+
+    .btn-details {
+      background: #F4F7FB;
+      border: 1px solid var(--border);
+      color: var(--primary);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-details:hover {
+      background: #E2E8F0;
+    }
+
+    /* Modals */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 30, 54, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-card {
+      background: #FFFFFF;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 520px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      animation: modalFade 0.2s ease-out;
+    }
+
+    @keyframes modalFade {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .btn-close-modal {
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .btn-close-modal:hover {
+      color: var(--text);
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      background: #F8FAFC;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .modal-input-group {
+      margin-bottom: 16px;
+    }
+
+    .modal-input-group label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    .modal-input {
+      width: 100%;
+      height: 42px;
+      padding: 8px 12px;
+      font-size: 13.5px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .modal-input:focus {
+      border-color: var(--primary-light);
+    }
+
+    .preview-box {
+      background: #F1F5F9;
+      border: 1px dashed var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 12.5px;
+      color: #334155;
+      margin-top: 6px;
+      word-break: break-all;
+    }
+
+    .details-item {
+      padding: 12px 14px;
+      background: #F8FAFC;
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1F3864;
+      color: #FFFFFF;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      z-index: 2000;
+      display: none;
+      animation: toastSlide 0.3s ease-out;
+    }
+
+    @keyframes toastSlide {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="top-navbar">
+    <div class="nav-brand">
+      <img src="/assets/iris-logo.svg" alt="IRIS Pay Logo" class="nav-logo">
+      <div class="brand-divider"></div>
+      <div>
+        <div class="nav-title">
+          Portal Parteneri & Statistici
+          <span class="country-tag">🇷🇴 România</span>
+        </div>
+        <div class="nav-subtitle">Sistem de monitorizare contracte și comisioane IRIS Pay</div>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <div class="user-pill">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span id="userEmailDisplay">sales@irisbgsf.com</span>
+      </div>
+      <a href="/ro" class="btn-portal-link" target="_blank">
+        Formular de semnare ↗
+      </a>
+      <button class="btn-logout" id="logoutBtn">
+        Deconectare
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="dashboard-container">
+
+    <!-- Actions & Page Heading -->
+    <div class="actions-bar">
+      <div class="page-heading">
+        <h1>Panou de Control (România)</h1>
+        <p>Monitorizați contractele semnate, partenerii afiliați și linkurile cu comisioane personalizate</p>
+      </div>
+      <div class="actions-buttons-group">
+        <button class="btn-primary-action" id="btnOpenCreateModal">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Generează nou Link Partener
+        </button>
+        <button class="btn-secondary-action" id="btnOpenCustomFeeModal" style="background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%); color: #FFFFFF; border: none; box-shadow: 0 4px 10px rgba(13, 148, 136, 0.2);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Creează comision personalizat
+        </button>
+      </div>
+    </div>
+
+    <!-- KPI Summary Metrics Grid -->
+    <div class="metrics-grid" id="metricsGrid">
+      <div class="metric-card" data-kpi="partners">
+        <div class="metric-title">Parteneri Activi</div>
+        <div class="metric-value" id="kpiPartnersCount">0</div>
+        <div class="metric-subtext">Parteneri afiliați înregistrați</div>
+      </div>
+
+      <div class="metric-card" data-kpi="direct" id="cardDirectContracts" style="cursor: pointer;" title="Faceți clic pentru a vizualiza lista de contracte directe">
+        <div class="metric-title" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>Contracte Directe</span>
+          <span style="font-size: 11px; background: #EFF6FF; color: #1E40AF; padding: 2px 6px; border-radius: 4px; font-weight: 600;">Fără partener</span>
+        </div>
+        <div class="metric-value" id="kpiDirectContracts">0</div>
+        <div class="metric-subtext" id="kpiDirectSubtext">Toate perioadele</div>
+      </div>
+
+      <div class="metric-card" data-kpi="total">
+        <div class="metric-title">Total Contracte Semnate</div>
+        <div class="metric-value" id="kpiTotalContracts" style="color: #059669;">0</div>
+        <div class="metric-subtext">Contracte procesate pentru piața din România</div>
+      </div>
+
+      <div class="metric-card" data-kpi="top">
+        <div class="metric-title">Cel mai activ partener</div>
+        <div class="metric-value" id="kpiTopPartner" style="font-size: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">—</div>
+        <div class="metric-subtext" id="kpiTopPartnerCount">Nu există date suficiente</div>
+      </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="filters-card">
+      <div class="filters-title-row">
+        <div class="filters-title">Filtrare și Căutare</div>
+        <span id="activeFilterDesc" style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Afișare: Toate perioadele</span>
+      </div>
+
+      <div class="filters-grid">
+        <div class="filter-item">
+          <label for="filterMonth">Lună</label>
+          <select id="filterMonth" class="filter-input">
+            <option value="">Toate lunile</option>
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label for="filterFrom">De la</label>
+          <input type="date" id="filterFrom" class="filter-input">
+        </div>
+
+        <div class="filter-item">
+          <label for="filterTo">Până la</label>
+          <input type="date" id="filterTo" class="filter-input">
+        </div>
+
+        <div class="filter-item">
+          <label for="searchPartner">Căutare Partener</label>
+          <input type="text" id="searchPartner" class="filter-input" placeholder="Introduceți nume sau slug...">
+        </div>
+
+        <div>
+          <button class="btn-reset-filters" id="btnResetFilters">
+            Resetează
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Partners Table -->
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">Parteneri Afiliați și Statistici</div>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table class="partners-table">
+          <thead>
+            <tr>
+              <th>Partener</th>
+              <th>Link Partener</th>
+              <th style="text-align: center;">Contracte Semnate</th>
+              <th>Ultimul Contract</th>
+              <th style="text-align: center;">Comision Personalizat</th>
+              <th style="text-align: right;">Detalii</th>
+            </tr>
+          </thead>
+          <tbody id="partnersTableBody">
+            <tr class="empty-row">
+              <td colspan="6" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                Se încarcă datele...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Custom Commission Links Table -->
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">Linkuri cu Comision Personalizat (România)</div>
+        <button id="btnRefreshCustomLinks" class="btn-reset-filters" style="height: 32px; padding: 0 10px;">
+          ⟳ Actualizează
+        </button>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table class="partners-table">
+          <thead>
+            <tr>
+              <th>Comision</th>
+              <th>Link Personalizat</th>
+              <th>Partener Alocat</th>
+              <th>Creat la</th>
+              <th>Status</th>
+              <th style="text-align: right;">Acțiuni</th>
+            </tr>
+          </thead>
+          <tbody id="customLinksTableBody">
+            <tr class="empty-row">
+              <td colspan="6" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                Se încarcă datele...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Create Partner Modal -->
+  <div class="modal-overlay" id="createModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Generează nou Link Partener (România)</h3>
+        <button class="btn-close-modal" id="btnCloseCreateModal">&times;</button>
+      </div>
+      <form id="createAffiliateForm">
+        <div class="modal-body">
+          <div class="modal-input-group">
+            <label for="newPartnerName">Numele partenerului *</label>
+            <input type="text" id="newPartnerName" class="modal-input" placeholder="ex. SmartBill, eMag, etc." required>
+          </div>
+
+          <div class="modal-input-group">
+            <label for="newPartnerSlug">Cod link (Slug) *</label>
+            <input type="text" id="newPartnerSlug" class="modal-input" placeholder="ex. smartbill" required pattern="[a-zA-Z0-9-_]+">
+          </div>
+
+          <div class="modal-input-group">
+            <label>Previzualizare URL:</label>
+            <div class="preview-box" id="previewUrlText">
+              https://dogovor-irispay.vercel.app/ro/(cod)
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-reset-filters" id="btnCancelCreateModal">Anulează</button>
+          <button type="submit" class="btn-primary-action" id="btnSubmitNewAff">
+            <span>Creează și copiază linkul</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Custom Commission Link Modal -->
+  <div class="modal-overlay" id="customFeeModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Creează comision personalizat</h3>
+        <button class="btn-close-modal" id="btnCloseCustomFeeModal">&times;</button>
+      </div>
+      <form id="createCustomFeeForm">
+        <div class="modal-body">
+          <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+            Comisionul standard în Anexa 1 este de <strong>0.25%</strong>. Introduceți noul comision negociat pentru acest comerciant.
+          </div>
+
+          <div class="modal-input-group">
+            <label for="customCommissionInput">Comision de inițiere a plății (%): *</label>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-weight: 700; color: #1F3864; font-size: 16px;">0.</span>
+              <input type="text" id="customCommissionInput" class="modal-input" placeholder="20" required style="font-weight: 700; font-size: 15px;" maxlength="4">
+              <span style="font-weight: 700; color: #1F3864; font-size: 16px;">%</span>
+            </div>
+            <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 5px;">
+              Introduceți doar cifrele de după zero (de ex. scrieți <strong>20</strong> pentru <strong>0.20%</strong>).
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-reset-filters" id="btnCancelCustomFeeModal">Anulează</button>
+          <button type="submit" class="btn-primary-action" id="btnSubmitCustomFee">
+            <span>Generează și copiază linkul</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Partner Details Modal -->
+  <div class="modal-overlay" id="detailsModal">
+    <div class="modal-card" style="max-width: 620px;">
+      <div class="modal-header">
+        <h3 id="detailsModalTitle">Contracte pentru Partener</h3>
+        <button class="btn-close-modal" id="btnCloseDetailsModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="detailsContractsList" style="max-height: 380px; overflow-y: auto;">
+          <!-- Items injected via JS -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-reset-filters" id="btnCloseDetailsBtn">Închide</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toastNotification"></div>
+
+  <script>
+    // Auth & Elements
+    let currentUserRole = 'sales';
+
+    function getAuthHeaders() {
+      const headers = { 'Content-Type': 'application/json' };
+      const token = sessionStorage.getItem('iris_auth_token') || localStorage.getItem('iris_auth_token');
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      return headers;
+    }
+
+    const kpiPartnersCount = document.getElementById('kpiPartnersCount');
+    const kpiDirectContracts = document.getElementById('kpiDirectContracts');
+    const kpiDirectSubtext = document.getElementById('kpiDirectSubtext');
+    const cardDirectContracts = document.getElementById('cardDirectContracts');
+    const kpiTotalContracts = document.getElementById('kpiTotalContracts');
+    const kpiTopPartner = document.getElementById('kpiTopPartner');
+    const kpiTopPartnerCount = document.getElementById('kpiTopPartnerCount');
+    const activeFilterDesc = document.getElementById('activeFilterDesc');
+
+    const filterMonth = document.getElementById('filterMonth');
+    const filterFrom = document.getElementById('filterFrom');
+    const filterTo = document.getElementById('filterTo');
+    const searchPartner = document.getElementById('searchPartner');
+    const btnResetFilters = document.getElementById('btnResetFilters');
+    const partnersTableBody = document.getElementById('partnersTableBody');
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    const toast = document.getElementById('toastNotification');
+
+    // Create Modal Elements
+    const btnOpenCreateModal = document.getElementById('btnOpenCreateModal');
+    const createModal = document.getElementById('createModal');
+    const btnCloseCreateModal = document.getElementById('btnCloseCreateModal');
+    const btnCancelCreateModal = document.getElementById('btnCancelCreateModal');
+    const createAffiliateForm = document.getElementById('createAffiliateForm');
+    const newPartnerName = document.getElementById('newPartnerName');
+    const newPartnerSlug = document.getElementById('newPartnerSlug');
+    const previewUrlText = document.getElementById('previewUrlText');
+
+    // Details Modal Elements
+    const detailsModal = document.getElementById('detailsModal');
+    const detailsModalTitle = document.getElementById('detailsModalTitle');
+    const detailsContractsList = document.getElementById('detailsContractsList');
+    const btnCloseDetailsModal = document.getElementById('btnCloseDetailsModal');
+    const btnCloseDetailsBtn = document.getElementById('btnCloseDetailsBtn');
+
+    let currentAffiliates = [];
+    let lastSummaryData = null;
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+
+    function getFullAffiliateUrl(slug) {
+      const origin = window.location.origin;
+      return `${origin}/ro/${slug}`;
+    }
+
+    function formatDateRO(isoStr) {
+      if (!isoStr) return '—';
+      try {
+        const d = new Date(isoStr);
+        if (isNaN(d.getTime())) return isoStr;
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        const hours = String(d.getHours()).padStart(2, '0');
+        const mins = String(d.getMinutes()).padStart(2, '0');
+        return `${day}.${month}.${year} (${hours}:${mins})`;
+      } catch (e) {
+        return isoStr;
+      }
+    }
+
+    function slugify(text) {
+      return text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+
+    newPartnerName.addEventListener('input', () => {
+      if (!newPartnerSlug.dataset.userEdited) {
+        newPartnerSlug.value = slugify(newPartnerName.value);
+        updatePreviewUrl();
+      }
+    });
+
+    newPartnerSlug.addEventListener('input', () => {
+      newPartnerSlug.dataset.userEdited = 'true';
+      newPartnerSlug.value = slugify(newPartnerSlug.value);
+      updatePreviewUrl();
+    });
+
+    function updatePreviewUrl() {
+      const slug = newPartnerSlug.value.trim() || '(cod-partener)';
+      previewUrlText.textContent = getFullAffiliateUrl(slug);
+    }
+
+    async function copyTextDirectly(text) {
+      if (!text) return false;
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(text);
+          return true;
+        } catch (e) {}
+      }
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        textArea.setAttribute('readonly', '');
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        return successful;
+      } catch (err) {
+        return false;
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Load Data for Romania (country=ro)
+    async function loadAffiliatesData() {
+      const month = filterMonth.value;
+      const fromDate = filterFrom.value;
+      const toDate = filterTo.value;
+      const search = searchPartner.value.trim();
+
+      const queryParams = new URLSearchParams();
+      queryParams.set('country', 'ro');
+      if (month) queryParams.set('month', month);
+      if (fromDate) queryParams.set('fromDate', fromDate);
+      if (toDate) queryParams.set('toDate', toDate);
+      if (search) queryParams.set('search', search);
+
+      try {
+        const res = await fetch(`/api/affiliates?${queryParams.toString()}`, {
+          headers: getAuthHeaders()
+        });
+
+        if (res.status === 401) {
+          localStorage.removeItem('iris_auth_token');
+          sessionStorage.removeItem('iris_auth_token');
+          window.location.replace('/ro/login');
+          return;
+        }
+
+        const data = await res.json();
+        if (data.success) {
+          if (data.role) currentUserRole = data.role;
+          currentAffiliates = data.affiliates || [];
+          lastSummaryData = data.summary || null;
+          renderSummary(data.summary, month, fromDate, toDate);
+          renderTable(data.affiliates);
+          populateMonthsDropdown(data.summary?.monthsList || []);
+        } else {
+          partnersTableBody.innerHTML = `
+            <tr class="empty-row">
+              <td colspan="6" style="color: #ef4444;">Eroare la încărcare: ${escapeHtml(data.error || 'Răspuns invalid de la server')}</td>
+            </tr>
+          `;
+        }
+      } catch (err) {
+        console.error('Error fetching affiliates data:', err);
+        partnersTableBody.innerHTML = `
+          <tr class="empty-row">
+            <td colspan="6" style="color: #ef4444;">Eroare de rețea. Vă rugăm să reîncercați.</td>
+          </tr>
+        `;
+      }
+    }
+
+    function populateMonthsDropdown(monthsList) {
+      const currentSelected = filterMonth.value;
+      filterMonth.innerHTML = '<option value="">Toate lunile</option>';
+      monthsList.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.value;
+        opt.textContent = m.label;
+        if (m.value === currentSelected) opt.selected = true;
+        filterMonth.appendChild(opt);
+      });
+    }
+
+    function renderSummary(summary, month, fromDate, toDate) {
+      if (!summary) return;
+
+      kpiPartnersCount.textContent = summary.totalPartners || 0;
+      kpiDirectContracts.textContent = summary.directContractsCount || 0;
+      kpiTotalContracts.textContent = summary.totalContractsAllTime || 0;
+
+      if (summary.topPartner) {
+        kpiTopPartner.textContent = summary.topPartner.name;
+        kpiTopPartnerCount.textContent = `${summary.topPartner.count} contracte în perioadă`;
+      } else {
+        kpiTopPartner.textContent = '—';
+        kpiTopPartnerCount.textContent = 'Nu există date';
+      }
+
+      if (month) {
+        const selectedOpt = filterMonth.options[filterMonth.selectedIndex];
+        const monthName = selectedOpt ? selectedOpt.textContent : month;
+        activeFilterDesc.textContent = `Perioadă: ${monthName}`;
+        kpiDirectSubtext.textContent = `Pentru ${monthName} (total: ${summary.directContractsAllTime || 0})`;
+      } else if (fromDate || toDate) {
+        activeFilterDesc.textContent = `Perioadă: ${fromDate || '...'} până la ${toDate || '...'}`;
+        kpiDirectSubtext.textContent = `De la ${fromDate || '...'} până la ${toDate || '...'} (total: ${summary.directContractsAllTime || 0})`;
+      } else {
+        activeFilterDesc.textContent = 'Afișare: Toate perioadele';
+        kpiDirectSubtext.textContent = `Toate perioadele (total: ${summary.directContractsAllTime || 0})`;
+      }
+    }
+
+    function renderTable(affiliates) {
+      partnersTableBody.innerHTML = '';
+
+      if (!affiliates || affiliates.length === 0) {
+        const hasFilters = filterMonth.value || filterFrom.value || filterTo.value || searchPartner.value.trim();
+        const emptyMsg = hasFilters 
+          ? 'Nu a fost găsit niciun partener conform filtrelor selectate.' 
+          : 'Nu există încă parteneri afiliați pentru România. Faceți clic pe „Generează nou Link Partener” pentru a crea primul link.';
+        partnersTableBody.innerHTML = `
+          <tr class="empty-row">
+            <td colspan="6" style="text-align: center; padding: 24px; color: var(--text-muted);">${emptyMsg}</td>
+          </tr>
+        `;
+        return;
+      }
+
+      affiliates.forEach((aff) => {
+        const fullUrl = getFullAffiliateUrl(aff.slug);
+        const count = aff.contractCount || 0;
+        const total = aff.totalContractCount || 0;
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td>
+            <div class="partner-name-cell">${escapeHtml(aff.name)}</div>
+          </td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="link-pill" title="${fullUrl}">/ro/${escapeHtml(aff.slug)}</span>
+              <button class="btn-copy-link" data-url="${fullUrl}">
+                Copiază
+              </button>
+            </div>
+          </td>
+          <td style="text-align: center;">
+            <span class="contracts-count-badge ${count > 0 ? 'has-contracts' : ''}" title="Total istoric: ${total}">
+              ${count}
+            </span>
+          </td>
+          <td>
+            <span style="font-size: 12.5px; color: var(--text-muted);">
+              ${aff.lastContractDate ? formatDateRO(aff.lastContractDate) : 'Niciunul încă'}
+            </span>
+          </td>
+          <td style="text-align: center;">
+            <button class="btn-partner-custom-fee" data-slug="${escapeHtml(aff.slug)}" data-name="${escapeHtml(aff.name)}" style="background: linear-gradient(135deg, #0D9488 0%, #059669 100%); color: #FFFFFF; border: none; border-radius: 6px; padding: 6px 12px; font-size: 11.5px; font-weight: 600; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(13, 148, 136, 0.2);">
+              + Alt comision
+            </button>
+          </td>
+          <td style="text-align: right;">
+            <button class="btn-details" data-slug="${escapeHtml(aff.slug)}" data-name="${escapeHtml(aff.name)}">
+              Detalii
+            </button>
+          </td>
+        `;
+
+        partnersTableBody.appendChild(tr);
+      });
+
+      // Copy listeners
+      document.querySelectorAll('.btn-copy-link').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const btnEl = e.currentTarget;
+          const url = btnEl.dataset.url;
+          await copyTextDirectly(url);
+          const origText = btnEl.textContent.trim();
+          btnEl.textContent = 'Copiat!';
+          showToast(`Linkul a fost copiat: ${url}`);
+          setTimeout(() => { btnEl.textContent = origText; }, 2000);
+        });
+      });
+
+      // Details listeners
+      document.querySelectorAll('.btn-details').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const slug = e.currentTarget.dataset.slug;
+          const name = e.currentTarget.dataset.name;
+          openDetailsModal(slug, name);
+        });
+      });
+
+      // Partner custom fee listeners
+      document.querySelectorAll('.btn-partner-custom-fee').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const slug = e.currentTarget.dataset.slug;
+          const name = e.currentTarget.dataset.name;
+          openCustomFeeModalForPartner(slug, name);
+        });
+      });
+    }
+
+    // Details Modal
+    function openDetailsModal(slug, name) {
+      const aff = currentAffiliates.find(a => a.slug === slug);
+      detailsModalTitle.textContent = `Contracte pentru: ${name} (/ro/${slug})`;
+      detailsContractsList.innerHTML = '';
+
+      const contracts = aff?.contracts || [];
+      if (contracts.length === 0) {
+        detailsContractsList.innerHTML = `
+          <div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 13.5px;">
+            Nu există contracte înregistrate pentru acest partener în perioada selectată.
+          </div>
+        `;
+      } else {
+        contracts.forEach(c => {
+          const item = document.createElement('div');
+          item.className = 'details-item';
+          item.innerHTML = `
+            <div>
+              <div style="font-weight: 600; color: var(--primary);">${escapeHtml(c.companyName)}</div>
+              <div style="font-size: 11.5px; color: var(--text-muted);">CUI/CIF: ${escapeHtml(c.companyEik)}</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-weight: 700; font-size: 11.5px; color: #1F3864; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 4px; white-space: nowrap;" title="Comision negociat">
+                ${escapeHtml(c.commission || '0.25%')}
+              </span>
+              <span style="font-size: 12px; color: var(--text-muted);">${formatDateRO(c.date)}</span>
+            </div>
+          `;
+          detailsContractsList.appendChild(item);
+        });
+      }
+
+      detailsModal.style.display = 'flex';
+    }
+
+    // Direct Contracts Modal
+    function openDirectContractsModal() {
+      const directContracts = lastSummaryData?.directContracts || [];
+      detailsModalTitle.textContent = `Contracte Directe (România - Fără partener)`;
+      detailsContractsList.innerHTML = '';
+
+      if (directContracts.length === 0) {
+        detailsContractsList.innerHTML = `
+          <div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 13.5px;">
+            Nu există contracte directe în perioada selectată.
+          </div>
+        `;
+      } else {
+        directContracts.forEach(c => {
+          const item = document.createElement('div');
+          item.className = 'details-item';
+          item.innerHTML = `
+            <div>
+              <div style="font-weight: 600; color: var(--primary);">${escapeHtml(c.companyName)}</div>
+              <div style="font-size: 11.5px; color: var(--text-muted);">CUI/CIF: ${escapeHtml(c.companyEik)}</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-weight: 700; font-size: 11.5px; color: #1F3864; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 4px; white-space: nowrap;" title="Comision negociat">
+                ${escapeHtml(c.commission || '0.25%')}
+              </span>
+              <span style="font-size: 12px; color: var(--text-muted);">${formatDateRO(c.date)}</span>
+            </div>
+          `;
+          detailsContractsList.appendChild(item);
+        });
+      }
+
+      detailsModal.style.display = 'flex';
+    }
+
+    if (cardDirectContracts) {
+      cardDirectContracts.addEventListener('click', openDirectContractsModal);
+    }
+
+    // Modal Close Handlers
+    function closeModals() {
+      createModal.style.display = 'none';
+      detailsModal.style.display = 'none';
+      customFeeModal.style.display = 'none';
+    }
+
+    btnCloseCreateModal.addEventListener('click', closeModals);
+    btnCancelCreateModal.addEventListener('click', closeModals);
+    btnCloseDetailsModal.addEventListener('click', closeModals);
+    btnCloseDetailsBtn.addEventListener('click', closeModals);
+
+    // Create Partner Submit
+    btnOpenCreateModal.addEventListener('click', () => {
+      createAffiliateForm.reset();
+      delete newPartnerSlug.dataset.userEdited;
+      updatePreviewUrl();
+      createModal.style.display = 'flex';
+      newPartnerName.focus();
+    });
+
+    createAffiliateForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = newPartnerName.value.trim();
+      const slug = newPartnerSlug.value.trim();
+
+      if (!name || !slug) return;
+
+      const submitBtn = document.getElementById('btnSubmitNewAff');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Se creează...';
+
+      try {
+        const res = await fetch('/api/affiliates', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ name, slug, country: 'ro' })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const fullUrl = getFullAffiliateUrl(data.affiliate.slug);
+          await copyTextDirectly(fullUrl);
+          showToast(`Linkul de partener a fost creat și copiat: ${fullUrl}`);
+          closeModals();
+          await loadAffiliatesData();
+        } else {
+          alert(data.error || 'A apărut o eroare la crearea partenerului.');
+        }
+      } catch (err) {
+        console.error('Error creating affiliate:', err);
+        alert('Eroare de rețea la crearea partenerului.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Creează și copiază linkul</span>';
+      }
+    });
+
+    // Custom Commission Links
+    const btnOpenCustomFeeModal = document.getElementById('btnOpenCustomFeeModal');
+    const customFeeModal = document.getElementById('customFeeModal');
+    const btnCloseCustomFeeModal = document.getElementById('btnCloseCustomFeeModal');
+    const btnCancelCustomFeeModal = document.getElementById('btnCancelCustomFeeModal');
+    const createCustomFeeForm = document.getElementById('createCustomFeeForm');
+    const customCommissionInput = document.getElementById('customCommissionInput');
+    const btnRefreshCustomLinks = document.getElementById('btnRefreshCustomLinks');
+    const customLinksTableBody = document.getElementById('customLinksTableBody');
+
+    let currentPartnerForCustomFee = null;
+
+    function openCustomFeeModalForPartner(slug, name) {
+      currentPartnerForCustomFee = { slug, name };
+      createCustomFeeForm.reset();
+      customCommissionInput.value = '';
+      const titleEl = customFeeModal.querySelector('.modal-header h3');
+      if (titleEl) {
+        titleEl.textContent = `Creează comision personalizat pentru „${name}”`;
+      }
+      customFeeModal.style.display = 'flex';
+      customCommissionInput.focus();
+    }
+
+    if (btnOpenCustomFeeModal) {
+      btnOpenCustomFeeModal.addEventListener('click', () => {
+        currentPartnerForCustomFee = null;
+        createCustomFeeForm.reset();
+        customCommissionInput.value = '';
+        const titleEl = customFeeModal.querySelector('.modal-header h3');
+        if (titleEl) {
+          titleEl.textContent = 'Creează contract cu comision personalizat';
+        }
+        customFeeModal.style.display = 'flex';
+        customCommissionInput.focus();
+      });
+    }
+
+    if (customCommissionInput) {
+      customCommissionInput.addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(',', '.').replace(/[^0-9.]/g, '');
+      });
+    }
+
+    if (btnCloseCustomFeeModal) btnCloseCustomFeeModal.addEventListener('click', closeModals);
+    if (btnCancelCustomFeeModal) btnCancelCustomFeeModal.addEventListener('click', closeModals);
+
+    if (createCustomFeeForm) {
+      createCustomFeeForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        let rawVal = (customCommissionInput?.value || '').trim().replace(',', '.').replace('%', '').trim();
+
+        if (!rawVal) {
+          alert('Vă rugăm să introduceți un număr pentru comision (de ex. 20 pentru 0.20%).');
+          customCommissionInput.focus();
+          return;
+        }
+
+        let num = parseFloat(rawVal);
+        if (isNaN(num) || num <= 0) {
+          alert('Vă rugăm să introduceți un număr valid.');
+          customCommissionInput.focus();
+          return;
+        }
+
+        let commission;
+        if (rawVal.startsWith('0.')) {
+          commission = `${rawVal}%`;
+        } else if (rawVal.startsWith('.')) {
+          commission = `0${rawVal}%`;
+        } else {
+          commission = `0.${rawVal}%`;
+        }
+
+        const submitBtn = document.getElementById('btnSubmitCustomFee');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Se generează...';
+
+        const payload = { commission, country: 'ro' };
+        if (currentPartnerForCustomFee && currentPartnerForCustomFee.slug) {
+          payload.partnerSlug = currentPartnerForCustomFee.slug;
+        }
+
+        try {
+          const res = await fetch('/api/custom-link', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(payload)
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success && data.link) {
+            const origin = window.location.origin;
+            const fullUrl = data.link.partnerSlug
+              ? `${origin}/ro/${data.link.partnerSlug}/${data.link.token}`
+              : `${origin}/ro/c/${data.link.token}`;
+
+            await copyTextDirectly(fullUrl);
+            const forPartnerText = data.link.partnerName ? ` pentru „${data.link.partnerName}”` : '';
+            showToast(`Linkul${forPartnerText} cu comision de ${data.link.commission} a fost creat și copiat!`);
+            closeModals();
+            await loadCustomLinksData();
+          } else {
+            alert(data.error || 'A apărut o eroare la crearea linkului.');
+          }
+        } catch (err) {
+          console.error('Error creating custom link:', err);
+          alert('Eroare de rețea la crearea linkului.');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span>Generează și copiază linkul</span>';
+        }
+      });
+    }
+
+    if (btnRefreshCustomLinks) {
+      btnRefreshCustomLinks.addEventListener('click', loadCustomLinksData);
+    }
+
+    async function loadCustomLinksData() {
+      if (!customLinksTableBody) return;
+
+      try {
+        const res = await fetch('/api/custom-link?country=ro', {
+          headers: getAuthHeaders()
+        });
+
+        if (res.status === 401) return;
+
+        const data = await res.json();
+        const links = data.links || [];
+
+        if (!links || links.length === 0) {
+          customLinksTableBody.innerHTML = `
+            <tr class="empty-row">
+              <td colspan="6" style="color: var(--text-muted); padding: 24px; text-align: center;">Nu există linkuri cu comision personalizat generate pentru România. Folosiți butonul „Creează comision personalizat”.</td>
+            </tr>
+          `;
+          return;
+        }
+
+        customLinksTableBody.innerHTML = links.map(link => {
+          const origin = window.location.origin;
+          const fullUrl = link.partnerSlug
+            ? `${origin}/ro/${link.partnerSlug}/${link.token}`
+            : `${origin}/ro/c/${link.token}`;
+          const isUsed = !!link.used;
+          const createdDate = link.createdAt ? formatDateRO(link.createdAt) : '—';
+
+          let statusBadge = '';
+          if (isUsed) {
+            const usedDate = link.usedAt ? formatDateRO(link.usedAt) : '';
+            const usedWho = link.usedByCompanyName ? ` de către <strong>${escapeHtml(link.usedByCompanyName)}</strong>` : '';
+            const usedEik = link.usedByEik ? ` (CUI: ${escapeHtml(link.usedByEik)})` : '';
+            statusBadge = `
+              <span style="display:inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11.5px; font-weight: 600; background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1;">
+                Utilizat la ${usedDate}${usedWho}${usedEik}
+              </span>
+            `;
+          } else {
+            statusBadge = `
+              <span style="display:inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11.5px; font-weight: 600; background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0;">
+                Activ (Așteaptă semnare)
+              </span>
+            `;
+          }
+
+          const partnerBadge = link.partnerName
+            ? `<span style="font-size: 12px; color: #0D9488; font-weight: 600;">${escapeHtml(link.partnerName)}</span>`
+            : '<span style="font-size: 12px; color: var(--text-muted);">Direct</span>';
+
+          const pathDisplay = link.partnerSlug
+            ? `/ro/${escapeHtml(link.partnerSlug)}/${escapeHtml(link.token)}`
+            : `/ro/c/${escapeHtml(link.token)}`;
+
+          return `
+            <tr>
+              <td>
+                <span style="font-weight: 700; color: #0F172A; font-size: 14.5px;">${escapeHtml(link.commission)}</span>
+              </td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="link-pill" title="${fullUrl}">${pathDisplay}</span>
+                  ${!isUsed ? `
+                    <button class="btn-copy-link" data-url="${fullUrl}">Copiază</button>
+                  ` : ''}
+                </div>
+              </td>
+              <td>${partnerBadge}</td>
+              <td style="font-size: 12.5px; color: var(--text-muted);">${createdDate}</td>
+              <td>${statusBadge}</td>
+              <td style="text-align: right; font-size: 12px; color: var(--text-muted);">
+                ${isUsed ? 'Dezactivat' : '—'}
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        // Attach copy listeners
+        customLinksTableBody.querySelectorAll('.btn-copy-link').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const btnEl = e.currentTarget;
+            const url = btnEl.dataset.url;
+            await copyTextDirectly(url);
+            const orig = btnEl.textContent;
+            btnEl.textContent = 'Copiat!';
+            showToast(`Linkul a fost copiat: ${url}`);
+            setTimeout(() => { btnEl.textContent = orig; }, 2000);
+          });
+        });
+
+      } catch (err) {
+        console.error('Error loading custom links:', err);
+      }
+    }
+
+    // Filter event listeners
+    filterMonth.addEventListener('change', () => {
+      filterFrom.value = '';
+      filterTo.value = '';
+      loadAffiliatesData();
+    });
+
+    filterFrom.addEventListener('change', () => {
+      filterMonth.value = '';
+      loadAffiliatesData();
+    });
+
+    filterTo.addEventListener('change', () => {
+      filterMonth.value = '';
+      loadAffiliatesData();
+    });
+
+    let searchTimeout = null;
+    searchPartner.addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(loadAffiliatesData, 250);
+    });
+
+    btnResetFilters.addEventListener('click', () => {
+      filterMonth.value = '';
+      filterFrom.value = '';
+      filterTo.value = '';
+      searchPartner.value = '';
+      loadAffiliatesData();
+    });
+
+    // Logout logic
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await fetch('/api/auth?action=logout', {
+          method: 'POST',
+          headers: getAuthHeaders()
+        });
+      } catch (e) {}
+      localStorage.removeItem('iris_auth_token');
+      sessionStorage.removeItem('iris_auth_token');
+      window.location.replace('/ro/login');
+    });
+
+    // Initial Load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadAffiliatesData();
+      loadCustomLinksData();
+    });
+  </script>
+</body>
+</html>
