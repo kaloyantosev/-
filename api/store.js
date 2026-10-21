@@ -164,6 +164,19 @@ function ensureStoreArrays(st) {
   if (!Array.isArray(st.affiliates)) st.affiliates = [];
   if (!Array.isArray(st.contracts)) st.contracts = [];
   if (!Array.isArray(st.customLinks)) st.customLinks = [];
+  if (!st.settings || typeof st.settings !== 'object') {
+    st.settings = {
+      standardCommission: '0.49%',
+      integrationFee: '0 EUR',
+      monthlyFee: '0 EUR',
+      contractRecipientEmail: 'sales@irisbgsf.com',
+      twoFaEmail: 'kaloyan.tosev@gmail.com',
+      dashboardCardsOrder: ['partners', 'total', 'top', 'direct'],
+      portalTitle: 'Портал за подписване на договор',
+      bnbBadgeText: 'Лицензирана институция от БНБ',
+      termsUrl: 'https://irisbgsf.com'
+    };
+  }
   return st;
 }
 
@@ -322,8 +335,9 @@ export async function createAffiliate({ name, slug }) {
 /**
  * Record a contract attribution
  */
-export async function recordContractAttribution({ affiliateSlug, companyName, companyEik }) {
+export async function recordContractAttribution({ affiliateSlug, companyName, companyEik, commission = null }) {
   const store = await loadStore();
+  const cleanComm = commission ? formatCommissionText(commission) : '0.49%';
 
   const createDirectContract = async (logReason) => {
     const newContract = {
@@ -331,6 +345,7 @@ export async function recordContractAttribution({ affiliateSlug, companyName, co
       affiliateSlug: null,
       companyName: String(companyName || '—').trim(),
       companyEik: String(companyEik || '—').trim(),
+      commission: cleanComm,
       date: new Date().toISOString()
     };
     store.contracts.push(newContract);
@@ -365,6 +380,7 @@ export async function recordContractAttribution({ affiliateSlug, companyName, co
     affiliateSlug: aff.slug,
     companyName: String(companyName || '—').trim(),
     companyEik: String(companyEik || '—').trim(),
+    commission: cleanComm,
     date: new Date().toISOString()
   };
 
@@ -422,16 +438,17 @@ export async function deleteAffiliate({ affiliateId, slug }) {
 }
 
 /**
- * Delete a specific contract
+ * Delete a specific contract (supports { contractId } or contractId string)
  */
-export async function deleteContract({ contractId }) {
+export async function deleteContract(arg) {
+  const contractId = (typeof arg === 'object' && arg !== null) ? arg.contractId : arg;
   if (!contractId) {
     throw new Error('Липсва идентификатор (ID) на договора.');
   }
 
   const store = await loadStore();
-  const initialLength = store.contracts.length;
-  store.contracts = store.contracts.filter(c => c.id !== contractId);
+  const initialLength = (store.contracts || []).length;
+  store.contracts = (store.contracts || []).filter(c => c.id !== contractId);
 
   if (store.contracts.length === initialLength) {
     throw new Error('Договорът с това ID не е намерен.');
@@ -522,7 +539,8 @@ export async function getDashboardSummary({ month = '', fromDate = '', toDate = 
     directContractsList: directContractsInPeriod,
     topPartner,
     monthsList,
-    cloudStatus
+    cloudStatus,
+    cardsOrder: store.settings?.dashboardCardsOrder || ['partners', 'total', 'top', 'direct']
   };
 }
 
@@ -552,18 +570,28 @@ export function generateCustomToken() {
 }
 
 /**
- * Create a one-time custom commission link
+ * Create a one-time custom commission link (direct or partner-specific)
  */
-export async function createCustomLink({ commission, note = '' }) {
+export async function createCustomLink({ commission, note = '', partnerSlug = null }) {
   const store = await loadStore();
   const cleanComm = formatCommissionText(commission);
   const token = generateCustomToken();
+
+  let matchedPartner = null;
+  if (partnerSlug) {
+    const cleanSlug = sanitizeSlug(partnerSlug);
+    matchedPartner = (store.affiliates || []).find(
+      a => a.slug && a.slug.toLowerCase() === cleanSlug.toLowerCase() && a.active !== false
+    );
+  }
 
   const newLink = {
     id: 'cl_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
     token,
     commission: cleanComm,
     note: String(note || '').trim(),
+    partnerSlug: matchedPartner ? matchedPartner.slug : null,
+    partnerName: matchedPartner ? matchedPartner.name : null,
     createdAt: new Date().toISOString(),
     used: false,
     usedAt: null,
@@ -574,7 +602,7 @@ export async function createCustomLink({ commission, note = '' }) {
 
   store.customLinks.push(newLink);
   await saveStore(store);
-  console.log(`[Store] Created one-time custom commission link (${cleanComm}): token=${token}`);
+  console.log(`[Store] Created one-time custom commission link (${cleanComm}): token=${token}, partner=${newLink.partnerSlug || 'none'}`);
   return newLink;
 }
 
@@ -654,4 +682,36 @@ export async function deleteCustomLink({ id, token }) {
   await saveStore(store);
   console.log(`[Store] Deleted custom link (id=${id}, token=${token}). Remaining: ${store.customLinks.length}`);
   return { success: true };
+}
+
+/**
+ * System and Site Settings
+ */
+export async function getSettings() {
+  const store = await loadStore();
+  return store.settings;
+}
+
+export async function updateSettings(newSettings) {
+  const store = await loadStore();
+  store.settings = {
+    ...store.settings,
+    ...newSettings
+  };
+  await saveStore(store);
+  return store.settings;
+}
+
+
+/**
+ * Get all contracts with partner info
+ */
+export async function getAllContracts() {
+  const store = await loadStore();
+  const affMap = new Map((store.affiliates || []).map(a => [a.slug.toLowerCase(), a.name]));
+
+  return (store.contracts || []).slice().map(c => ({
+    ...c,
+    partnerName: c.affiliateSlug ? (affMap.get(c.affiliateSlug.toLowerCase()) || c.affiliateSlug) : null
+  })).sort((a, b) => new Date(b.date) - new Date(a.date));
 }

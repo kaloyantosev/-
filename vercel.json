@@ -20,10 +20,18 @@
       "dest": "/dashboard.html"
     },
     {
+      "src": "/admin",
+      "dest": "/admin.html"
+    },
+    {
       "handle": "filesystem"
     },
     {
       "src": "/c/(.*)",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/([^/]+)/([^/]+)",
       "dest": "/index.html"
     },
     {

@@ -1,6 +1,22 @@
 {
   "affiliates": [],
   "contracts": [],
-  "updatedAt": "2026-10-20T16:24:22.352Z",
-  "customLinks": []
+  "updatedAt": "2026-10-21T08:42:33.786Z",
+  "customLinks": [],
+  "settings": {
+    "standardCommission": "0.49%",
+    "integrationFee": "0 EUR",
+    "monthlyFee": "0 EUR",
+    "contractRecipientEmail": "sales@irisbgsf.com",
+    "twoFaEmail": "kaloyan.tosev@gmail.com",
+    "dashboardCardsOrder": [
+      "partners",
+      "total",
+      "top",
+      "direct"
+    ],
+    "portalTitle": "Портал за подписване на договор",
+    "bnbBadgeText": "Лицензирана институция от БНБ",
+    "termsUrl": "https://irisbgsf.com"
+  }
 }

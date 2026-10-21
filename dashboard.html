@@ -688,8 +688,9 @@
     </div>
 
     <div class="nav-actions">
+      <a href="/admin" id="linkToAdmin" class="btn-portal-link" style="display: none; background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); color: #FFFFFF; border-color: transparent;">⚙ Админ панел</a>
       <a href="/" target="_blank" class="btn-portal-link">Отвори сайта за договори</a>
-      <span class="user-pill">sales</span>
+      <span class="user-pill" id="dashboardUserPill">sales</span>
       <button id="logoutBtn" class="btn-logout">Изход</button>
     </div>
   </nav>
@@ -697,8 +698,8 @@
   <!-- Main Content -->
   <main class="main-content">
     <!-- Key Metrics Grid -->
-    <section class="metrics-grid">
-      <div class="metric-card accent-navy">
+    <section class="metrics-grid" id="metricsGrid">
+      <div class="metric-card accent-navy" data-kpi="partners">
         <div class="metric-header">
           <span class="metric-label">Общ брой партньори</span>
         </div>
@@ -706,7 +707,7 @@
         <div class="metric-foot">Регистрирани активни партньори</div>
       </div>
 
-      <div class="metric-card accent-teal">
+      <div class="metric-card accent-teal" data-kpi="total">
         <div class="metric-header">
           <span class="metric-label">Общо договори (всички)</span>
         </div>
@@ -714,7 +715,7 @@
         <div class="metric-foot">Общ брой получени договори</div>
       </div>
 
-      <div class="metric-card accent-gold">
+      <div class="metric-card accent-gold" data-kpi="top">
         <div class="metric-header">
           <span class="metric-label">Най-активен партньор</span>
         </div>
@@ -722,7 +723,7 @@
         <div class="metric-foot" id="kpiTopPartnerCount">0 договора</div>
       </div>
 
-      <div class="metric-card accent-blue" id="cardDirectContracts" style="cursor: pointer;" title="Натиснете за детайли">
+      <div class="metric-card accent-blue" id="cardDirectContracts" data-kpi="direct" style="cursor: pointer;" title="Натиснете за детайли">
         <div class="metric-header">
           <span class="metric-label">Договори без партньор</span>
         </div>
@@ -779,10 +780,11 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th style="width: 28%;">Партньор</th>
-            <th style="width: 32%;">Affiliate Линк</th>
-            <th style="width: 16%; text-align: center;">Докарани договори</th>
-            <th style="width: 14%;">Последен договор</th>
+            <th style="width: 22%;">Партньор</th>
+            <th style="width: 26%;">Affiliate Линк</th>
+            <th style="width: 14%; text-align: center;">Докарани договори</th>
+            <th style="width: 13%;">Последен договор</th>
+            <th style="width: 15%; text-align: center;">Създай друга комисионна</th>
             <th style="width: 10%; text-align: right;">Действия</th>
           </tr>
         </thead>
@@ -972,6 +974,13 @@
           localStorage.removeItem('iris_auth_token');
           sessionStorage.removeItem('iris_auth_token');
           window.location.replace('/login');
+          return;
+        }
+        if (data.role === 'admin' || data.user === 'admin') {
+          const linkToAdmin = document.getElementById('linkToAdmin');
+          if (linkToAdmin) linkToAdmin.style.display = 'inline-flex';
+          const userPill = document.getElementById('dashboardUserPill');
+          if (userPill) userPill.textContent = 'admin';
         }
       } catch (err) {
         console.error('Auth verification error:', err);
@@ -1146,6 +1155,17 @@
     function renderSummary(summary, month, fromDate, toDate) {
       if (!summary) return;
 
+      // Reorder cards based on admin layout settings
+      if (Array.isArray(summary.cardsOrder) && summary.cardsOrder.length > 0) {
+        const grid = document.getElementById('metricsGrid');
+        if (grid) {
+          summary.cardsOrder.forEach(key => {
+            const card = grid.querySelector(`[data-kpi="${key}"]`);
+            if (card) grid.appendChild(card);
+          });
+        }
+      }
+
       kpiPartnersCount.textContent = summary.totalPartners || 0;
       kpiDirectContracts.textContent = summary.directContractsCount || 0;
       kpiTotalContracts.textContent = summary.totalContractsAllTime || 0;
@@ -1255,6 +1275,11 @@
               ${aff.lastContractDate ? formatDateBG(aff.lastContractDate) : 'Няма още'}
             </span>
           </td>
+          <td style="text-align: center;">
+            <button class="btn-partner-custom-fee" data-slug="${escapeHtml(aff.slug)}" data-name="${escapeHtml(aff.name)}" style="background: linear-gradient(135deg, #0D9488 0%, #059669 100%); color: #FFFFFF; border: none; border-radius: 6px; padding: 6px 12px; font-size: 11.5px; font-weight: 600; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(13, 148, 136, 0.2);">
+              + Друга комисионна
+            </button>
+          </td>
           <td style="text-align: right;">
             <button class="btn-details" data-slug="${escapeHtml(aff.slug)}" data-name="${escapeHtml(aff.name)}">
               Детайли
@@ -1286,6 +1311,15 @@
           const slug = e.currentTarget.dataset.slug;
           const name = e.currentTarget.dataset.name;
           openDetailsModal(slug, name);
+        });
+      });
+
+      // Attach partner custom fee listeners
+      document.querySelectorAll('.btn-partner-custom-fee').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const slug = e.currentTarget.dataset.slug;
+          const name = e.currentTarget.dataset.name;
+          openCustomFeeModalForPartner(slug, name);
         });
       });
     }
@@ -1347,7 +1381,10 @@
               <div style="font-weight: 600; color: var(--primary);">${escapeHtml(c.companyName)}</div>
               <div style="font-size: 11.5px; color: var(--text-muted);">ЕИК: ${escapeHtml(c.companyEik)}</div>
             </div>
-            <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-weight: 700; font-size: 11.5px; color: #1F3864; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 4px; white-space: nowrap;" title="Договорена комисионна">
+                ${escapeHtml(c.commission || '0.49%')}
+              </span>
               <div style="text-align: right; font-size: 12px; color: var(--primary-light); font-weight: 600;">
                 ${formatDateBG(c.date)}
               </div>
@@ -1423,7 +1460,10 @@
               <div style="font-weight: 600; color: var(--primary);">${escapeHtml(c.companyName)}</div>
               <div style="font-size: 11.5px; color: var(--text-muted);">ЕИК: ${escapeHtml(c.companyEik)}</div>
             </div>
-            <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-weight: 700; font-size: 11.5px; color: #1F3864; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 4px; white-space: nowrap;" title="Договорена комисионна">
+                ${escapeHtml(c.commission || '0.49%')}
+              </span>
               <div style="text-align: right; font-size: 12px; color: var(--primary-light); font-weight: 600;">
                 ${formatDateBG(c.date)}
               </div>
@@ -1591,10 +1631,29 @@
     const btnRefreshCustomLinks = document.getElementById('btnRefreshCustomLinks');
     const customLinksTableBody = document.getElementById('customLinksTableBody');
 
+    let currentPartnerForCustomFee = null;
+
+    function openCustomFeeModalForPartner(slug, name) {
+      currentPartnerForCustomFee = { slug, name };
+      createCustomFeeForm.reset();
+      customCommissionInput.value = '';
+      const titleEl = customFeeModal.querySelector('.modal-header h3');
+      if (titleEl) {
+        titleEl.textContent = `Създай друга комисионна за „${name}“`;
+      }
+      customFeeModal.style.display = 'flex';
+      customCommissionInput.focus();
+    }
+
     if (btnOpenCustomFeeModal) {
       btnOpenCustomFeeModal.addEventListener('click', () => {
+        currentPartnerForCustomFee = null;
         createCustomFeeForm.reset();
         customCommissionInput.value = '';
+        const titleEl = customFeeModal.querySelector('.modal-header h3');
+        if (titleEl) {
+          titleEl.textContent = 'Създай договор с друга комисионна';
+        }
         customFeeModal.style.display = 'flex';
         customCommissionInput.focus();
       });
@@ -1609,6 +1668,7 @@
 
     function closeCustomFeeModal() {
       if (customFeeModal) customFeeModal.style.display = 'none';
+      currentPartnerForCustomFee = null;
     }
 
     if (btnCloseCustomFeeModal) btnCloseCustomFeeModal.addEventListener('click', closeCustomFeeModal);
@@ -1633,19 +1693,28 @@
         submitBtn.disabled = true;
         submitBtn.textContent = 'Генериране...';
 
+        const payload = { commission };
+        if (currentPartnerForCustomFee && currentPartnerForCustomFee.slug) {
+          payload.partnerSlug = currentPartnerForCustomFee.slug;
+        }
+
         try {
           const res = await fetch('/api/custom-link', {
             method: 'POST',
             headers: getAuthHeaders(),
-            body: JSON.stringify({ commission })
+            body: JSON.stringify(payload)
           });
 
           const data = await res.json();
           if (res.ok && data.success && data.link) {
             const origin = window.location.origin;
-            const fullUrl = `${origin}/c/${data.link.token}`;
+            const fullUrl = data.link.partnerSlug
+              ? `${origin}/${data.link.partnerSlug}/${data.link.token}`
+              : `${origin}/c/${data.link.token}`;
+
             await copyTextDirectly(fullUrl);
-            showToast(`Линкът с комисионна ${data.link.commission} е създаден и автоматично копиран!`);
+            const forPartnerText = data.link.partnerName ? ` за „${data.link.partnerName}“` : '';
+            showToast(`Линкът${forPartnerText} с комисионна ${data.link.commission} е създаден и автоматично копиран!`);
             closeCustomFeeModal();
             await loadCustomLinksData();
           } else {
@@ -1691,7 +1760,9 @@
 
         customLinksTableBody.innerHTML = links.map(link => {
           const origin = window.location.origin;
-          const fullUrl = `${origin}/c/${link.token}`;
+          const fullUrl = link.partnerSlug
+            ? `${origin}/${link.partnerSlug}/${link.token}`
+            : `${origin}/c/${link.token}`;
           const isUsed = !!link.used;
           const createdDate = link.createdAt ? formatDateBG(link.createdAt) : '—';
 
@@ -1723,6 +1794,14 @@
             </div>
           `;
 
+          const pathDisplay = link.partnerSlug
+            ? `/${escapeHtml(link.partnerSlug)}/${escapeHtml(link.token)}`
+            : `/c/${escapeHtml(link.token)}`;
+
+          const partnerBadge = link.partnerName
+            ? `<div style="font-size: 11px; color: #0D9488; font-weight: 600; margin-top: 3px;">Партньор: ${escapeHtml(link.partnerName)}</div>`
+            : '';
+
           return `
             <tr>
               <td>
@@ -1730,11 +1809,12 @@
               </td>
               <td>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                  <span class="link-pill" title="${fullUrl}">/c/${escapeHtml(link.token)}</span>
+                  <span class="link-pill" title="${fullUrl}">${pathDisplay}</span>
                   <button class="btn-copy-link" data-url="${fullUrl}">
                     Копирай
                   </button>
                 </div>
+                ${partnerBadge}
               </td>
               <td>
                 <div style="font-size: 13px; font-weight: 500; color: #334155;">${createdDate}</div>

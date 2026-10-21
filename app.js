@@ -33,61 +33,61 @@ document.addEventListener('DOMContentLoaded', () => {
     hiddenNativeDatePicker.value = todayYmd;
   }
 
-  // Detect custom commission one-time link token (?c=..., ?custom=..., /c/..., /c-...)
+  // Detect custom commission one-time link token and partner referral
   let detectedCustomToken = null;
+  let detectedPartnerSlug = null;
+
   try {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('c')) {
       detectedCustomToken = urlParams.get('c').trim();
     } else if (urlParams.get('custom')) {
       detectedCustomToken = urlParams.get('custom').trim();
-    } else {
-      const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
-      const slashMatch = rawPath.match(/^c\/(.+)$/i);
-      const dashMatch = rawPath.match(/^c-(.+)$/i);
-      if (slashMatch) {
-        detectedCustomToken = slashMatch[1].trim();
-      } else if (dashMatch) {
-        detectedCustomToken = dashMatch[1].trim();
+    }
+
+    if (urlParams.get('ref')) {
+      detectedPartnerSlug = urlParams.get('ref').trim();
+    } else if (urlParams.get('affiliate')) {
+      detectedPartnerSlug = urlParams.get('affiliate').trim();
+    }
+
+    const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    const ignored = ['login', 'dashboard', 'admin', 'index.html', 'api', 'assets', 'favicon.ico'];
+    const segments = rawPath.split('/').filter(Boolean);
+
+    if (segments.length === 2) {
+      if (segments[0].toLowerCase() === 'c') {
+        // Format: /c/[token]
+        detectedCustomToken = segments[1].trim();
+      } else if (!ignored.includes(segments[0].toLowerCase())) {
+        // Format: /[partner]/[token] (e.g. /superhosting/ry9gyra)
+        detectedPartnerSlug = segments[0].toLowerCase().trim();
+        detectedCustomToken = segments[1].trim();
+      }
+    } else if (segments.length === 1) {
+      const seg = segments[0].trim();
+      if (seg.toLowerCase().startsWith('c-')) {
+        detectedCustomToken = seg.substring(2).trim();
+      } else if (!ignored.includes(seg.toLowerCase()) && !detectedCustomToken) {
+        detectedPartnerSlug = seg.toLowerCase().trim();
       }
     }
   } catch (tErr) {
-    console.warn('Error parsing custom link token:', tErr);
+    console.warn('Error parsing URL parameters:', tErr);
   }
 
-  // Detect & persist affiliate referral from URL path (/slug) or parameter (?ref=slug)
-  try {
-    const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
-    const ignored = ['login', 'dashboard', 'index.html', 'api', 'assets', 'favicon.ico'];
-    let slug = null;
-    if (rawPath && !ignored.includes(rawPath.toLowerCase()) && !rawPath.includes('/') && !rawPath.toLowerCase().startsWith('c-')) {
-      slug = rawPath;
-    }
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('ref')) {
-      slug = urlParams.get('ref');
-    }
-    if (urlParams.get('affiliate')) {
-      slug = urlParams.get('affiliate');
-    }
-    // If a custom commission link is active, do not treat it as an affiliate slug
-    if (detectedCustomToken) {
-      slug = null;
-    }
-    if (slug) {
-      const cleanSlug = slug.toLowerCase().trim();
-      sessionStorage.setItem('iris_affiliate_ref', cleanSlug);
-      window.irisCurrentAffiliate = cleanSlug;
-      console.log('[IRIS Pay] Affiliate partner detected:', cleanSlug);
-    } else {
-      // Direct visit without /slug: CLEAR any cached affiliate
-      localStorage.removeItem('iris_affiliate_ref');
-      sessionStorage.removeItem('iris_affiliate_ref');
-      window.irisCurrentAffiliate = null;
-      console.log('[IRIS Pay] Direct visit without partner');
-    }
-  } catch (e) {
-    console.warn('Affiliate tracking error:', e);
+  // Persist partner referral
+  if (detectedPartnerSlug) {
+    const cleanSlug = detectedPartnerSlug.toLowerCase().trim();
+    sessionStorage.setItem('iris_affiliate_ref', cleanSlug);
+    window.irisCurrentAffiliate = cleanSlug;
+    console.log('[IRIS Pay] Affiliate partner detected:', cleanSlug);
+  } else {
+    // If not a partner visit, clear cached affiliate
+    localStorage.removeItem('iris_affiliate_ref');
+    sessionStorage.removeItem('iris_affiliate_ref');
+    window.irisCurrentAffiliate = null;
+    console.log('[IRIS Pay] Direct visit without partner');
   }
 
   // Initialize and validate custom commission token if present
@@ -109,21 +109,60 @@ document.addEventListener('DOMContentLoaded', () => {
               commDisplay.style.color = '#0F172A';
               commDisplay.style.fontWeight = 'bold';
             }
+
+            // If this token was created for a specific partner, remember that partner
+            if (data.partnerSlug) {
+              window.irisCurrentAffiliate = data.partnerSlug;
+              sessionStorage.setItem('iris_affiliate_ref', data.partnerSlug);
+            }
+
             if (banner) {
               banner.style.display = 'block';
               banner.style.background = '#F0FDF4';
               banner.style.border = '1px solid #BBF7D0';
               banner.style.color = '#166534';
+              const partnerNotice = data.partnerName 
+                ? ` от партньор <strong>${data.partnerName}</strong>`
+                : '';
               banner.innerHTML = `
                 <div style="display:flex;align-items:flex-start;gap:8px;">
                   <span style="font-weight:700;font-size:15px;line-height:1;">✓</span>
                   <div>
-                    <strong>Индивидуална оферта:</strong> Договорът е генериран със специална комисионна <strong>${data.commission}</strong> за иницииране на плащане (Приложение № 1).
+                    <strong>Индивидуална оферта${partnerNotice}:</strong> Договорът е генериран със специална комисионна <strong>${data.commission}</strong> за иницииране на плащане (Приложение № 1).
                   </div>
                 </div>
               `;
             }
           }
+        } else if (res.status === 410) {
+          window.irisCustomTokenUsed = true;
+          if (banner) {
+            banner.style.display = 'block';
+            banner.style.background = '#FEF2F2';
+            banner.style.border = '1px solid #FECACA';
+            banner.style.color = '#991B1B';
+            banner.innerHTML = `
+              <div style="text-align: center; padding: 4px 0;">
+                <div style="font-size: 14.5px; font-weight: 700; margin-bottom: 4px;">Този еднократен линк вече е използван</div>
+                <div style="font-size: 12.5px;">Договорът за тази индивидуална комисионна вече е бил подписан и изпратен. Линкът е деактивиран и не може да се използва повторно.</div>
+              </div>
+            `;
+          }
+          const submitBtn = document.getElementById('submitContractBtn');
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
+            submitBtn.style.cursor = 'not-allowed';
+            submitBtn.textContent = 'Линкът вече е използван';
+          }
+        } else {
+          console.warn('[IRIS Pay] Custom token not valid or not found');
+        }
+      })
+      .catch((err) => {
+        console.warn('[IRIS Pay] Error verifying custom token:', err);
+      });
+  }
         } else if (res.status === 410) {
           window.irisCustomTokenUsed = true;
           if (banner) {

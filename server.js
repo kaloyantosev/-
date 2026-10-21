@@ -30,6 +30,7 @@ const MIME_TYPES = {
 // Map of API routes to their local module paths
 const API_ROUTES = {
   '/api/auth': './api/auth.js',
+  '/api/admin': './api/admin.js',
   '/api/affiliates': './api/affiliates.js',
   '/api/custom-link': './api/custom-link.js',
   '/api/send-contract': './api/send-contract.js',
@@ -106,28 +107,33 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (pathname === '/admin' || pathname === '/admin/') {
+    serveFile(path.join(__dirname, 'admin.html'), res);
+    return;
+  }
+
   if (pathname === '/' || pathname === '/index.html') {
     serveFile(path.join(__dirname, 'index.html'), res);
     return;
   }
 
   // 3. Static Files Check (including any subpath assets)
-  if (pathname.startsWith('/c/')) {
-    const subPath = pathname.substring(2);
-    const safeSubPath = path.normalize(decodeURIComponent(subPath)).replace(/^(\.\.[/\\])+/, '');
-    const subFilePath = path.join(__dirname, safeSubPath);
-    if (fs.existsSync(subFilePath) && fs.statSync(subFilePath).isFile()) {
-      serveFile(subFilePath, res);
-      return;
-    }
-  }
-
   const safePath = path.normalize(decodeURIComponent(pathname)).replace(/^(\.\.[/\\])+/, '');
   const filePath = path.join(__dirname, safePath);
 
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
     serveFile(filePath, res);
     return;
+  }
+
+  // If a static asset is requested from a subpath (e.g. /superhosting/style.css, /c/app.js)
+  const baseFileName = path.basename(pathname);
+  if (baseFileName && baseFileName.includes('.')) {
+    const rootCandidate = path.join(__dirname, baseFileName);
+    if (fs.existsSync(rootCandidate) && fs.statSync(rootCandidate).isFile()) {
+      serveFile(rootCandidate, res);
+      return;
+    }
   }
 
   // 4. Dynamic Affiliate Referral Slugs: e.g. /tech-academy, /elvada, /partner-slug

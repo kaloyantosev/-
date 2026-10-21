@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IRIS Pay | Администраторски контролен панел</title>
+  <link rel="icon" href="/assets/iris-logo.svg" type="image/svg+xml">
+  <base href="/">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    :root {
+      --admin-navy: #0F172A;
+      --admin-primary: #1E293B;
+      --admin-accent: #0D9488;
+      --admin-accent-hover: #0F766E;
+      --admin-border: #E2E8F0;
+      --admin-bg: #F8FAFC;
+    }
+
+    body {
+      background: var(--admin-bg);
+      color: #1E293B;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Top Navigation */
+    .admin-navbar {
+      background: var(--admin-navy);
+      color: #FFFFFF;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .admin-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .admin-badge-role {
+      background: #0D9488;
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .admin-nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .btn-nav-link {
+      background: rgba(255,255,255,0.1);
+      color: #FFFFFF;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-nav-link:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    .btn-nav-logout {
+      background: #EF4444;
+      color: #FFFFFF;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-nav-logout:hover {
+      background: #DC2626;
+    }
+
+    /* Layout */
+    .admin-container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 28px 24px 60px;
+    }
+
+    .admin-header-title {
+      margin-bottom: 24px;
+    }
+
+    .admin-header-title h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--admin-navy);
+      margin: 0 0 6px 0;
+    }
+
+    .admin-header-title p {
+      font-size: 14px;
+      color: #64748B;
+      margin: 0;
+    }
+
+    /* Tabs Bar */
+    .admin-tabs-bar {
+      display: flex;
+      gap: 6px;
+      border-bottom: 2px solid var(--admin-border);
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+
+    .admin-tab-btn {
+      background: none;
+      border: none;
+      padding: 12px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #64748B;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .admin-tab-btn:hover {
+      color: var(--admin-navy);
+    }
+
+    .admin-tab-btn.active {
+      color: var(--admin-accent);
+      border-bottom-color: var(--admin-accent);
+    }
+
+    /* Cards & Sections */
+    .admin-panel-card {
+      background: #FFFFFF;
+      border: 1px solid var(--admin-border);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      margin-bottom: 24px;
+    }
+
+    .card-heading {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--admin-navy);
+      margin: 0 0 4px 0;
+    }
+
+    .card-desc {
+      font-size: 13px;
+      color: #64748B;
+      margin: 0 0 20px 0;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .admin-field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .admin-field-group label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .admin-input {
+      height: 42px;
+      padding: 8px 12px;
+      border: 1px solid var(--admin-border);
+      border-radius: 6px;
+      font-size: 14px;
+      color: #0F172A;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    .admin-input:focus {
+      border-color: var(--admin-accent);
+      box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.15);
+    }
+
+    .btn-save-settings {
+      background: var(--admin-accent);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 20px;
+    }
+
+    .btn-save-settings:hover {
+      background: var(--admin-accent-hover);
+    }
+
+    /* Stats Grid */
+    .admin-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-box {
+      background: #FFFFFF;
+      border: 1px solid var(--admin-border);
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748B;
+      text-transform: uppercase;
+    }
+
+    .stat-val {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--admin-navy);
+      margin-top: 4px;
+    }
+
+    /* Tables */
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+
+    .admin-table th {
+      background: #F1F5F9;
+      color: #475569;
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--admin-border);
+    }
+
+    .admin-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #F1F5F9;
+      color: #1E293B;
+      vertical-align: middle;
+    }
+
+    .admin-table tr:hover td {
+      background: #F8FAFC;
+    }
+
+    .btn-danger-sm {
+      background: #FEF2F2;
+      color: #DC2626;
+      border: 1px solid #FECACA;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-danger-sm:hover {
+      background: #FEE2E2;
+    }
+
+    .btn-copy-sm {
+      background: #F8FAFC;
+      color: #1E293B;
+      border: 1px solid #CBD5E1;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-copy-sm:hover {
+      background: #E2E8F0;
+    }
+
+    /* Toast */
+    .admin-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #0F172A;
+      color: #FFFFFF;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 1000;
+      display: none;
+    }
+
+    /* Card Layout Reorder Items */
+    .reorder-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #F8FAFC;
+      border: 1px solid var(--admin-border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Nav -->
+  <header class="admin-navbar">
+    <div class="admin-brand">
+      <img src="/assets/iris-logo.svg" alt="IRIS Logo" style="height: 34px;">
+      <span style="font-weight: 800; font-size: 16px;">Контролен Панел</span>
+      <span class="admin-badge-role">Admin</span>
+    </div>
+    <div class="admin-nav-actions">
+      <a href="/dashboard" class="btn-nav-link" target="_blank">Към Dashboard ↗</a>
+      <a href="/" class="btn-nav-link" target="_blank">Към Портала за договори ↗</a>
+      <button id="adminLogoutBtn" class="btn-nav-logout">Изход</button>
+    </div>
+  </header>
+
+  <main class="admin-container">
+    <div class="admin-header-title">
+      <h1>Административен панел на IRIS Pay</h1>
+      <p>Управление на системни настройки, комисионни, известия, договори и партньори</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="admin-stats-grid">
+      <div class="stat-box">
+        <div class="stat-label">Партньори</div>
+        <div class="stat-val" id="statPartners">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Общо договори</div>
+        <div class="stat-val" id="statContracts">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Активни еднократни линкове</div>
+        <div class="stat-val" id="statActiveLinks" style="color: #0D9488;">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Използвани оферти</div>
+        <div class="stat-val" id="statUsedLinks">0</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="admin-tabs-bar">
+      <button class="admin-tab-btn active" data-tab="tab-settings">⚙️ Настройки на сайта & такси</button>
+      <button class="admin-tab-btn" data-tab="tab-emails">📧 Имейли & 2FA</button>
+      <button class="admin-tab-btn" data-tab="tab-dashboard-layout">📊 Разместване на Dashboard</button>
+      <button class="admin-tab-btn" data-tab="tab-contracts">📋 Всички договори</button>
+      <button class="admin-tab-btn" data-tab="tab-partners">🤝 Партньори</button>
+      <button class="admin-tab-btn" data-tab="tab-links">🔗 Еднократни линкове</button>
+      <button class="admin-tab-btn" data-tab="tab-backup">💾 Бекъп & Възстановяване</button>
+    </div>
+
+    <!-- TAB 1: Site & Fee Settings -->
+    <div id="tab-settings" class="tab-pane">
+      <div class="admin-panel-card">
+        <h2 class="card-heading">Такси и параметри по Приложение № 1</h2>
+        <p class="card-desc">Тези стойности се зареждат по подразбиране в договора и Приложение № 1 за нови клиенти.</p>
+
+        <form id="feesSettingsForm">
+          <div class="form-grid">
+            <div class="admin-field-group">
+              <label for="setStandardCommission">Стандартна такса за иницииране на плащане (%):</label>
+              <input type="text" id="setStandardCommission" class="admin-input" placeholder="0.49%">
+            </div>
+
+            <div class="admin-field-group">
+              <label for="setIntegrationFee">Интеграционна такса:</label>
+              <input type="text" id="setIntegrationFee" class="admin-input" placeholder="0 EUR">
+            </div>
+
+            <div class="admin-field-group">
+              <label for="setMonthlyFee">Месечна такса за поддръжка:</label>
+              <input type="text" id="setMonthlyFee" class="admin-input" placeholder="0 EUR">
+            </div>
+
+            <div class="admin-field-group">
+              <label for="setTermsUrl">Линк към Общи условия:</label>
+              <input type="url" id="setTermsUrl" class="admin-input" placeholder="https://irisbgsf.com">
+            </div>
+
+            <div class="admin-field-group">
+              <label for="setPortalTitle">Заглавие на портала за договори:</label>
+              <input type="text" id="setPortalTitle" class="admin-input" placeholder="Портал за подписване на договор">
+            </div>
+
+            <div class="admin-field-group">
+              <label for="setBnbBadgeText">Текст на институционалния бадж (БНБ):</label>
+              <input type="text" id="setBnbBadgeText" class="admin-input" placeholder="Лицензирана институция от БНБ">
+            </div>
+          </div>
+
+          <button type="submit" class="btn-save-settings">Запази промените</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- TAB 2: Email & 2FA Settings -->
+    <div id="tab-emails" class="tab-pane" style="display: none;">
+      <div class="admin-panel-card">
+        <h2 class="card-heading">Имейл конфигурация и известия</h2>
+        <p class="card-desc">Контрол върху имейлите за получаване на подписани договори и 2FA кодове за сигурност.</p>
+
+        <form id="emailSettingsForm">
+          <div class="form-grid">
+            <div class="admin-field-group">
+              <label for="setContractRecipient">Имейл за получаване на подписани договори:</label>
+              <input type="email" id="setContractRecipient" class="admin-input" placeholder="sales@irisbgsf.com">
+              <span style="font-size: 11.5px; color: #64748B;">Тук се изпращат уведомленията с прикрепения подписан PDF договор.</span>
+            </div>
+
+            <div class="admin-field-group">
+              <label for="setTwoFaEmail">Имейл за получаване на 2FA кодове при вход:</label>
+              <input type="email" id="setTwoFaEmail" class="admin-input" placeholder="kaloyan.tosev@gmail.com">
+              <span style="font-size: 11.5px; color: #64748B;">Кодовете за двуфакторна автентикация на sales@irisbgsf.com се доставят на този адрес.</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-save-settings">Запази имейл настройките</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- TAB 3: Dashboard Layout Reorder -->
+    <div id="tab-dashboard-layout" class="tab-pane" style="display: none;">
+      <div class="admin-panel-card">
+        <h2 class="card-heading">Разместване и подредба на Dashboard картите</h2>
+        <p class="card-desc">Променете подредбата на ключовите KPI показатели в главното табло (Dashboard).</p>
+
+        <div id="dashboardCardsOrderContainer" style="max-width: 520px; margin-bottom: 20px;">
+          <div class="reorder-item" data-key="partners">
+            <div>
+              <strong class="item-title">Общ брой партньори</strong>
+              <div style="font-size: 12px; color: #64748B;">Показва броя регистрирани афилиейт партньори</div>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="btn-move-up" style="background:#E2E8F0; border:none; border-radius:4px; padding:5px 10px; cursor:pointer; font-weight:bold;" title="Премести нагоре">▲</button>
+              <button type="button" class="btn-move-down" style="background:#E2E8F0; border:none; border-radius:4px; padding:5px 10px; cursor:pointer; font-weight:bold;" title="Премести надолу">▼</button>
+            </div>
+          </div>
+          <div class="reorder-item" data-key="total">
+            <div>
+              <strong class="item-title">Общо договори (всички)</strong>
+              <div style="font-size: 12px; color: #64748B;">Сума от всички подписани договори (с и без партньор)</div>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="btn-move-up" style="background:#E2E8F0; border:none; border-radius:4px; padding:5px 10px; cursor:pointer; font-weight:bold;" title="Премести нагоре">▲</button>
+              <button type="button" class="btn-move-down" style="background:#E2E8F0; border:none; border-radius:4px; padding:5px 10px; cursor:pointer; font-weight:bold;" title="Премести надолу">▼</button>
+            </div>
+          </div>
+          <div class="reorder-item" data-key="top">
+            <div>
+              <strong class="item-title">Най-активен партньор</strong>
+              <div style="font-size: 12px; color: #64748B;">Партньорът с най-много генерирани договори</div>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="btn-move-up" style="background:#E2E8F0; border:none; border-radius:4px; padding:5px 10px; cursor:pointer; font-weight:bold;" title="Премести нагоре">▲</button>
+              <button type="button" class="btn-move-down" style="background:#E2E8F0; border:none; border-radius:4px; padding:5px 10px; cursor:pointer; font-weight:bold;" title="Премести надолу">▼</button>
+            </div>
+          </div>
+          <div class="reorder-item" data-key="direct">
+            <div>
+              <strong class="item-title">Договори без партньор</strong>
+              <div style="font-size: 12px; color: #64748B;">Директни посещения на сайта без реферален линк</div>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="btn-move-up" style="background:#E2E8F0; border:none; border-radius:4px; padding:5px 10px; cursor:pointer; font-weight:bold;" title="Премести нагоре">▲</button>
+              <button type="button" class="btn-move-down" style="background:#E2E8F0; border:none; border-radius:4px; padding:5px 10px; cursor:pointer; font-weight:bold;" title="Премести надолу">▼</button>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" id="btnSaveDashboardLayout" class="btn-save-settings">Запази подредбата</button>
+      </div>
+    </div>
+
+    <!-- TAB 4: Contracts Master List -->
+    <div id="tab-contracts" class="tab-pane" style="display: none;">
+      <div class="admin-panel-card">
+        <h2 class="card-heading">Всички подписани договори в базата</h2>
+        <p class="card-desc">Пълен списък на договорите, докарани през директния сайт или от партньори.</p>
+
+        <div style="overflow-x: auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Фирма</th>
+                <th>ЕИК</th>
+                <th>Партньор</th>
+                <th>Комисионна</th>
+                <th>Дата</th>
+                <th style="text-align: right;">Действия</th>
+              </tr>
+            </thead>
+            <tbody id="adminContractsTableBody">
+              <tr><td colspan="6" style="text-align:center; padding: 24px;">Зареждане...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: Partners Master List -->
+    <div id="tab-partners" class="tab-pane" style="display: none;">
+      <div class="admin-panel-card">
+        <h2 class="card-heading">Регистрирани партньори</h2>
+        <p class="card-desc">Всички афилиейт партньори и техните реферални линкове.</p>
+
+        <div style="overflow-x: auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Партньор</th>
+                <th>Код / Slug</th>
+                <th>Създаден</th>
+                <th style="text-align: right;">Действия</th>
+              </tr>
+            </thead>
+            <tbody id="adminPartnersTableBody">
+              <tr><td colspan="4" style="text-align:center; padding: 24px;">Зареждане...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: Custom Links Master List -->
+    <div id="tab-links" class="tab-pane" style="display: none;">
+      <div class="admin-panel-card">
+        <h2 class="card-heading">Всички еднократни оферти (Custom Commission Links)</h2>
+        <p class="card-desc">Пълен регистър на индивидуалните еднократни линкове, партньор (ако е посочен) и статус на използване.</p>
+
+        <div style="overflow-x: auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Комисионна</th>
+                <th>Линк</th>
+                <th>Партньор</th>
+                <th>Създаден</th>
+                <th>Статус</th>
+                <th style="text-align: right;">Действия</th>
+              </tr>
+            </thead>
+            <tbody id="adminCustomLinksTableBody">
+              <tr><td colspan="6" style="text-align:center; padding: 24px;">Зареждане...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 7: Backup & Restore -->
+    <div id="tab-backup" class="tab-pane" style="display: none;">
+      <div class="admin-panel-card">
+        <h2 class="card-heading">Архивиране и възстановяване на данни</h2>
+        <p class="card-desc">Свалете пълно архивно копие на базата (партньори, договори, настройки, линкове) или възстановете от предишен архив.</p>
+
+        <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+          <a href="/api/admin?action=export-backup" class="btn-save-settings" style="text-decoration: none; display: inline-block;">
+            📥 Свали пълен бекъп (JSON)
+          </a>
+
+          <label class="btn-nav-link" style="background: #475569; cursor: pointer; padding: 10px 18px;">
+            📤 Възстанови от файл
+            <input type="file" id="importBackupInput" accept=".json" style="display: none;">
+          </label>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="adminToast" class="admin-toast"></div>
+
+  <script>
+    // 1. Session verification & Token handling
+    const token = localStorage.getItem('iris_auth_token') || sessionStorage.getItem('iris_auth_token');
+    if (!token) {
+      window.location.replace('/login');
+    }
+
+    function getAuthHeaders() {
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      return headers;
+    }
+
+    async function checkAuth() {
+      if (!token) {
+        window.location.replace('/login');
+        return;
+      }
+      try {
+        const res = await fetch('/api/auth?action=check', { headers: getAuthHeaders() });
+        const data = await res.json();
+        if (!data || !data.authenticated || (data.role !== 'admin' && data.user !== 'admin')) {
+          alert('Нямате администраторски права за достъп.');
+          window.location.replace('/login');
+        }
+      } catch (err) {
+        window.location.replace('/login');
+      }
+    }
+    checkAuth();
+
+    // 2. Elements & Tabs
+    const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+    const adminToast = document.getElementById('adminToast');
+    const tabBtns = document.querySelectorAll('.admin-tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    function showToast(msg) {
+      adminToast.textContent = msg;
+      adminToast.style.display = 'block';
+      setTimeout(() => { adminToast.style.display = 'none'; }, 2600);
+    }
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabPanes.forEach(p => p.style.display = 'none');
+
+        btn.classList.add('active');
+        const targetId = btn.dataset.tab;
+        const targetPane = document.getElementById(targetId);
+        if (targetPane) targetPane.style.display = 'block';
+      });
+    });
+
+    // 3. Load Overview Data
+    let adminData = null;
+
+    async function loadAdminOverview() {
+      try {
+        const res = await fetch('/api/admin?action=overview', { headers: getAuthHeaders() });
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/login');
+          return;
+        }
+
+        const data = await res.json();
+        if (!data || !data.success) return;
+
+        adminData = data;
+
+        // Update stats
+        document.getElementById('statPartners').textContent = data.stats.totalPartners || 0;
+        document.getElementById('statContracts').textContent = data.stats.totalContracts || 0;
+        document.getElementById('statActiveLinks').textContent = data.stats.activeCustomLinks || 0;
+        document.getElementById('statUsedLinks').textContent = data.stats.usedCustomLinks || 0;
+
+        // Populate Settings
+        const s = data.settings || {};
+        document.getElementById('setStandardCommission').value = s.standardCommission || '0.49%';
+        document.getElementById('setIntegrationFee').value = s.integrationFee || '0 EUR';
+        document.getElementById('setMonthlyFee').value = s.monthlyFee || '0 EUR';
+        document.getElementById('setTermsUrl').value = s.termsUrl || 'https://irisbgsf.com';
+        document.getElementById('setPortalTitle').value = s.portalTitle || 'Портал за подписване на договор';
+        document.getElementById('setBnbBadgeText').value = s.bnbBadgeText || 'Лицензирана институция от БНБ';
+
+        document.getElementById('setContractRecipient').value = s.contractRecipientEmail || 'sales@irisbgsf.com';
+        document.getElementById('setTwoFaEmail').value = s.twoFaEmail || 'kaloyan.tosev@gmail.com';
+
+        // Reorder container cards according to saved order
+        if (Array.isArray(s.dashboardCardsOrder) && s.dashboardCardsOrder.length > 0) {
+          const cCont = document.getElementById('dashboardCardsOrderContainer');
+          if (cCont) {
+            s.dashboardCardsOrder.forEach(key => {
+              const el = cCont.querySelector(`[data-key="${key}"]`);
+              if (el) cCont.appendChild(el);
+            });
+          }
+        }
+
+        // Render Contracts Table
+        renderContractsTable(data.contracts || []);
+
+        // Render Partners Table
+        renderPartnersTable(data.affiliates || []);
+
+        // Render Custom Links Table
+        renderCustomLinksTable(data.customLinks || []);
+
+      } catch (err) {
+        console.error('Admin overview error:', err);
+      }
+    }
+
+    function renderContractsTable(contracts) {
+      const tbody = document.getElementById('adminContractsTableBody');
+      if (!tbody) return;
+
+      if (!contracts || contracts.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 24px; color: #64748B;">Няма намерени договори.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = contracts.map(c => `
+        <tr>
+          <td><strong>${escapeHtml(c.companyName)}</strong></td>
+          <td>${escapeHtml(c.companyEik)}</td>
+          <td>${c.partnerName ? `<span style="color:#2E75B6; font-weight:600;">${escapeHtml(c.partnerName)}</span>` : '<span style="color:#64748B;">Директен (без партньор)</span>'}</td>
+          <td><span style="font-weight:700; background:#EFF6FF; border:1px solid #BFDBFE; padding:2px 7px; border-radius:4px;">${escapeHtml(c.commission || '0.49%')}</span></td>
+          <td>${formatDate(c.date)}</td>
+          <td style="text-align: right;">
+            <button class="btn-danger-sm btn-del-contract" data-id="${c.id}" data-company="${escapeHtml(c.companyName)}">Изтрий</button>
+          </td>
+        </tr>
+      `).join('');
+
+      tbody.querySelectorAll('.btn-del-contract').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.dataset.id;
+          const comp = e.currentTarget.dataset.company;
+          if (!confirm(`Сигурни ли сте, че искате да изтриете договора за „${comp}“?`)) return;
+
+          const res = await fetch(`/api/admin?action=delete-contract&id=${encodeURIComponent(id)}`, {
+            method: 'POST',
+            headers: getAuthHeaders()
+          });
+          if (res.ok) {
+            showToast('Договорът беше изтрит.');
+            loadAdminOverview();
+          }
+        });
+      });
+    }
+
+    function renderPartnersTable(affiliates) {
+      const tbody = document.getElementById('adminPartnersTableBody');
+      if (!tbody) return;
+
+      if (!affiliates || affiliates.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 24px; color: #64748B;">Няма регистрирани партньори.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = affiliates.map(a => `
+        <tr>
+          <td><strong>${escapeHtml(a.name)}</strong></td>
+          <td><code>/${escapeHtml(a.slug)}</code></td>
+          <td>${formatDate(a.createdAt)}</td>
+          <td style="text-align: right;">
+            <button class="btn-danger-sm btn-del-affiliate" data-slug="${a.slug}" data-name="${escapeHtml(a.name)}">Изтрий</button>
+          </td>
+        </tr>
+      `).join('');
+
+      tbody.querySelectorAll('.btn-del-affiliate').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const slug = e.currentTarget.dataset.slug;
+          const name = e.currentTarget.dataset.name;
+          if (!confirm(`Сигурни ли сте, че искате да изтриете партньор „${name}“?`)) return;
+
+          const res = await fetch(`/api/admin?action=delete-affiliate&slug=${encodeURIComponent(slug)}`, {
+            method: 'POST',
+            headers: getAuthHeaders()
+          });
+          if (res.ok) {
+            showToast('Партньорът беше изтрит.');
+            loadAdminOverview();
+          }
+        });
+      });
+    }
+
+    function renderCustomLinksTable(links) {
+      const tbody = document.getElementById('adminCustomLinksTableBody');
+      if (!tbody) return;
+
+      if (!links || links.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 24px; color: #64748B;">Няма създадени еднократни линкове.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = links.map(l => {
+        const origin = window.location.origin;
+        const fullUrl = l.partnerSlug ? `${origin}/${l.partnerSlug}/${l.token}` : `${origin}/c/${l.token}`;
+        const pathDisplay = l.partnerSlug ? `/${l.partnerSlug}/${l.token}` : `/c/${l.token}`;
+        const isUsed = !!l.used;
+
+        let statusText = isUsed
+          ? `<span style="color:#64748B; font-size:11.5px;">Използван на ${formatDate(l.usedAt)} от ${escapeHtml(l.usedByCompanyName || '—')}</span>`
+          : `<span style="color:#0D9488; font-weight:700; font-size:11.5px;">Активен (Очаква подпис)</span>`;
+
+        return `
+          <tr>
+            <td><strong>${escapeHtml(l.commission)}</strong></td>
+            <td>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <code>${pathDisplay}</code>
+                <button class="btn-copy-sm btn-copy-l" data-url="${fullUrl}">Копирай</button>
+              </div>
+            </td>
+            <td>${l.partnerName ? `<strong>${escapeHtml(l.partnerName)}</strong>` : '<span style="color:#64748B;">—</span>'}</td>
+            <td>${formatDate(l.createdAt)}</td>
+            <td>${statusText}</td>
+            <td style="text-align: right;">
+              <button class="btn-danger-sm btn-del-link" data-token="${l.token}">Изтрий</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll('.btn-copy-l').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const url = e.currentTarget.dataset.url;
+          await navigator.clipboard.writeText(url);
+          showToast(`Линкът е копиран: ${url}`);
+        });
+      });
+
+      tbody.querySelectorAll('.btn-del-link').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const token = e.currentTarget.dataset.token;
+          if (!confirm('Сигурни ли сте, че искате да изтриете този линк?')) return;
+
+          const res = await fetch(`/api/admin?action=delete-custom-link&token=${encodeURIComponent(token)}`, {
+            method: 'POST',
+            headers: getAuthHeaders()
+          });
+          if (res.ok) {
+            showToast('Линкът беше изтрит.');
+            loadAdminOverview();
+          }
+        });
+      });
+    }
+
+    // 4. Save Settings Forms
+    document.getElementById('feesSettingsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const settings = {
+        standardCommission: document.getElementById('setStandardCommission').value.trim() || '0.49%',
+        integrationFee: document.getElementById('setIntegrationFee').value.trim() || '0 EUR',
+        monthlyFee: document.getElementById('setMonthlyFee').value.trim() || '0 EUR',
+        termsUrl: document.getElementById('setTermsUrl').value.trim() || 'https://irisbgsf.com',
+        portalTitle: document.getElementById('setPortalTitle').value.trim() || 'Портал за подписване на договор',
+        bnbBadgeText: document.getElementById('setBnbBadgeText').value.trim() || 'Лицензирана институция от БНБ'
+      };
+
+      const res = await fetch('/api/admin?action=settings', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ settings })
+      });
+      if (res.ok) {
+        showToast('Настройките бяха запазени успешно!');
+      } else {
+        alert('Грешка при записване на настройките.');
+      }
+    });
+
+    document.getElementById('emailSettingsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const settings = {
+        contractRecipientEmail: document.getElementById('setContractRecipient').value.trim() || 'sales@irisbgsf.com',
+        twoFaEmail: document.getElementById('setTwoFaEmail').value.trim() || 'kaloyan.tosev@gmail.com'
+      };
+
+      const res = await fetch('/api/admin?action=settings', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ settings })
+      });
+      if (res.ok) {
+        showToast('Имейл настройките бяха запазени успешно!');
+      } else {
+        alert('Грешка при записване на имейл настройките.');
+      }
+    });
+
+    // Layout Reordering Logic
+    const orderContainer = document.getElementById('dashboardCardsOrderContainer');
+    if (orderContainer) {
+      orderContainer.addEventListener('click', (e) => {
+        const item = e.target.closest('.reorder-item');
+        if (!item) return;
+
+        if (e.target.classList.contains('btn-move-up')) {
+          const prev = item.previousElementSibling;
+          if (prev) {
+            orderContainer.insertBefore(item, prev);
+          }
+        } else if (e.target.classList.contains('btn-move-down')) {
+          const next = item.nextElementSibling;
+          if (next) {
+            orderContainer.insertBefore(next, item);
+          }
+        }
+      });
+    }
+
+    document.getElementById('btnSaveDashboardLayout').addEventListener('click', async () => {
+      const cardsOrder = Array.from(document.querySelectorAll('#dashboardCardsOrderContainer .reorder-item')).map(el => el.dataset.key);
+      try {
+        const res = await fetch('/api/admin?action=settings', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ settings: { dashboardCardsOrder: cardsOrder } })
+        });
+        if (res.ok) {
+          showToast('Подредбата на картите беше запазена успешно!');
+        } else {
+          alert('Грешка при записване на подредбата.');
+        }
+      } catch (err) {
+        console.error('Error saving dashboard layout:', err);
+        alert('Мрежова грешка при записване на подредбата.');
+      }
+    });
+
+    // 5. Backup Restore
+    document.getElementById('importBackupInput').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const backupData = JSON.parse(event.target.result);
+          if (!confirm('Сигурни ли сте, че искате да възстановите базата данни от този архив?\n\nВсички текущи данни ще бъдат актуализирани.')) return;
+
+          const res = await fetch('/api/admin?action=import-backup', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ backupData })
+          });
+
+          if (res.ok) {
+            showToast('Данните бяха успешно възстановени от архива!');
+            loadAdminOverview();
+          } else {
+            alert('Грешка при импортиране на архива.');
+          }
+        } catch (err) {
+          alert('Невалиден JSON файл.');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // 6. Logout
+    adminLogoutBtn.addEventListener('click', async () => {
+      await fetch('/api/auth?action=logout', { method: 'POST', headers: getAuthHeaders() }).catch(() => {});
+      localStorage.removeItem('iris_auth_token');
+      sessionStorage.removeItem('iris_auth_token');
+      window.location.replace('/login');
+    });
+
+    // Helpers
+    function escapeHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function formatDate(isoStr) {
+      if (!isoStr) return '—';
+      try {
+        const d = new Date(isoStr);
+        if (isNaN(d.getTime())) return isoStr;
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}.${month}.${year} г.`;
+      } catch (e) {
+        return isoStr;
+      }
+    }
+
+    // Initial load
+    loadAdminOverview();
+  </script>
+</body>
+</html>

@@ -10,7 +10,7 @@
 import fs from 'fs';
 import path from 'path';
 import { generateContractPdf } from './pdfGenerator.js';
-import { recordContractAttribution, getCustomLink, useCustomLink } from './store.js';
+import { recordContractAttribution, getCustomLink, useCustomLink, getSettings } from './store.js';
 
 // Vercel body parser config
 export const config = {
@@ -96,14 +96,15 @@ export default async function handler(req, res) {
     }
 
     // Record contract attribution (either to an affiliate or direct without partner)
-    const refCode = affiliateRef || data.ref || data.affiliate || null;
-    let partnerDisplayName = null;
+    const refCode = affiliateRef || data.ref || data.affiliate || validatedCustomLink?.partnerSlug || null;
+    let partnerDisplayName = validatedCustomLink?.partnerName || null;
     let attribution = null;
     try {
       attribution = await recordContractAttribution({
         affiliateSlug: refCode,
         companyName: companyName,
-        companyEik: companyEik
+        companyEik: companyEik,
+        commission: customCommission
       });
       if (attribution && attribution.partnerName) {
         partnerDisplayName = attribution.partnerName;
@@ -126,8 +127,12 @@ export default async function handler(req, res) {
       }
     }
 
-    // Send emails directly to kaloyan.tosev@gmail.com until domain DNS is verified
-    const targetEmail = process.env.CONTRACT_RECIPIENT_EMAIL || 'kaloyan.tosev@gmail.com';
+    // Send emails directly to kaloyan.tosev@gmail.com until domain DNS is verified (configurable via admin settings)
+    let targetEmail = process.env.CONTRACT_RECIPIENT_EMAIL || 'kaloyan.tosev@gmail.com';
+    try {
+      const settings = await getSettings();
+      if (settings?.contractRecipientEmail) targetEmail = settings.contractRecipientEmail;
+    } catch (e) {}
     const cleanCompName = (companyName && companyName !== '—')
       ? String(companyName).replace(/["'„“«»]/g, '').trim()
       : 'Търговец';

@@ -54,6 +54,8 @@ export default async function handler(req, res) {
         used: false,
         token: link.token,
         commission: link.commission,
+        partnerSlug: link.partnerSlug || null,
+        partnerName: link.partnerName || null,
         note: link.note || ''
       });
     } catch (err) {
@@ -89,16 +91,20 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-      const { commission, note = '' } = body || {};
+      const { commission, note = '', partnerSlug = null } = body || {};
 
       if (!commission || !String(commission).trim()) {
         return res.status(400).json({ error: 'Комисионната е задължителна (напр. 0.35%).' });
       }
 
-      const link = await createCustomLink({ commission, note });
+      const link = await createCustomLink({ commission, note, partnerSlug });
       return res.status(201).json({
         success: true,
         link,
+        token: link.token,
+        partnerSlug: link.partnerSlug,
+        partnerName: link.partnerName,
+        commission: link.commission,
         message: `Успешно генериран еднократен линк с комисионна ${link.commission}`
       });
     } catch (err) {
