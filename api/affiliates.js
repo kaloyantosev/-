@@ -33,6 +33,14 @@ export default async function handler(req, res) {
 
   // 2. DELETE (or POST with action=deleteContract / action=deleteAffiliate)
   if (req.method === 'DELETE' || action === 'deleteContract' || action === 'deleteAffiliate') {
+    // Only users with role === 'admin' are allowed to delete contracts or partners
+    if (session.role !== 'admin' && session.user !== 'admin') {
+      return res.status(403).json({
+        error: 'Нямате права за изтриване на договори или партньори. Тази операция изисква администраторски достъп през /admin.',
+        code: 'FORBIDDEN'
+      });
+    }
+
     try {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
       const reqAction = action || body?.action || req.query?.action;
@@ -77,7 +85,8 @@ export default async function handler(req, res) {
         success: true,
         summary,
         affiliates,
-        user: session.user
+        user: session.user,
+        role: session.role
       });
     } catch (err) {
       console.error('[Affiliates API GET error]:', err);

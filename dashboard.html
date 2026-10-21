@@ -966,6 +966,8 @@
       return headers;
     }
 
+    let currentUserRole = 'sales'; // Default to sales role (no delete permissions)
+
     async function checkAuth() {
       if (!token) return;
       try {
@@ -977,7 +979,8 @@
           window.location.replace('/login');
           return;
         }
-        if (data.role === 'admin' || data.user === 'admin') {
+        currentUserRole = data.role || (data.user === 'admin' ? 'admin' : 'sales');
+        if (currentUserRole === 'admin') {
           const linkToAdmin = document.getElementById('linkToAdmin');
           if (linkToAdmin) linkToAdmin.style.display = 'inline-flex';
           const userPill = document.getElementById('dashboardUserPill');
@@ -1118,6 +1121,7 @@
 
         const data = await res.json();
         if (data.success) {
+          if (data.role) currentUserRole = data.role;
           currentAffiliates = data.affiliates || [];
           lastSummaryData = data.summary || null;
           renderSummary(data.summary, month, fromDate, toDate);
@@ -1332,38 +1336,42 @@
       detailsContractsList.innerHTML = '';
 
       if (btnDeletePartner) {
-        btnDeletePartner.style.display = 'block';
-        btnDeletePartner.disabled = false;
-        btnDeletePartner.textContent = 'Изтрий този партньор';
-        btnDeletePartner.onclick = async () => {
-          const confirmed = confirm(`Сигурни ли сте, че искате да изтриете партньор „${name}“ (/${slug})?\n\nВсички съществуващи договори от този партньор ще бъдат запазени и прехвърлени автоматично към „Договори без партньор“.`);
-          if (!confirmed) return;
+        if (currentUserRole === 'admin') {
+          btnDeletePartner.style.display = 'block';
+          btnDeletePartner.disabled = false;
+          btnDeletePartner.textContent = 'Изтрий този партньор';
+          btnDeletePartner.onclick = async () => {
+            const confirmed = confirm(`Сигурни ли сте, че искате да изтриете партньор „${name}“ (/${slug})?\n\nВсички съществуващи договори от този партньор ще бъдат запазени и прехвърлени автоматично към „Договори без партньор“.`);
+            if (!confirmed) return;
 
-          btnDeletePartner.disabled = true;
-          btnDeletePartner.textContent = 'Изтриване...';
+            btnDeletePartner.disabled = true;
+            btnDeletePartner.textContent = 'Изтриване...';
 
-          try {
-            const res = await fetch(`/api/affiliates?action=deleteAffiliate&slug=${encodeURIComponent(slug)}`, {
-              method: 'DELETE',
-              headers: getAuthHeaders()
-            });
-            const data = await res.json();
-            if (res.ok && data.success) {
-              showToast(data.message || `Партньорът беше изтрит.`);
-              detailsModal.style.display = 'none';
-              await loadAffiliatesData();
-            } else {
-              alert(data.error || 'Грешка при изтриване на партньора.');
+            try {
+              const res = await fetch(`/api/affiliates?action=deleteAffiliate&slug=${encodeURIComponent(slug)}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+              });
+              const data = await res.json();
+              if (res.ok && data.success) {
+                showToast(data.message || `Партньорът беше изтрит.`);
+                detailsModal.style.display = 'none';
+                await loadAffiliatesData();
+              } else {
+                alert(data.error || 'Грешка при изтриване на партньора.');
+                btnDeletePartner.disabled = false;
+                btnDeletePartner.textContent = 'Изтрий този партньор';
+              }
+            } catch (err) {
+              console.error('Delete affiliate error:', err);
+              alert('Мрежова грешка при изтриване на партньора.');
               btnDeletePartner.disabled = false;
               btnDeletePartner.textContent = 'Изтрий този партньор';
             }
-          } catch (err) {
-            console.error('Delete affiliate error:', err);
-            alert('Мрежова грешка при изтриване на партньора.');
-            btnDeletePartner.disabled = false;
-            btnDeletePartner.textContent = 'Изтрий този партньор';
-          }
-        };
+          };
+        } else {
+          btnDeletePartner.style.display = 'none';
+        }
       }
 
       const contracts = aff?.contracts || [];
@@ -1377,6 +1385,12 @@
         contracts.forEach(c => {
           const item = document.createElement('div');
           item.className = 'details-item';
+          const deleteBtnHtml = (currentUserRole === 'admin') ? `
+            <button class="btn-delete-contract" data-id="${escapeHtml(c.id)}" data-company="${escapeHtml(c.companyName)}" title="Изтрий договор">
+              Изтрий
+            </button>
+          ` : '';
+
           item.innerHTML = `
             <div>
               <div style="font-weight: 600; color: var(--primary);">${escapeHtml(c.companyName)}</div>
@@ -1389,44 +1403,44 @@
               <div style="text-align: right; font-size: 12px; color: var(--primary-light); font-weight: 600;">
                 ${formatDateBG(c.date)}
               </div>
-              <button class="btn-delete-contract" data-id="${escapeHtml(c.id)}" data-company="${escapeHtml(c.companyName)}" title="Изтрий договор">
-                Изтрий
-              </button>
+              ${deleteBtnHtml}
             </div>
           `;
 
           const deleteBtn = item.querySelector('.btn-delete-contract');
-          deleteBtn.addEventListener('click', async (e) => {
-            const contractId = e.currentTarget.dataset.id;
-            const company = e.currentTarget.dataset.company;
-            const confirmed = confirm(`Сигурни ли сте, че искате да изтриете договора за „${company}“?\n\nТова действие ще намали брояча на партньора с 1.`);
-            if (!confirmed) return;
+          if (deleteBtn) {
+            deleteBtn.addEventListener('click', async (e) => {
+              const contractId = e.currentTarget.dataset.id;
+              const company = e.currentTarget.dataset.company;
+              const confirmed = confirm(`Сигурни ли сте, че искате да изтриете договора за „${company}“?\n\nТова действие ще намали брояча на партньора с 1.`);
+              if (!confirmed) return;
 
-            deleteBtn.disabled = true;
-            deleteBtn.textContent = 'Изтриване...';
+              deleteBtn.disabled = true;
+              deleteBtn.textContent = 'Изтриване...';
 
-            try {
-              const res = await fetch(`/api/affiliates?contractId=${encodeURIComponent(contractId)}`, {
-                method: 'DELETE',
-                headers: getAuthHeaders()
-              });
-              const data = await res.json();
-              if (res.ok && data.success) {
-                showToast(`Договорът за „${company}“ беше изтрит.`);
-                await loadAffiliatesData();
-                openDetailsModal(slug, name);
-              } else {
-                alert(data.error || 'Грешка при изтриване на договора.');
+              try {
+                const res = await fetch(`/api/affiliates?contractId=${encodeURIComponent(contractId)}`, {
+                  method: 'DELETE',
+                  headers: getAuthHeaders()
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                  showToast(`Договорът за „${company}“ беше изтрит.`);
+                  await loadAffiliatesData();
+                  openDetailsModal(slug, name);
+                } else {
+                  alert(data.error || 'Грешка при изтриване на договора.');
+                  deleteBtn.disabled = false;
+                  deleteBtn.innerHTML = 'Изтрий';
+                }
+              } catch (err) {
+                console.error('Delete contract error:', err);
+                alert('Мрежова грешка при изтриване на договора.');
                 deleteBtn.disabled = false;
                 deleteBtn.innerHTML = 'Изтрий';
               }
-            } catch (err) {
-              console.error('Delete contract error:', err);
-              alert('Мрежова грешка при изтриване на договора.');
-              deleteBtn.disabled = false;
-              deleteBtn.innerHTML = 'Изтрий';
-            }
-          });
+            });
+          }
 
           detailsContractsList.appendChild(item);
         });
@@ -1456,6 +1470,12 @@
         contracts.forEach(c => {
           const item = document.createElement('div');
           item.className = 'details-item';
+          const deleteBtnHtml = (currentUserRole === 'admin') ? `
+            <button class="btn-delete-contract" data-id="${escapeHtml(c.id)}" data-company="${escapeHtml(c.companyName)}" title="Изтрий договор">
+              Изтрий
+            </button>
+          ` : '';
+
           item.innerHTML = `
             <div>
               <div style="font-weight: 600; color: var(--primary);">${escapeHtml(c.companyName)}</div>
@@ -1468,44 +1488,44 @@
               <div style="text-align: right; font-size: 12px; color: var(--primary-light); font-weight: 600;">
                 ${formatDateBG(c.date)}
               </div>
-              <button class="btn-delete-contract" data-id="${escapeHtml(c.id)}" data-company="${escapeHtml(c.companyName)}" title="Изтрий договор">
-                Изтрий
-              </button>
+              ${deleteBtnHtml}
             </div>
           `;
 
           const deleteBtn = item.querySelector('.btn-delete-contract');
-          deleteBtn.addEventListener('click', async (e) => {
-            const contractId = e.currentTarget.dataset.id;
-            const company = e.currentTarget.dataset.company;
-            const confirmed = confirm(`Сигурни ли сте, че искате да изтриете договора за „${company}“?\n\nТова действие ще намали общия брой договори.`);
-            if (!confirmed) return;
+          if (deleteBtn) {
+            deleteBtn.addEventListener('click', async (e) => {
+              const contractId = e.currentTarget.dataset.id;
+              const company = e.currentTarget.dataset.company;
+              const confirmed = confirm(`Сигурни ли сте, че искате да изтриете договора за „${company}“?\n\nТова действие ще намали общия брой договори.`);
+              if (!confirmed) return;
 
-            deleteBtn.disabled = true;
-            deleteBtn.textContent = 'Изтриване...';
+              deleteBtn.disabled = true;
+              deleteBtn.textContent = 'Изтриване...';
 
-            try {
-              const res = await fetch(`/api/affiliates?contractId=${encodeURIComponent(contractId)}`, {
-                method: 'DELETE',
-                headers: getAuthHeaders()
-              });
-              const data = await res.json();
-              if (res.ok && data.success) {
-                showToast(`Договорът за „${company}“ беше изтрит.`);
-                await loadAffiliatesData();
-                openDirectContractsModal();
-              } else {
-                alert(data.error || 'Грешка при изтриване на договора.');
+              try {
+                const res = await fetch(`/api/affiliates?contractId=${encodeURIComponent(contractId)}`, {
+                  method: 'DELETE',
+                  headers: getAuthHeaders()
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                  showToast(`Договорът за „${company}“ беше изтрит.`);
+                  await loadAffiliatesData();
+                  openDirectContractsModal();
+                } else {
+                  alert(data.error || 'Грешка при изтриване на договора.');
+                  deleteBtn.disabled = false;
+                  deleteBtn.innerHTML = 'Изтрий';
+                }
+              } catch (err) {
+                console.error('Delete contract error:', err);
+                alert('Мрежова грешка при изтриване на договора.');
                 deleteBtn.disabled = false;
                 deleteBtn.innerHTML = 'Изтрий';
               }
-            } catch (err) {
-              console.error('Delete contract error:', err);
-              alert('Мрежова грешка при изтриване на договора.');
-              deleteBtn.disabled = false;
-              deleteBtn.innerHTML = 'Изтрий';
-            }
-          });
+            });
+          }
 
           detailsContractsList.appendChild(item);
         });
@@ -1797,15 +1817,24 @@
             `;
           }
 
-          const actionHtml = isUsed ? `
-            <span style="font-size: 12px; color: var(--text-muted);">Деактивиран</span>
-          ` : `
-            <div style="display: flex; gap: 6px; justify-content: flex-end;">
-              <button class="btn-delete-custom" data-token="${link.token}" style="background: #FFF5F5; border: 1px solid #FECACA; border-radius: 4px; padding: 4px 10px; font-size: 11.5px; font-weight: 600; color: #DC2626; cursor: pointer;">
-                Изтрий
-              </button>
-            </div>
-          `;
+          let actionHtml = '';
+          if (isUsed) {
+            actionHtml = `
+              <span style="font-size: 12px; color: var(--text-muted);">Деактивиран</span>
+            `;
+          } else if (currentUserRole === 'admin') {
+            actionHtml = `
+              <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                <button class="btn-delete-custom" data-token="${link.token}" style="background: #FFF5F5; border: 1px solid #FECACA; border-radius: 4px; padding: 4px 10px; font-size: 11.5px; font-weight: 600; color: #DC2626; cursor: pointer;">
+                  Изтрий
+                </button>
+              </div>
+            `;
+          } else {
+            actionHtml = `
+              <span style="font-size: 12px; color: var(--text-muted);">—</span>
+            `;
+          }
 
           const pathDisplay = link.partnerSlug
             ? `/${escapeHtml(link.partnerSlug)}/${escapeHtml(link.token)}`

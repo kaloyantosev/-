@@ -115,6 +115,14 @@ export default async function handler(req, res) {
 
   // 4. PROTECTED DELETE: Cancel/delete an unused custom link
   if (req.method === 'DELETE') {
+    // Only users with role === 'admin' are allowed to delete custom links
+    if (session.role !== 'admin' && session.user !== 'admin') {
+      return res.status(403).json({
+        error: 'Нямате права за изтриване на еднократни оферти. Тази операция изисква администраторски достъп през /admin.',
+        code: 'FORBIDDEN'
+      });
+    }
+
     try {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
       const token = req.query?.token || body?.token;
