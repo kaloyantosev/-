@@ -481,23 +481,21 @@ document.addEventListener('DOMContentLoaded', () => {
       badgeAppendix.textContent = 'Nesemnat';
       badgeAppendix.className = 'status-badge';
     }
-    const defaultPlaceholder = '<span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ Pentru Comerciant ]</span>';
-    const defaultPlaceholderEn = '<span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ For the Merchant ]</span>';
 
-    const slots = [
-      { el: contractMerchantSigSlot, html: defaultPlaceholder },
-      { el: contractMerchantSigSlotEn, html: defaultPlaceholderEn },
-      { el: contractMerchantTermsSigSlot, html: defaultPlaceholder },
-      { el: contractMerchantTermsSigSlotEn, html: defaultPlaceholderEn },
-      { el: appendixMerchantSigSlot, html: defaultPlaceholder },
-      { el: appendixMerchantSigSlotEn, html: defaultPlaceholderEn }
+    const allSlots = [
+      contractMerchantSigSlot,
+      contractMerchantSigSlotEn,
+      contractMerchantTermsSigSlot,
+      contractMerchantTermsSigSlotEn,
+      appendixMerchantSigSlot,
+      appendixMerchantSigSlotEn
     ];
 
-    slots.forEach(s => {
-      if (s.el) {
-        s.el.innerHTML = s.html;
-        s.el.style.border = '1px dashed #94A3B8';
-        s.el.style.background = '#FAFAFA';
+    allSlots.forEach(slot => {
+      if (slot) {
+        slot.innerHTML = '';
+        slot.style.border = 'none';
+        slot.style.background = 'transparent';
       }
     });
 
@@ -589,7 +587,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      const imgHtml = `<img src="${sigData}" alt="Semnătură Comerciant" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block; margin: auto;">`;
+      const imgHtml = `<img src="${sigData}" alt="Semnătură Comerciant" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block;">`;
       const allSlots = [
         contractMerchantSigSlot,
         contractMerchantSigSlotEn,
@@ -602,8 +600,8 @@ document.addEventListener('DOMContentLoaded', () => {
       allSlots.forEach(slot => {
         if (slot) {
           slot.innerHTML = imgHtml;
-          slot.style.border = '1.5px solid #10B981';
-          slot.style.background = '#ECFDF5';
+          slot.style.border = 'none';
+          slot.style.background = 'transparent';
         }
       });
 
