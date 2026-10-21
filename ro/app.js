@@ -326,9 +326,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const badgeContract = document.getElementById('badgeContract');
   const badgeAppendix = document.getElementById('badgeAppendix');
   const contractMerchantSigSlot = document.getElementById('contractMerchantSigSlot');
+  const contractMerchantSigSlotEn = document.getElementById('contractMerchantSigSlotEn');
   const contractMerchantTermsSigSlot = document.getElementById('contractMerchantTermsSigSlot');
-  const contractMerchantTermsSigSlotRo = document.getElementById('contractMerchantTermsSigSlotRo');
+  const contractMerchantTermsSigSlotEn = document.getElementById('contractMerchantTermsSigSlotEn');
   const appendixMerchantSigSlot = document.getElementById('appendixMerchantSigSlot');
+  const appendixMerchantSigSlotEn = document.getElementById('appendixMerchantSigSlotEn');
   const typedSigInput = document.getElementById('typedSigInput');
   const sigFileInput = document.getElementById('sigFileInput');
   const uploadPreviewWrapper = document.getElementById('uploadPreviewWrapper');
@@ -460,16 +462,22 @@ document.addEventListener('DOMContentLoaded', () => {
       badgeAppendix.className = 'status-badge';
     }
     if (contractMerchantSigSlot) {
-      contractMerchantSigSlot.innerHTML = '<span style="font-size: 11px; color: #94A3B8; font-style: italic;">[ Semnătura va apărea aici după aplicare ]</span>';
+      contractMerchantSigSlot.innerHTML = '<span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ Pentru Comerciant ]</span>';
+    }
+    if (contractMerchantSigSlotEn) {
+      contractMerchantSigSlotEn.innerHTML = '<span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ For the Merchant ]</span>';
     }
     if (contractMerchantTermsSigSlot) {
-      contractMerchantTermsSigSlot.innerHTML = '<span style="font-size: 11px; color: #94A3B8; font-style: italic;">[ Semnătura va apărea aici după aplicare ]</span>';
+      contractMerchantTermsSigSlot.innerHTML = '<span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ Pentru Comerciant ]</span>';
     }
-    if (contractMerchantTermsSigSlotRo) {
-      contractMerchantTermsSigSlotRo.innerHTML = '<span style="font-size: 11px; color: #94A3B8; font-style: italic;">[ Semnătura va apărea aici după aplicare ]</span>';
+    if (contractMerchantTermsSigSlotEn) {
+      contractMerchantTermsSigSlotEn.innerHTML = '<span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ For the Merchant ]</span>';
     }
     if (appendixMerchantSigSlot) {
-      appendixMerchantSigSlot.innerHTML = '<span style="font-size: 11px; color: #94A3B8; font-style: italic;">[ Semnătura va apărea aici după aplicare ]</span>';
+      appendixMerchantSigSlot.innerHTML = '<span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ Pentru Comerciant ]</span>';
+    }
+    if (appendixMerchantSigSlotEn) {
+      appendixMerchantSigSlotEn.innerHTML = '<span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ For the Merchant ]</span>';
     }
   }
 
@@ -521,11 +529,13 @@ document.addEventListener('DOMContentLoaded', () => {
         badgeAppendix.className = 'status-badge signed';
       }
 
-      const imgHtml = `<img src="${sigData}" alt="Semnătură Comerciant" class="sig-preview-img-box">`;
+      const imgHtml = `<img src="${sigData}" alt="Semnătură Comerciant" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
       if (contractMerchantSigSlot) contractMerchantSigSlot.innerHTML = imgHtml;
+      if (contractMerchantSigSlotEn) contractMerchantSigSlotEn.innerHTML = imgHtml;
       if (contractMerchantTermsSigSlot) contractMerchantTermsSigSlot.innerHTML = imgHtml;
-      if (contractMerchantTermsSigSlotRo) contractMerchantTermsSigSlotRo.innerHTML = imgHtml;
+      if (contractMerchantTermsSigSlotEn) contractMerchantTermsSigSlotEn.innerHTML = imgHtml;
       if (appendixMerchantSigSlot) appendixMerchantSigSlot.innerHTML = imgHtml;
+      if (appendixMerchantSigSlotEn) appendixMerchantSigSlotEn.innerHTML = imgHtml;
 
       showToast('Semnătura a fost aplicată pe Contract și Anexa 1!');
     });

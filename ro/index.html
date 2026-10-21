@@ -121,6 +121,32 @@
       object-fit: contain;
       display: block;
     }
+  
+    .ro-a4-sheet {
+      padding: 0 !important;
+      display: block !important;
+      width: 820px !important;
+      height: 1160px !important;
+      position: relative !important;
+      overflow: hidden !important;
+      background: #ffffff !important;
+      box-shadow: 0 4px 22px rgba(15, 23, 42, 0.08) !important;
+    }
+    .ro-a4-sheet img {
+      width: 100% !important;
+      height: 100% !important;
+      display: block !important;
+      object-fit: contain !important;
+    }
+    .live-fields-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .live-field.filled {
+      color: #0F172A;
+      font-weight: 700;
+    }
   </style>
 </head>
 <body>
@@ -451,431 +477,447 @@
       <!-- Viewport: Stack of Bilingual A4 Sheets -->
       <div class="doc-viewport" id="docViewport">
         <div class="pages-stack" id="mainDocContainer">
-          <!-- ===================================================================
-               PAGINA 1: PREAMBUL, PĂRȚI, RECITALE
-               =================================================================== -->
+
+          
           <div class="doc-page-card" id="pageCard1">
             <div class="page-top-tab">
-              <span class="page-tab-badge">PAGINA 1 DIN 9 • ACORD-CADRU</span>
+              <span class="page-tab-badge">PAGINA 1 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet" id="docSheet1">
-              <div class="page-content-area">
-                <h1 class="exact-contract-title">
-                  ACORD-CADRU PENTRU FURNIZAREA SERVICIILOR DE INIȚIERE A PLĂȚII
-                </h1>
-
-                <p class="exact-p">Astăzi, <strong><span class="live-field" data-field="date">.........................</span></strong>, în București, între:</p>
-
-                <p class="exact-p">1. <strong>„IRIS Solutions” AD</strong>, înregistrată în CRRNPLE de pe lângă Agenția Registrului cu CUI 208455895, cu sediul social și adresa de conducere: Sofia, Blvd. Hristo Smirnenski 78, et. 4, reprezentată de Galya Dimitrova Dimitrova sau prin împuternicit Dimitar Yoshkov Hristov, denumită în continuare „Furnizorul”, pe de o parte,</p>
-                <p class="exact-p" style="text-align: center; margin: 8px 0; font-weight: 500;">și</p>
-                <p class="exact-p">2. <strong><span class="live-field" data-field="companyName">.......................................................................</span></strong>, înregistrată în Registrul Comerțului cu CUI <strong><span class="live-field" data-field="companyEik">..................................</span></strong>, cu sediul social și adresa de conducere: <strong><span class="live-field" data-field="companyAddress">.....................................................................................................................................................</span></strong>, reprezentată de <strong><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></strong>, cu CNP <strong><span class="live-field" data-field="companyRepresentativePin">..............................</span></strong>, telefon: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong>, denumită în continuare „Comerciantul”, pe de altă parte,</p>
-
-                <p class="exact-p" style="margin-top: 14px;">Denumite împreună Părțile,</p>
-                <p class="exact-p"><strong>Întrucât:</strong></p>
-                <p class="exact-p">a) Furnizorul este o instituție de plată autorizată, care furnizează servicii de plată în temeiul art. 4, pct. 7 și pct. 8 din Legea privind serviciile și sistemele de plată (un serviciu de inițiere a plăților și un serviciu de furnizare de informații despre cont), conform Hotărârii Nr. 316 din 17.09.2019 a BNB;</p>
-                <p class="exact-p">b) Furnizorul furnizează soluția software – Terminal de plată, prin care Comerciantul poate utiliza serviciile pentru inițierea plății;</p>
-                <p class="exact-p">c) Comerciantul este o entitate juridică care furnizează o gamă largă de bunuri/servicii și este beneficiarul serviciilor de plată;</p>
-                <p class="exact-p">d) Comerciantul dorește să utilizeze serviciile pentru inițierea plății pentru a oferi Clienților săi o oportunitate suplimentară de a plăti pentru bunurile/serviciile oferite de Comerciant legate de: plăți online (magazin electronic);</p>
-                <p class="exact-p">e) Părțile doresc să-și reglementeze relațiile în legătură cu cele de mai sus,</p>
-                <p class="exact-p" style="margin-top: 10px;">S-a încheiat următorul Acord de utilizare a serviciilor de inițiere a plății (Acord), cu privire la următoarele:</p>
-              </div>
-
-              <!-- Page Footer -->
-              <div class="page-footer">
-                <span class="page-footer-right">Pagina 1 din 9</span>
-              </div>
+            <div class="a4-sheet ro-a4-sheet" id="docSheet1">
+              <img src="/ro/pages/contract_page_1.png" alt="Pagina 1">
+              
+            </div>
+            <div class="page-footer">
+              <span class="page-footer-right">Pagina 1 din 14</span>
             </div>
           </div>
+    
 
+          
           <!-- Divider -->
           <div class="page-gap-divider">
             <span class="gap-line"></span>
             <span class="gap-badge">● PREVIZUALIZARE PAGINA 2 ●</span>
             <span class="gap-line"></span>
           </div>
-
-          <!-- ===================================================================
-               PAGINA 2: I. DEFINIȚII & II. OBIECTUL
-               =================================================================== -->
+        
           <div class="doc-page-card" id="pageCard2">
             <div class="page-top-tab">
-              <span class="page-tab-badge">PAGINA 2 DIN 9 • ACORD-CADRU</span>
+              <span class="page-tab-badge">PAGINA 2 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet" id="docSheet2">
-              <div class="page-content-area">
-                <h2 class="exact-chapter-title">I. DEFINIȚII</h2>
-                
-                <p class="exact-p"><strong>Art. 1.</strong> (1) În sensul prezentului Acord, termenii enumerați mai jos vor avea următorul înțeles, cu excepția cazului în care contextul cere altfel:</p>
-                <p class="exact-p"><strong>„Servicii”</strong> înseamnă serviciul de inițiere a plăților în sensul art. 4, pct. 7 din Legea privind serviciile și sistemele de plată (PSPSA) și serviciul de informare cu privire la cont în sensul art. 4, pct. 8 din PSPSA.</p>
-                <p class="exact-p"><strong>„Serviciul de inițiere a plății”</strong> este un serviciu de plată electronică în care, la solicitarea Comerciantului (cu acordul explicit al Clientului, realizat conform procedurii implementate de furnizorul de servicii de plată care deservește contul Clientului), se inițiază o plată (se generează și se execută un ordin de plată) din contul Clientului dintr-o bancă/instituție de plată către contul de plată al Comerciantului;</p>
-                <p class="exact-p"><strong>„Serviciul de informare cu privire la cont”</strong> este un serviciu de plată electronică prin care Comerciantul primește informații despre soldurile și mișcările din conturile de plăți deschise de acesta la bănci/instituții de plată;</p>
-                <p class="exact-p"><strong>„Produsul” sau „Terminalul de plată”</strong> este o soluție software furnizată de Furnizor, prin care Comerciantul poate iniția plăți către Clienții săi.</p>
-                <p class="exact-p"><strong>„Client”</strong> este orice persoană fizică sau juridică ce dorește să plătească prin tehnologia pusă la dispoziție de Terminalul de plată pentru bunurile/serviciile Comerciantului.</p>
-                <p class="exact-p">(2) Cu excepția cazului în care contextul sugerează altfel, cuvintele folosite la singular includ și pluralul, iar cuvintele folosite la plural includ și singularul.</p>
-
-                <h2 class="exact-chapter-title">II. OBIECTUL</h2>
-
-                <p class="exact-p"><strong>Art. 2.</strong> (1) Prezentul Acord reglementează furnizarea Serviciilor prin intermediul Produselor.</p>
-                <p class="exact-p">(2) Utilizarea de către Comerciant a serviciului de informații despre cont pentru unul sau mai multe conturi de plată include: a) Informații privind lista conturilor de plăți; b) Informații privind soldurile conturilor de plăți; c) Detalii și mișcări pe conturile de plăți.</p>
-                <p class="exact-p">(3) Plățile între Clienți și Comerciant se efectuează prin intermediul Produselor după înregistrarea și identificarea cu succes a Comerciantului și integrarea cu sistemul de plată al Furnizorului.</p>
-                <p class="exact-p">(4) Furnizorul este un intermediar de plată și nu este parte în raportul juridic dintre Comerciant și clienții săi. Furnizorul nu este răspunzător pentru erorile băncilor/instituțiilor de plată care deservesc conturile Comerciantului sau Clienților.</p>
-              </div>
-
-              <!-- Page Footer -->
-              <div class="page-footer">
-                <span class="page-footer-right">Pagina 2 din 9</span>
-              </div>
+            <div class="a4-sheet ro-a4-sheet" id="docSheet2">
+              <img src="/ro/pages/contract_page_2.png" alt="Pagina 2">
+              
+            </div>
+            <div class="page-footer">
+              <span class="page-footer-right">Pagina 2 din 14</span>
             </div>
           </div>
+    
 
+          
           <!-- Divider -->
           <div class="page-gap-divider">
             <span class="gap-line"></span>
             <span class="gap-badge">● PREVIZUALIZARE PAGINA 3 ●</span>
             <span class="gap-line"></span>
           </div>
-
-          <!-- ===================================================================
-               PAGINA 3: III. FURNIZAREA DE SERVICII & IV. DREPTURI ȘI OBLIGAȚII
-               =================================================================== -->
+        
           <div class="doc-page-card" id="pageCard3">
             <div class="page-top-tab">
-              <span class="page-tab-badge">PAGINA 3 DIN 9 • ACORD-CADRU</span>
+              <span class="page-tab-badge">PAGINA 3 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet" id="docSheet3">
-              <div class="page-content-area">
-                <h2 class="exact-chapter-title">III. FURNIZAREA DE SERVICII</h2>
+            <div class="a4-sheet ro-a4-sheet" id="docSheet3">
+              <img src="/ro/pages/contract_page_3.png" alt="Pagina 3">
+              
+              <!-- Live Overlay Page 3 -->
+              <div class="live-fields-overlay">
+                <!-- EN Date -->
+                <div style="position: absolute; left: 12.85%; top: 4.8%; width: 36.7%; height: 2.2%; background: #ffffff; display: flex; align-items: center; font-family: 'Calibri', 'Inter', sans-serif; font-size: 11px; color: #000000; z-index: 10;">
+                  Today <strong style="margin: 0 4px;"><span class="live-field" data-field="date">.........................</span></strong> 202..., in Bucharest, between:
+                </div>
+                <!-- RO Date -->
+                <div style="position: absolute; left: 50.72%; top: 4.8%; width: 39.47%; height: 2.2%; background: #ffffff; display: flex; align-items: center; font-family: 'Calibri', 'Inter', sans-serif; font-size: 11px; color: #000000; z-index: 10;">
+                  Astăzi <strong style="margin: 0 4px;"><span class="live-field" data-field="date">.........................</span></strong> 202..., în București, între:
+                </div>
 
-                <p class="exact-p"><strong>Art. 3.</strong> (1) Furnizarea serviciului de informare despre cont se realizează în conformitate cu standardele implementate de furnizorii de servicii ai contului al cărui titular este Comerciantul.</p>
-                <p class="exact-p">(2) Plata prin intermediul serviciului de inițiere a plății implică transferul de fonduri direct din contul Clientului într-un cont bancar specificat de Comerciant. Transferul efectiv este executat de banca/instituția de plată care deservește contul Clientului.</p>
+                <!-- EN Merchant Item 2 -->
+                <div style="position: absolute; left: 12.85%; top: 27.5%; width: 36.7%; height: 13.8%; background: #ffffff; padding: 1px 0; font-family: 'Calibri', 'Inter', sans-serif; font-size: 10.5px; line-height: 1.35; color: #000000; text-align: justify; z-index: 10;">
+                  2.  <strong><span class="live-field" data-field="companyName">.......................................................................</span></strong>, registered in the CRRNPLE at the Registry Agency, with UIC/CUI <strong><span class="live-field" data-field="companyEik">..................................</span></strong>, with headquarters and address of management: <strong><span class="live-field" data-field="companyAddress">.....................................................................................................................................................</span></strong>, represented by <strong><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></strong>, with PIN/CNP <strong><span class="live-field" data-field="companyRepresentativePin">..............................</span></strong>, telephone: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong>, hereby referred to as "Merchant", on the other hand
+                </div>
 
-                <p class="exact-p"><strong>Art. 4.</strong> Cu excepția cazului în care se specifică altfel în ordinul de plată generat, transferurile de inițiere a plății se efectuează în contul bancar al Comerciantului deschis la Banca: <strong><span class="live-field" data-field="bankName">..................................................</span></strong>, IBAN: <strong><span class="live-field" data-field="bankIban">......................................................................</span></strong>.</p>
-
-                <p class="exact-p"><strong>Art. 5.</strong> Comerciantul desemnează ca persoană autorizată pentru comunicare și administrare pe: <strong><span class="live-field" data-field="companyRepresentative">..................................................</span></strong>, E-mail: <strong><span class="live-field" data-field="contactEmail">..................................................</span></strong>, CNP: <strong><span class="live-field" data-field="companyRepresentativePin">..............................</span></strong>, Telefon: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong>, Locație / Website autorizat: <strong><span class="live-field" data-field="merchantWebsite">..................................................</span></strong>.</p>
-
-                <p class="exact-p"><strong>Art. 6.</strong> Furnizorul depune toate eforturile rezonabile pentru a asigura disponibilitatea neîntreruptă a Serviciilor, cu excepția perioadelor de mentenanță programată sau a incidentelor imputabile rețelelor bancare externe.</p>
-
-                <h2 class="exact-chapter-title">IV. DREPTURI ȘI OBLIGAȚII ALE PĂRȚILOR</h2>
-
-                <p class="exact-p"><strong>Art. 7.</strong> (1) Comerciantul se obligă:</p>
-                <p class="exact-p">1. Să furnizeze datele complete și corecte necesare pentru identificare și verificarea conformității;</p>
-                <p class="exact-p">2. Să efectueze instalarea și configurarea necesară pentru operarea cu Produsele conform instrucțiunilor tehnice;</p>
-                <p class="exact-p">3. Să nu utilizeze Produsul și Serviciile pentru activități ilegale, tranzacții frauduloase sau neconforme cu legislația;</p>
+                <!-- RO Merchant Item 2 -->
+                <div style="position: absolute; left: 50.72%; top: 27.5%; width: 39.47%; height: 13.8%; background: #ffffff; padding: 1px 0; font-family: 'Calibri', 'Inter', sans-serif; font-size: 10.5px; line-height: 1.35; color: #000000; text-align: justify; z-index: 10;">
+                  2.  <strong><span class="live-field" data-field="companyName">.......................................................................</span></strong>, înregistrat în CRRNPLE la Agenția Registrului, având CUI <strong><span class="live-field" data-field="companyEik">..................................</span></strong>, cu sediul social și adresa de conducere: <strong><span class="live-field" data-field="companyAddress">.....................................................................................................................................................</span></strong>, reprezentată de <strong><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></strong>, cu CNP <strong><span class="live-field" data-field="companyRepresentativePin">..............................</span></strong>, telefon: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong>, denumită în continuare „Comerciantul”, pe de altă parte
+                </div>
               </div>
-
-              <!-- Page Footer -->
-              <div class="page-footer">
-                <span class="page-footer-right">Pagina 3 din 9</span>
-              </div>
+        
+            </div>
+            <div class="page-footer">
+              <span class="page-footer-right">Pagina 3 din 14</span>
             </div>
           </div>
+    
 
+          
           <!-- Divider -->
           <div class="page-gap-divider">
             <span class="gap-line"></span>
             <span class="gap-badge">● PREVIZUALIZARE PAGINA 4 ●</span>
             <span class="gap-line"></span>
           </div>
-
-          <!-- ===================================================================
-               PAGINA 4: IV. DREPTURI ȘI OBLIGAȚII CONT. & V. TAXE & VI. PROPRIETATE
-               =================================================================== -->
+        
           <div class="doc-page-card" id="pageCard4">
             <div class="page-top-tab">
-              <span class="page-tab-badge">PAGINA 4 DIN 9 • ACORD-CADRU</span>
+              <span class="page-tab-badge">PAGINA 4 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet" id="docSheet4">
-              <div class="page-content-area">
-                <p class="exact-p">4. Să informeze de îndată Furnizorul despre orice erori, anomalii sau disfuncționalități apărute în funcționarea Produsului;</p>
-                <p class="exact-p">5. Să păstreze securitatea și confidențialitatea credențialelor de acces și a integrării tehnice;</p>
-                <p class="exact-p">6. Să livreze Clienților bunurile și serviciile achiziționate în conformitate cu termenii stabiliți și să gestioneze direct reclamațiile Clienților;</p>
-                <p class="exact-p">7. În caz de abuz, plăți neautorizate sau refuz confirmat conform legii, să ramburseze sumele încasate necuvenit de la Clienți;</p>
-                <p class="exact-p">(2) Furnizorul se obligă să furnizeze Serviciile cu profesionalism și să asigure suport tehnic pentru remedierea incidentelor din sfera sa de competență.</p>
-
-                <h2 class="exact-chapter-title">V. TAXE ȘI COMISIOANE</h2>
-
-                <p class="exact-p"><strong>Art. 8.</strong> (1) Furnizorul percepe taxe și comisioane în conformitate cu <strong>Anexa 1</strong> la prezentul Acord.</p>
-                <p class="exact-p">(2) Comerciantului i se va factura lunar pentru serviciile furnizate în luna anterioară, în baza volumelor și tranzacțiilor procesate.</p>
-                <p class="exact-p">(3) Facturile se achită prin virament bancar în termen de 10 (zece) zile de la data emiterii, în contul indicat de Furnizor.</p>
-                <p class="exact-p">(4) Neplata la termen îndreptățește Furnizorul să aplice penalități de întârziere și să suspende temporar furnizarea Serviciilor.</p>
-
-                <h2 class="exact-chapter-title">VI. DREPTURI DE PROPRIETATE INTELECTUALĂ</h2>
-
-                <p class="exact-p"><strong>Art. 9.</strong> (1) Prezentul Acord nu constituie un transfer de drepturi de autor sau proprietate intelectuală asupra Produselor, mărcilor sau codului Furnizorului.</p>
-                <p class="exact-p">(2) Comerciantul primește pe durata Acordului o licență neexclusivă, netransmisibilă și revocabilă de utilizare a Produsului în scopul operării plăților comerciale proprii.</p>
-              </div>
-
-              <!-- Page Footer -->
-              <div class="page-footer">
-                <span class="page-footer-right">Pagina 4 din 9</span>
-              </div>
+            <div class="a4-sheet ro-a4-sheet" id="docSheet4">
+              <img src="/ro/pages/contract_page_4.png" alt="Pagina 4">
+              
+            </div>
+            <div class="page-footer">
+              <span class="page-footer-right">Pagina 4 din 14</span>
             </div>
           </div>
+    
 
+          
           <!-- Divider -->
           <div class="page-gap-divider">
             <span class="gap-line"></span>
             <span class="gap-badge">● PREVIZUALIZARE PAGINA 5 ●</span>
             <span class="gap-line"></span>
           </div>
-
-          <!-- ===================================================================
-               PAGINA 5: VII. CONFIDENȚIALITATE
-               =================================================================== -->
+        
           <div class="doc-page-card" id="pageCard5">
             <div class="page-top-tab">
-              <span class="page-tab-badge">PAGINA 5 DIN 9 • ACORD-CADRU</span>
+              <span class="page-tab-badge">PAGINA 5 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet" id="docSheet5">
-              <div class="page-content-area">
-                <h2 class="exact-chapter-title">VII. CONFIDENȚIALITATE</h2>
-
-                <p class="exact-p"><strong>Art. 10.</strong> (1) Părțile convin să păstreze confidențialitatea strictă asupra tuturor clauzelor prezentului Acord și asupra tuturor informațiilor de afaceri, tehnice, comerciale și financiare la care au acces.</p>
-                <p class="exact-p">(2) Informațiile confidențiale nu pot fi dezvăluite către terți fără acordul prealabil scris al celeilalte Părți, cu excepția cerințelor legale exprese sau a solicitărilor autorităților competente.</p>
-                <p class="exact-p">(3) Părțile garantează că angajații și subcontractanții lor respectă aceleași obligații stricte de confidențialitate.</p>
-                <p class="exact-p">(4) Obligațiile de confidențialitate rămân valabile pe întreaga durată a Acordului și timp de 5 (cinci) ani de la încetarea acestuia.</p>
-              </div>
-
-              <!-- Page Footer -->
-              <div class="page-footer">
-                <span class="page-footer-right">Pagina 5 din 9</span>
-              </div>
+            <div class="a4-sheet ro-a4-sheet" id="docSheet5">
+              <img src="/ro/pages/contract_page_5.png" alt="Pagina 5">
+              
+            </div>
+            <div class="page-footer">
+              <span class="page-footer-right">Pagina 5 din 14</span>
             </div>
           </div>
+    
 
+          
           <!-- Divider -->
           <div class="page-gap-divider">
             <span class="gap-line"></span>
             <span class="gap-badge">● PREVIZUALIZARE PAGINA 6 ●</span>
             <span class="gap-line"></span>
           </div>
-
-          <!-- ===================================================================
-               PAGINA 6: VIII. PENALITĂȚI ȘI COMPENSAȚII & IX. COMUNICAREA ÎNTRE PĂRȚI
-               =================================================================== -->
+        
           <div class="doc-page-card" id="pageCard6">
             <div class="page-top-tab">
-              <span class="page-tab-badge">PAGINA 6 DIN 9 • ACORD-CADRU</span>
+              <span class="page-tab-badge">PAGINA 6 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet" id="docSheet6">
-              <div class="page-content-area">
-                <h2 class="exact-chapter-title">VIII. PENALITĂȚI ȘI COMPENSAȚII</h2>
+            <div class="a4-sheet ro-a4-sheet" id="docSheet6">
+              <img src="/ro/pages/contract_page_6.png" alt="Pagina 6">
+              
+              <!-- Live Overlay Page 6 -->
+              <div class="live-fields-overlay">
+                <!-- Art. 4 EN Bank -->
+                <div style="position: absolute; left: 12.85%; top: 35.5%; width: 36.7%; height: 4.5%; background: #ffffff; font-family: 'Calibri', 'Inter', sans-serif; font-size: 10.5px; line-height: 1.35; color: #000000; z-index: 10;">
+                  • Bank/Payment institution: <strong><span class="live-field" data-field="bankName">..................................................</span></strong><br>• IBAN: <strong><span class="live-field" data-field="bankIban">......................................................................</span></strong>
+                </div>
+                <!-- Art. 4 RO Bank -->
+                <div style="position: absolute; left: 50.72%; top: 32.0%; width: 39.47%; height: 4.5%; background: #ffffff; font-family: 'Calibri', 'Inter', sans-serif; font-size: 10.5px; line-height: 1.35; color: #000000; z-index: 10;">
+                  • Bancă/Instituție de plată: <strong><span class="live-field" data-field="bankName">..................................................</span></strong><br>• IBAN: <strong><span class="live-field" data-field="bankIban">......................................................................</span></strong>
+                </div>
 
-                <p class="exact-p"><strong>Art. 11.</strong> În caz de culpă în executarea obligațiilor contractuale, Partea vinovată datorează repararea integrală a prejudiciului direct cauzat celeilalte Părți.</p>
-                <p class="exact-p"><strong>Art. 12.</strong> Răspunderea Furnizorului este limitată conform legii și nu acoperă pierderi colaterale, profit nerealizat sau întreruperi de afaceri generate de factori externi.</p>
-
-                <h2 class="exact-chapter-title">IX. COMUNICAREA ÎNTRE PĂRȚI</h2>
-
-                <p class="exact-p"><strong>Art. 13.</strong> (1) Pentru corespondență și notificări oficiale, Părțile utilizează următoarele date de contact:</p>
-                
-                <p class="exact-p"><strong>Pentru Furnizor:</strong><br>Adresă: Sofia, Bulgaria, Blvd. Hristo Smirnenski 78, et. 4<br>E-mail: sales@irisbgsf.com<br>Telefon: +359 889 209 055</p>
-                
-                <p class="exact-p"><strong>Pentru Comerciant:</strong><br>Adresă: <strong><span class="live-field" data-field="contactAddress">......................................................................</span></strong><br>E-mail: <strong><span class="live-field" data-field="contactEmail">..................................................</span></strong><br>Telefon: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong></p>
-
-                <p class="exact-p">(2) Notificările transmise pe cale electronică sunt considerate recepționate în prima zi lucrătoare de după expediere.</p>
-                <p class="exact-p">(3) Orice modificare a datelor de corespondență va fi notificată celeilalte Părți în termen de 3 (trei) zile lucrătoare.</p>
+                <!-- Art. 5 EN Rep -->
+                <div style="position: absolute; left: 12.85%; top: 51.0%; width: 36.7%; height: 9.8%; background: #ffffff; font-family: 'Calibri', 'Inter', sans-serif; font-size: 10.5px; line-height: 1.35; color: #000000; z-index: 10;">
+                  Name: <strong><span class="live-field" data-field="companyRepresentative">..................................................</span></strong><br>Email: <strong><span class="live-field" data-field="contactEmail">..................................................</span></strong><br>CNP: <strong><span class="live-field" data-field="companyRepresentativePin">..............................</span></strong><br>Phone Number: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong><br>Authorized location / website: <strong><span class="live-field" data-field="merchantWebsite">..................................................</span></strong>
+                </div>
+                <!-- Art. 5 RO Rep -->
+                <div style="position: absolute; left: 50.72%; top: 49.0%; width: 39.47%; height: 9.8%; background: #ffffff; font-family: 'Calibri', 'Inter', sans-serif; font-size: 10.5px; line-height: 1.35; color: #000000; z-index: 10;">
+                  Nume: <strong><span class="live-field" data-field="companyRepresentative">..................................................</span></strong><br>Email: <strong><span class="live-field" data-field="contactEmail">..................................................</span></strong><br>CNP: <strong><span class="live-field" data-field="companyRepresentativePin">..............................</span></strong><br>Număr de telefon: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong><br>Locația autorizată / website: <strong><span class="live-field" data-field="merchantWebsite">..................................................</span></strong>
+                </div>
               </div>
-
-              <!-- Page Footer -->
-              <div class="page-footer">
-                <span class="page-footer-right">Pagina 6 din 9</span>
-              </div>
+        
+            </div>
+            <div class="page-footer">
+              <span class="page-footer-right">Pagina 6 din 14</span>
             </div>
           </div>
+    
 
+          
           <!-- Divider -->
           <div class="page-gap-divider">
             <span class="gap-line"></span>
             <span class="gap-badge">● PREVIZUALIZARE PAGINA 7 ●</span>
             <span class="gap-line"></span>
           </div>
-
-          <!-- ===================================================================
-               PAGINA 7: X. DURATA ACORDULUI. REZILIERE & XI. ÎNTREȚINEREA
-               =================================================================== -->
+        
           <div class="doc-page-card" id="pageCard7">
             <div class="page-top-tab">
-              <span class="page-tab-badge">PAGINA 7 DIN 9 • ACORD-CADRU</span>
+              <span class="page-tab-badge">PAGINA 7 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet" id="docSheet7">
-              <div class="page-content-area">
-                <h2 class="exact-chapter-title">X. DURATA ACORDULUI. MODIFICĂRI ȘI REZILIERE</h2>
-
-                <p class="exact-p"><strong>Art. 14.</strong> (1) Prezentul Acord intră în vigoare la data semnării și se încheie pe o durată nedeterminată.</p>
-                <p class="exact-p">(2) Oricare dintre Părți poate denunța Acordul cu un preaviz scris de 30 (treizeci) de zile calendaristice.</p>
-                <p class="exact-p">(3) În caz de neîndeplinire culpabilă a obligațiilor esențiale, Partea lezată poate rezilia Acordul dacă încălcarea nu este remediată în termen de 10 zile de la somație.</p>
-                <p class="exact-p"><strong>Art. 15.</strong> Prezentul Acord nu impune o cotă minimă obligatorie privind numărul tranzacțiilor intermediate.</p>
-
-                <h2 class="exact-chapter-title">XI. ÎNTREȚINEREA</h2>
-
-                <p class="exact-p"><strong>Art. 16.</strong> (1) Furnizorul asigură suportul tehnic pentru buna funcționare a Produsului și Serviciilor, cu o țintă de disponibilitate de 95% lunar.</p>
-                <p class="exact-p">(2) Furnizorul actualizează componentele software și API conform standardelor Open Banking aplicabile.</p>
-                <p class="exact-p">(3) În eventualitatea unui incident de securitate, Furnizorul va notifica Comerciantul fără întârziere și va întreprinde acțiunile de remediere necesare.</p>
-              </div>
-
-              <!-- Page Footer -->
-              <div class="page-footer">
-                <span class="page-footer-right">Pagina 7 din 9</span>
-              </div>
+            <div class="a4-sheet ro-a4-sheet" id="docSheet7">
+              <img src="/ro/pages/contract_page_7.png" alt="Pagina 7">
+              
+            </div>
+            <div class="page-footer">
+              <span class="page-footer-right">Pagina 7 din 14</span>
             </div>
           </div>
+    
 
+          
           <!-- Divider -->
           <div class="page-gap-divider">
             <span class="gap-line"></span>
             <span class="gap-badge">● PREVIZUALIZARE PAGINA 8 ●</span>
             <span class="gap-line"></span>
           </div>
-
-          <!-- ===================================================================
-               PAGINA 8: XII. PREVEDERI SUPLIMENTARE
-               =================================================================== -->
+        
           <div class="doc-page-card" id="pageCard8">
             <div class="page-top-tab">
-              <span class="page-tab-badge">PAGINA 8 DIN 9 • ACORD-CADRU</span>
+              <span class="page-tab-badge">PAGINA 8 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet" id="docSheet8">
-              <div class="page-content-area">
-                <h2 class="exact-chapter-title">XII. PREVEDERI SUPLIMENTARE</h2>
-
-                <p class="exact-p"><strong>Art. 17.</strong> Nulitatea oricărei prevederi a prezentului Acord nu atrage nulitatea întregului Acord, restul dispozițiilor rămânând în vigoare.</p>
-                <p class="exact-p"><strong>Art. 18.</strong> Prezentul Acord poate fi amendat sau completat numai prin acordul scris al ambelor Părți.</p>
-                <p class="exact-p"><strong>Art. 19.</strong> Părțile acționează ca profesioniști independenți; Acordul nu creează o societate în participație, mandat comercial sau raport de subordonare.</p>
-                <p class="exact-p"><strong>Art. 20.</strong> (1) Comerciantul declară că a primit și acceptă „Termenii și Condițiile Generale ale IRIS Solutions AD pentru utilizarea produsului Terminal de plată”.</p>
-                <p class="exact-p">(2) Furnizorul poate aduce modificări Termenilor și Condițiilor Generale cu o notificare prealabilă de 30 de zile.</p>
-                <p class="exact-p"><strong>Art. 21.</strong> Prezentul Acord este supus și interpretat în conformitate cu legislația Republicii Bulgaria.</p>
-              </div>
-
-              <!-- Page Footer -->
-              <div class="page-footer">
-                <span class="page-footer-right">Pagina 8 din 9</span>
-              </div>
+            <div class="a4-sheet ro-a4-sheet" id="docSheet8">
+              <img src="/ro/pages/contract_page_8.png" alt="Pagina 8">
+              
+            </div>
+            <div class="page-footer">
+              <span class="page-footer-right">Pagina 8 din 14</span>
             </div>
           </div>
+    
 
+          
           <!-- Divider -->
           <div class="page-gap-divider">
             <span class="gap-line"></span>
             <span class="gap-badge">● PREVIZUALIZARE PAGINA 9 ●</span>
             <span class="gap-line"></span>
           </div>
-
-          <!-- ===================================================================
-               PAGINA 9: DISPUTE, SEMNĂTURI CONTRACT ȘI TERMENI GENERALI
-               =================================================================== -->
+        
           <div class="doc-page-card" id="pageCard9">
             <div class="page-top-tab">
-              <span class="page-tab-badge">PAGINA 9 DIN 9 • ACORD-CADRU ȘI SEMNĂTURI</span>
+              <span class="page-tab-badge">PAGINA 9 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet" id="docSheet9">
-              <div class="page-content-area">
-                <p class="exact-p"><strong>Art. 22.</strong> (1) Eventualele litigii apărute se vor soluționa pe cale amiabilă în termen de 7 (șapte) zile lucrătoare de la apariție.</p>
-                <p class="exact-p">(2) În lipsa unui acord amiabil, litigiile vor fi deduse spre judecată instanțelor competente din municipiul Sofia.</p>
-
-                <p class="exact-p" style="margin-top: 14px;">Prezentul Acord este întocmit și semnat electronic în două exemplare originale, câte unul pentru fiecare Parte.</p>
-                <p class="exact-p">Parte integrantă a prezentului Acord este: <strong>Anexa 1 – Servicii și Soluții, Taxe și Comisioane</strong>.</p>
-
-                <!-- Contract Signatures Grid -->
-                <div class="exact-signatures-grid mt-4" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 25px;">
-                  <div class="sig-side">
-                    <p style="font-weight: bold; margin-bottom: 8px;">Pentru Furnizor:</p>
-                    <div class="provider-sig-badge" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12px; color: #1E3A8A; font-weight: 600; margin-top: 6px;">
-                      <span>✓ [ Semnat electronic: IRIS Solutions AD ]</span>
-                    </div>
-                  </div>
-                  <div class="sig-side">
-                    <p style="font-weight: bold; margin-bottom: 8px;">Pentru Comerciant:</p>
-                    <div class="sig-slot-box contract-merchant-sig-slot" id="contractMerchantSigSlot" style="margin-top: 6px;">
-                      <span style="font-size: 11px; color: #94A3B8; font-style: italic;">[ Semnătura va apărea aici după aplicare ]</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Acceptance of General Terms -->
-                <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #E2E8F0;">
-                  <p class="exact-p"><strong>* Am primit o copie și sunt de acord că Termenii și Condițiile Generale ale IRIS Solutions AD privind utilizarea Produsului Terminal de plată se aplică în relațiile noastre.</strong></p>
-
-                  <div class="exact-signatures-grid mt-3" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 18px;">
-                    <div class="sig-side"></div>
-                    <div class="sig-side">
-                      <p style="font-weight: bold; margin-bottom: 8px;">Pentru Comerciant:</p>
-                      <div class="sig-slot-box contract-merchant-terms-sig-slot" id="contractMerchantTermsSigSlot" style="margin-top: 6px;">
-                        <span style="font-size: 11px; color: #94A3B8; font-style: italic;">[ Semnătura va apărea aici după aplicare ]</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Page Footer -->
-              <div class="page-footer">
-                <span class="page-footer-right">Pagina 9 din 9</span>
-              </div>
+            <div class="a4-sheet ro-a4-sheet" id="docSheet9">
+              <img src="/ro/pages/contract_page_9.png" alt="Pagina 9">
+              
+            </div>
+            <div class="page-footer">
+              <span class="page-footer-right">Pagina 9 din 14</span>
             </div>
           </div>
+    
 
-          <!-- Divider: Appendix -->
-          <div class="page-gap-divider appendix-page-divider">
+          
+          <!-- Divider -->
+          <div class="page-gap-divider">
             <span class="gap-line"></span>
-            <span class="gap-badge appendix-badge">● ANEXA NR. 1 • PAGINĂ SEPARATĂ (PAGINA 10) ●</span>
+            <span class="gap-badge">● PREVIZUALIZARE PAGINA 10 ●</span>
             <span class="gap-line"></span>
           </div>
+        
+          <div class="doc-page-card" id="pageCard10">
+            <div class="page-top-tab">
+              <span class="page-tab-badge">PAGINA 10 DIN 14 • ACORD-CADRU</span>
+            </div>
+            <div class="a4-sheet ro-a4-sheet" id="docSheet10">
+              <img src="/ro/pages/contract_page_10.png" alt="Pagina 10">
+              
+            </div>
+            <div class="page-footer">
+              <span class="page-footer-right">Pagina 10 din 14</span>
+            </div>
+          </div>
+    
+
+          
+          <!-- Divider -->
+          <div class="page-gap-divider">
+            <span class="gap-line"></span>
+            <span class="gap-badge">● PREVIZUALIZARE PAGINA 11 ●</span>
+            <span class="gap-line"></span>
+          </div>
+        
+          <div class="doc-page-card" id="pageCard11">
+            <div class="page-top-tab">
+              <span class="page-tab-badge">PAGINA 11 DIN 14 • ACORD-CADRU</span>
+            </div>
+            <div class="a4-sheet ro-a4-sheet" id="docSheet11">
+              <img src="/ro/pages/contract_page_11.png" alt="Pagina 11">
+              
+              <!-- Live Overlay Page 11 -->
+              <div class="live-fields-overlay">
+                <!-- EN Correspondence -->
+                <div style="position: absolute; left: 12.85%; top: 23.0%; width: 36.7%; height: 6.2%; background: #ffffff; font-family: 'Calibri', 'Inter', sans-serif; font-size: 10.5px; line-height: 1.35; color: #000000; z-index: 10;">
+                  Address: <strong><span class="live-field" data-field="contactAddress">......................................................................</span></strong><br>E-mail: <strong><span class="live-field" data-field="contactEmail">..................................................</span></strong><br>Telephone: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong>
+                </div>
+                <!-- RO Correspondence -->
+                <div style="position: absolute; left: 50.72%; top: 23.0%; width: 39.47%; height: 6.2%; background: #ffffff; font-family: 'Calibri', 'Inter', sans-serif; font-size: 10.5px; line-height: 1.35; color: #000000; z-index: 10;">
+                  Adresa: <strong><span class="live-field" data-field="contactAddress">......................................................................</span></strong><br>E-mail: <strong><span class="live-field" data-field="contactEmail">..................................................</span></strong><br>Telefon: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong>
+                </div>
+              </div>
+        
+            </div>
+            <div class="page-footer">
+              <span class="page-footer-right">Pagina 11 din 14</span>
+            </div>
+          </div>
+    
+
+          
+          <!-- Divider -->
+          <div class="page-gap-divider">
+            <span class="gap-line"></span>
+            <span class="gap-badge">● PREVIZUALIZARE PAGINA 12 ●</span>
+            <span class="gap-line"></span>
+          </div>
+        
+          <div class="doc-page-card" id="pageCard12">
+            <div class="page-top-tab">
+              <span class="page-tab-badge">PAGINA 12 DIN 14 • ACORD-CADRU</span>
+            </div>
+            <div class="a4-sheet ro-a4-sheet" id="docSheet12">
+              <img src="/ro/pages/contract_page_12.png" alt="Pagina 12">
+              
+            </div>
+            <div class="page-footer">
+              <span class="page-footer-right">Pagina 12 din 14</span>
+            </div>
+          </div>
+    
+
+          
+          <!-- Divider -->
+          <div class="page-gap-divider">
+            <span class="gap-line"></span>
+            <span class="gap-badge">● PREVIZUALIZARE PAGINA 13 ●</span>
+            <span class="gap-line"></span>
+          </div>
+        
+          <div class="doc-page-card" id="pageCard13">
+            <div class="page-top-tab">
+              <span class="page-tab-badge">PAGINA 13 DIN 14 • ACORD-CADRU</span>
+            </div>
+            <div class="a4-sheet ro-a4-sheet" id="docSheet13">
+              <img src="/ro/pages/contract_page_13.png" alt="Pagina 13">
+              
+            </div>
+            <div class="page-footer">
+              <span class="page-footer-right">Pagina 13 din 14</span>
+            </div>
+          </div>
+    
+
+          
+          <!-- Divider -->
+          <div class="page-gap-divider">
+            <span class="gap-line"></span>
+            <span class="gap-badge">● PREVIZUALIZARE PAGINA 14 ●</span>
+            <span class="gap-line"></span>
+          </div>
+        
+          <div class="doc-page-card" id="pageCard14">
+            <div class="page-top-tab">
+              <span class="page-tab-badge">PAGINA 14 DIN 14 • ACORD-CADRU ȘI SEMNĂTURI</span>
+            </div>
+            <div class="a4-sheet ro-a4-sheet" id="docSheet14">
+              <img src="/ro/pages/contract_page_14.png" alt="Pagina 14">
+              
+              <!-- Live Overlay Page 14 -->
+              <div class="live-fields-overlay">
+                <!-- Contract Signatures: For the Merchant -->
+                <div class="sig-slot-box" id="contractMerchantSigSlotEn" style="position: absolute; left: 12.85%; top: 67.2%; width: 22%; height: 4.8%; border: 1px dashed #94A3B8; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.92); z-index: 10; pointer-events: auto;">
+                  <span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ For the Merchant ]</span>
+                </div>
+                <div class="sig-slot-box contract-merchant-sig-slot" id="contractMerchantSigSlot" style="position: absolute; left: 50.72%; top: 65.5%; width: 24%; height: 4.8%; border: 1px dashed #94A3B8; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.92); z-index: 10; pointer-events: auto;">
+                  <span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ Pentru Comerciant ]</span>
+                </div>
+
+                <!-- General Terms Signatures: For the Merchant -->
+                <div class="sig-slot-box" id="contractMerchantTermsSigSlotEn" style="position: absolute; left: 12.85%; top: 83.0%; width: 22%; height: 4.8%; border: 1px dashed #94A3B8; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.92); z-index: 10; pointer-events: auto;">
+                  <span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ For the Merchant ]</span>
+                </div>
+                <div class="sig-slot-box contract-merchant-terms-sig-slot" id="contractMerchantTermsSigSlot" style="position: absolute; left: 50.72%; top: 81.5%; width: 24%; height: 4.8%; border: 1px dashed #94A3B8; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.92); z-index: 10; pointer-events: auto;">
+                  <span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ Pentru Comerciant ]</span>
+                </div>
+              </div>
+        
+            </div>
+            <div class="page-footer">
+              <span class="page-footer-right">Pagina 14 din 14</span>
+            </div>
+          </div>
+    
 
           <!-- ===================================================================
-               PAGINA 10: ANEXA 1 (TAXE ȘI COMISIOANE) - IDENTICĂ CU SCREENSHOT-UL
+               DIVIDER: ANEXA 1 (PAGINILE 15 - 16)
                =================================================================== -->
+          <div class="page-gap-divider appendix-page-divider">
+            <span class="gap-line"></span>
+            <span class="gap-badge appendix-badge">● ANEXA NR. 1 • PAGINĂ SEPARATĂ (PAGINILE 15 - 16) ●</span>
+            <span class="gap-line"></span>
+          </div>
+
+
+          <div class="doc-page-card appendix-page-card" id="pageCardAppendix1">
+            <div class="page-top-tab">
+              <span class="page-tab-badge appendix-tab-badge">ANEXA NR. 1 • PAGINA 1 DIN 2 (ENG)</span>
+            </div>
+            <div class="a4-sheet appendix-a4-sheet ro-a4-sheet" id="docSheetAppendix1">
+              <img src="/ro/pages/appendix_page_1.png" alt="Anexa 1 Pagina 1">
+              
+              <!-- Live Overlay Appendix Page 1 -->
+              <div class="live-fields-overlay">
+                <!-- Fee item 3 Commission EN -->
+                <div style="position: absolute; left: 9.8%; top: 50.8%; width: 80%; height: 3.5%; background: #ffffff; display: flex; align-items: center; font-family: 'Calibri', 'Inter', sans-serif; font-size: 12.5px; color: #000000; z-index: 10;">
+                  3. Payment initiation fee – <strong id="appCommissionDisplayEn" class="live-field" style="color: #1F3864; font-size: 13.5px; margin: 0 4px;">0.25%</strong> of the transaction value. The fee is due by the 10th of the month following the month of implementation.
+                </div>
+
+                <!-- Signature slot EN -->
+                <div class="sig-slot-box" id="appendixMerchantSigSlotEn" style="position: absolute; left: 64.2%; top: 74.8%; width: 25%; height: 4.8%; border: 1px dashed #94A3B8; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.92); z-index: 10; pointer-events: auto;">
+                  <span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ For the Merchant ]</span>
+                </div>
+              </div>
+            </div>
+            <div class="page-footer">
+              <span class="page-footer-right">Anexa 1 • Pagina 1 din 2</span>
+            </div>
+          </div>
+
+
+          <!-- Divider -->
+          <div class="page-gap-divider">
+            <span class="gap-line"></span>
+            <span class="gap-badge">● PREVIZUALIZARE ANEXA 1 • PAGINA 2 ●</span>
+            <span class="gap-line"></span>
+          </div>
+
           <div class="doc-page-card appendix-page-card" id="pageCardAppendix">
             <div class="page-top-tab">
-              <span class="page-tab-badge appendix-tab-badge">ANEXA NR. 1 • TAXE ȘI COMISIOANE</span>
+              <span class="page-tab-badge appendix-tab-badge">ANEXA NR. 1 • PAGINA 2 DIN 2 (RON)</span>
             </div>
-            <div class="a4-sheet appendix-a4-sheet" id="docSheetAppendix">
-              <div class="page-content-area">
-                
-                <div class="appendix-exact-head" style="text-align: center; margin-bottom: 24px;">
-                  <h2 class="exact-app-title" style="text-align: center; margin: 0 0 4px 0; font-family: 'Calibri', 'Inter', sans-serif; font-size: 16px; font-weight: bold;">Anexa 1</h2>
-                  <p class="exact-app-sub" style="text-align: center; margin: 4px 0; font-family: 'Calibri', 'Inter', sans-serif; font-size: 13.5px;">la</p>
-                  <h3 class="exact-app-contract-name" style="text-align: center; margin: 4px 0 24px 0; font-family: 'Calibri', 'Inter', sans-serif; font-size: 14.5px; font-weight: bold; line-height: 1.4;">ACORD-CADRU PENTRU FURNIZAREA SERVICIILOR DE INIȚIERE A PLĂȚII</h3>
+            <div class="a4-sheet appendix-a4-sheet ro-a4-sheet" id="docSheetAppendix">
+              <img src="/ro/pages/appendix_page_2.png" alt="Anexa 1 Pagina 2">
+              
+              <!-- Live Overlay Appendix Page 2 -->
+              <div class="live-fields-overlay">
+                <!-- Fee item 3 Commission RO -->
+                <div style="position: absolute; left: 9.8%; top: 31.8%; width: 80%; height: 3.5%; background: #ffffff; display: flex; align-items: center; font-family: 'Calibri', 'Inter', sans-serif; font-size: 12.5px; color: #000000; z-index: 10;">
+                  3. Taxă de inițiere a plății – <strong id="appCommissionDisplay" class="live-field" style="color: #1F3864; font-size: 13.5px; margin: 0 4px;">0.25%</strong> din valoarea tranzacției. Taxa se plătește până la data de 10 a lunii următoare lunii implementării.
                 </div>
 
-                <p class="exact-p app-p">Iris Solutions AD este o companie care oferă servicii fintech inovatoare. Compania este un furnizor de servicii de plată licențiat de Banca Națională a Bulgariei în temeiul articolului 4, punctele 7 și 8 din Legea privind serviciile de plată și decontare - servicii de inițiere a plăților și servicii de informare a contului..</p>
-
-                <h3 class="exact-section-sub app-sub" style="text-align: center; font-weight: bold; font-size: 14.5px; margin-top: 22px; margin-bottom: 6px;">SERVICII ȘI SOLUȚII</h3>
-                
-                <!-- TITLE WITH THE EXACT ORIGINAL ORANGE COLOR #ED7C31 -->
-                <h4 class="exact-section-sub-sub color-iris-orange" style="text-align: center; font-weight: bold; font-size: 15.5px; color: #ED7C31; margin-bottom: 20px;">Terminal de plată IRISPay</h4>
-
-                <p class="exact-p app-p">Aplicația software (IRISPay) este un terminal de plată care permite comerciantului să inițieze plăți către clienții săi, compania asigurând asistență și integrare cu bănci și instituții de plată înregistrate în Bulgaria, România, Grecia și alte țări..</p>
-
-                <div class="app-fees-list" style="margin: 24px 0;">
-                  <p class="exact-p app-fee-item" style="margin-bottom: 14px;"><strong>1. Taxă de integrare – 20 EUR.</strong> Taxa se datorează la semnarea contractului.</p>
-                  <p class="exact-p app-fee-item" style="margin-bottom: 14px;"><strong>2. Taxă lunară de întreținere – 5 EUR.</strong> Taxa se plătește la începutul lunii căreia i se aplică.</p>
-                  <p class="exact-p app-fee-item" style="margin-bottom: 14px;"><strong>3. Taxă de inițiere a plății – <strong id="appCommissionDisplay" class="live-field" style="color: #1F3864; font-size: 15px; font-weight: bold;">0.25%</strong> din valoarea tranzacției.</strong> Taxa se plătește până la data de 10 a lunii următoare lunii implementării.</p>
+                <!-- Signature slot RO -->
+                <div class="sig-slot-box appendix-merchant-sig-slot" id="appendixMerchantSigSlot" style="position: absolute; left: 64.2%; top: 55.8%; width: 25%; height: 4.8%; border: 1px dashed #94A3B8; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.92); z-index: 10; pointer-events: auto;">
+                  <span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ Pentru Comerciant ]</span>
                 </div>
-
-                <p class="exact-p" style="font-size: 13.5px; color: #334155; margin-top: 18px;">* Toate prețurile sunt fără TVA. Nu se datorează TVA pentru taxele de la punctul 3..</p>
-
-                <!-- Appendix Signatures -->
-                <div class="exact-signatures-grid appendix-sig-grid mt-5" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 45px;">
-                  <div class="sig-side">
-                    <p style="font-weight: bold; margin-bottom: 12px;">Pentru Furnizor:</p>
-                    <div class="provider-sig-badge" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12px; color: #1E3A8A; font-weight: 600;">
-                      <span>✓ [ Semnat electronic: IRIS Solutions AD ]</span>
-                    </div>
-                  </div>
-                  <div class="sig-side">
-                    <p style="font-weight: bold; margin-bottom: 12px;">Pentru Comerciant:</p>
-                    <div class="sig-slot-box appendix-merchant-sig-slot" id="appendixMerchantSigSlot">
-                      <span style="font-size: 11px; color: #94A3B8; font-style: italic;">[ Semnătura va apărea aici după aplicare ]</span>
-                    </div>
-                  </div>
-                </div>
-
               </div>
-
-              <!-- Page Appendix Footer -->
-              <div class="page-footer">
-                <span class="page-footer-right">Pagina 1 din 1</span>
-              </div>
+            </div>
+            <div class="page-footer">
+              <span class="page-footer-right">Anexa 1 • Pagina 2 din 2</span>
             </div>
           </div>
 
