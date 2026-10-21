@@ -122,22 +122,8 @@
       display: block;
     }
   
-    .ro-a4-sheet {
-      padding: 0 !important;
-      display: block !important;
-      width: 820px !important;
-      height: 1160px !important;
-      position: relative !important;
-      overflow: hidden !important;
-      background: #ffffff !important;
-      box-shadow: 0 4px 22px rgba(15, 23, 42, 0.08) !important;
-    }
-    .ro-a4-sheet img {
-      width: 100% !important;
-      height: 100% !important;
-      display: block !important;
-      object-fit: contain !important;
-    }
+    
+    
     .live-fields-overlay {
       position: absolute;
       inset: 0;
@@ -145,6 +131,37 @@
     }
     .live-field.filled {
       color: #0F172A;
+      font-weight: 700;
+    }
+  
+    .doc-bilingual-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 36px;
+      font-family: 'Calibri', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 11.5px;
+      line-height: 1.44;
+      color: #000000;
+      text-align: justify;
+      text-justify: inter-word;
+    }
+    .doc-col-en {
+      color: #1e293b;
+    }
+    .doc-col-ro {
+      color: #000000;
+    }
+    .doc-col-en p, .doc-col-ro p {
+      margin-bottom: 9px;
+    }
+    .doc-chapter-h2 {
+      font-size: 12.5px;
+      font-weight: bold;
+      text-align: center;
+      margin: 12px 0 6px;
+      text-transform: uppercase;
+    }
+    .doc-p-bold {
       font-weight: 700;
     }
   </style>
@@ -478,384 +495,459 @@
       <div class="doc-viewport" id="docViewport">
         <div class="pages-stack" id="mainDocContainer">
 
-          
           <div class="doc-page-card" id="pageCard1">
             <div class="page-top-tab">
-              <span class="page-tab-badge">PAGINA 1 DIN 14 • ACORD-CADRU</span>
+              <span class="page-tab-badge">PAGINA 1 DIN 14 • TITLU</span>
             </div>
-            <div class="a4-sheet ro-a4-sheet" id="docSheet1">
-              <img src="/ro/pages/contract_page_1.png" alt="Pagina 1">
-              
-            </div>
-            <div class="page-footer">
-              <span class="page-footer-right">Pagina 1 din 14</span>
+            <div class="a4-sheet" id="docSheet1" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; min-height: 1080px; padding: 60px;">
+              <div class="page-content-area" style="display: flex; flex-direction: column; justify-content: center; align-items: center; flex: 1;">
+                <h1 style="font-family: 'Calibri', 'Inter', sans-serif; font-size: 20px; font-weight: bold; line-height: 1.4; text-transform: uppercase; margin-bottom: 40px; color: #0F172A; max-width: 650px;">
+                  FRAMEWORK AGREEMENT FOR THE<br>PROVISION OF PAYMENT INITIATION SERVICES
+                </h1>
+                <div style="width: 80px; height: 2px; background: #cbd5e1; margin-bottom: 40px;"></div>
+                <h2 style="font-family: 'Calibri', 'Inter', sans-serif; font-size: 20px; font-weight: bold; line-height: 1.4; text-transform: uppercase; color: #0F172A; max-width: 650px;">
+                  ACORD CADRU PENTRU<br>FURNIZORAREA SERVICIILOR DE INIȚIERE A PLĂȚII
+                </h2>
+              </div>
+              <div class="page-footer" style="width: 100%;">
+                <span class="page-footer-right">Pagina 1 din 14</span>
+              </div>
             </div>
           </div>
-    
 
-          
-          <!-- Divider -->
-          <div class="page-gap-divider">
-            <span class="gap-line"></span>
-            <span class="gap-badge">● PREVIZUALIZARE PAGINA 2 ●</span>
-            <span class="gap-line"></span>
-          </div>
-        
+
+          <div class="page-gap-divider"><span class="gap-line"></span><span class="gap-badge">● PREVIZUALIZARE PAGINA 2 ●</span><span class="gap-line"></span></div>
           <div class="doc-page-card" id="pageCard2">
             <div class="page-top-tab">
-              <span class="page-tab-badge">PAGINA 2 DIN 14 • ACORD-CADRU</span>
+              <span class="page-tab-badge">PAGINA 2 DIN 14 • СЪДЪРЖАНИЕ / CONTENT</span>
             </div>
-            <div class="a4-sheet ro-a4-sheet" id="docSheet2">
-              <img src="/ro/pages/contract_page_2.png" alt="Pagina 2">
-              
-            </div>
-            <div class="page-footer">
-              <span class="page-footer-right">Pagina 2 din 14</span>
-            </div>
-          </div>
-    
-
-          
-          <!-- Divider -->
-          <div class="page-gap-divider">
-            <span class="gap-line"></span>
-            <span class="gap-badge">● PREVIZUALIZARE PAGINA 3 ●</span>
-            <span class="gap-line"></span>
-          </div>
-        
-          <div class="doc-page-card" id="pageCard3">
-            <div class="page-top-tab">
-              <span class="page-tab-badge">PAGINA 3 DIN 14 • ACORD-CADRU</span>
-            </div>
-            <div class="a4-sheet ro-a4-sheet" id="docSheet3">
-              <img src="/ro/pages/contract_page_3.png" alt="Pagina 3">
-              
-              <!-- Live Overlay Page 3 -->
-              <div class="live-fields-overlay">
-                <!-- EN Date -->
-                <div style="position: absolute; left: 12.85%; top: 4.8%; width: 36.7%; height: 2.2%; background: #ffffff; display: flex; align-items: center; font-family: 'Calibri', 'Inter', sans-serif; font-size: 11px; color: #000000; z-index: 10;">
-                  Today <strong style="margin: 0 4px;"><span class="live-field" data-field="date">.........................</span></strong> 202..., in Bucharest, between:
-                </div>
-                <!-- RO Date -->
-                <div style="position: absolute; left: 50.72%; top: 4.8%; width: 39.47%; height: 2.2%; background: #ffffff; display: flex; align-items: center; font-family: 'Calibri', 'Inter', sans-serif; font-size: 11px; color: #000000; z-index: 10;">
-                  Astăzi <strong style="margin: 0 4px;"><span class="live-field" data-field="date">.........................</span></strong> 202..., în București, între:
-                </div>
-
-                <!-- EN Merchant Item 2 -->
-                <div style="position: absolute; left: 12.85%; top: 27.5%; width: 36.7%; height: 13.8%; background: #ffffff; padding: 1px 0; font-family: 'Calibri', 'Inter', sans-serif; font-size: 10.5px; line-height: 1.35; color: #000000; text-align: justify; z-index: 10;">
-                  2.  <strong><span class="live-field" data-field="companyName">.......................................................................</span></strong>, registered in the CRRNPLE at the Registry Agency, with UIC/CUI <strong><span class="live-field" data-field="companyEik">..................................</span></strong>, with headquarters and address of management: <strong><span class="live-field" data-field="companyAddress">.....................................................................................................................................................</span></strong>, represented by <strong><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></strong>, with PIN/CNP <strong><span class="live-field" data-field="companyRepresentativePin">..............................</span></strong>, telephone: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong>, hereby referred to as "Merchant", on the other hand
-                </div>
-
-                <!-- RO Merchant Item 2 -->
-                <div style="position: absolute; left: 50.72%; top: 27.5%; width: 39.47%; height: 13.8%; background: #ffffff; padding: 1px 0; font-family: 'Calibri', 'Inter', sans-serif; font-size: 10.5px; line-height: 1.35; color: #000000; text-align: justify; z-index: 10;">
-                  2.  <strong><span class="live-field" data-field="companyName">.......................................................................</span></strong>, înregistrat în CRRNPLE la Agenția Registrului, având CUI <strong><span class="live-field" data-field="companyEik">..................................</span></strong>, cu sediul social și adresa de conducere: <strong><span class="live-field" data-field="companyAddress">.....................................................................................................................................................</span></strong>, reprezentată de <strong><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></strong>, cu CNP <strong><span class="live-field" data-field="companyRepresentativePin">..............................</span></strong>, telefon: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong>, denumită în continuare „Comerciantul”, pe de altă parte
+            <div class="a4-sheet" id="docSheet2" style="min-height: 1080px; padding: 50px 65px;">
+              <div class="page-content-area">
+                <h2 style="font-family: 'Calibri', 'Inter', sans-serif; font-size: 15px; font-weight: bold; margin-bottom: 25px; text-transform: uppercase;">
+                  CONTENT: / СЪДЪРЖАНИЕ:
+                </h2>
+                <div style="font-family: 'Calibri', 'Inter', sans-serif; font-size: 12.5px; line-height: 1.8; color: #000000;">
+                  <div style="display:flex; justify-content:space-between; border-bottom: 1px dotted #cbd5e1; padding: 4px 0;"><span>I. DEFINITIONS / DEFINIȚII</span><span>4</span></div>
+                  <div style="display:flex; justify-content:space-between; border-bottom: 1px dotted #cbd5e1; padding: 4px 0;"><span>II. SUBJECT / OBIECTUL</span><span>5</span></div>
+                  <div style="display:flex; justify-content:space-between; border-bottom: 1px dotted #cbd5e1; padding: 4px 0;"><span>III. PROVISION OF SERVICES / FURNIZAREA DE SERVICII</span><span>6</span></div>
+                  <div style="display:flex; justify-content:space-between; border-bottom: 1px dotted #cbd5e1; padding: 4px 0;"><span>IV. RIGHTS AND OBLIGATIONS OF THE PARTIES / DREPTURI ȘI OBLIGAȚII ALE PĂRȚILOR</span><span>7</span></div>
+                  <div style="display:flex; justify-content:space-between; border-bottom: 1px dotted #cbd5e1; padding: 4px 0;"><span>V. FEES AND COMMISSIONS / TAXE ȘI COMISIOANE</span><span>9</span></div>
+                  <div style="display:flex; justify-content:space-between; border-bottom: 1px dotted #cbd5e1; padding: 4px 0;"><span>VI. INTELLECTUAL PROPERTY RIGHTS / DREPTURI DE PROPRIETATE INTELECTUALĂ</span><span>9</span></div>
+                  <div style="display:flex; justify-content:space-between; border-bottom: 1px dotted #cbd5e1; padding: 4px 0;"><span>VII. CONFIDENTIALITY / CONFIDENȚIALITATE</span><span>10</span></div>
+                  <div style="display:flex; justify-content:space-between; border-bottom: 1px dotted #cbd5e1; padding: 4px 0;"><span>VIII. PENALTIES AND COMPENSATION / PENALITĂȚI ȘI COMPENSAȚII</span><span>11</span></div>
+                  <div style="display:flex; justify-content:space-between; border-bottom: 1px dotted #cbd5e1; padding: 4px 0;"><span>IX. COMMUNICATION BETWEEN THE PARTIES / COMUNICAREA ÎNTRE PĂRȚI</span><span>11</span></div>
+                  <div style="display:flex; justify-content:space-between; border-bottom: 1px dotted #cbd5e1; padding: 4px 0;"><span>X. TERM OF THE AGREEMENT. CHANGES AND TERMINATION / DURATA ACORDULUI. MODIFICĂRI ȘI REZILIERE</span><span>12</span></div>
+                  <div style="display:flex; justify-content:space-between; border-bottom: 1px dotted #cbd5e1; padding: 4px 0;"><span>XI. MAINTENANCE / ÎNTREȚINEREA</span><span>13</span></div>
+                  <div style="display:flex; justify-content:space-between; border-bottom: 1px dotted #cbd5e1; padding: 4px 0;"><span>XII. ADDITIONAL PROVISIONS / PREVEDERI SUPLIMENTARE</span><span>13</span></div>
                 </div>
               </div>
-        
-            </div>
-            <div class="page-footer">
-              <span class="page-footer-right">Pagina 3 din 14</span>
+              <div class="page-footer">
+                <span class="page-footer-right">Pagina 2 din 14</span>
+              </div>
             </div>
           </div>
-    
 
-          
-          <!-- Divider -->
-          <div class="page-gap-divider">
-            <span class="gap-line"></span>
-            <span class="gap-badge">● PREVIZUALIZARE PAGINA 4 ●</span>
-            <span class="gap-line"></span>
+
+          <div class="page-gap-divider"><span class="gap-line"></span><span class="gap-badge">● PREVIZUALIZARE PAGINA 3 ●</span><span class="gap-line"></span></div>
+          <div class="doc-page-card" id="pageCard3">
+            <div class="page-top-tab">
+              <span class="page-tab-badge">PAGINA 3 DIN 14 • PREAMBUL</span>
+            </div>
+            <div class="a4-sheet" id="docSheet3" style="min-height: 1080px; padding: 48px 56px;">
+              <div class="page-content-area">
+                <div class="doc-bilingual-grid">
+                  <div class="doc-col-en">
+                    <p>Today <strong><span class="live-field" data-field="date">.........................</span></strong> 202..., in Bucharest, between:</p>
+                    <p>1. <strong>IRIS Solutions AD</strong>, registered in the Commercial register and register of non-profit legal entities (CRRNPLE) at the Registry Agency, with UIC 208455895, with headquarters, address of management: Sofia, Blvd. Hristo Smirnenski 78, fl. 4, hereby referred to as “The Provider”, on the one hand,</p>
+                    <p style="text-align: center; margin: 4px 0;">and</p>
+                    <p>2. <strong><span class="live-field" data-field="companyName">.......................................................................</span></strong>, registered in the CRRNPLE at the Registry Agency, with UIC/CUI <strong><span class="live-field" data-field="companyEik">..................................</span></strong>, with headquarters and address of management: <strong><span class="live-field" data-field="companyAddress">.....................................................................................................................................................</span></strong>, represented by <strong><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></strong>, with PIN <strong><span class="live-field" data-field="companyRepresentativePin">..............................</span></strong>, telephone: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong>, hereby referred to as “Merchant”, on the other hand</p>
+                    <p style="margin-top: 10px;">Together referred to as referred to as Parties,</p>
+                    <p><strong>Whereas:</strong></p>
+                    <p>a) The Provider is a licensed payment institution, which provides payment services under Art. 4, item 7 and item 8 of the Payment Services and Payment Systems Act (a service for initiating payments and a service for providing account information), according to Decision № 316 from 17.09.2019 of the BNB.</p>
+                    <p>b) The Provider provides software solution – Payment Terminal, through which the Merchant can use the services for payment initiation.</p>
+                    <p>c) The Merchant is a legal entity that provides a range of goods/services and is the beneficiary of the payment services.</p>
+                    <p>d) The Merchant wishes to use the services for payment initiation in order to provide an additional opportunity for his Customers to pay for the goods/services offered by the Merchant related to:</p>
+                    <p> online payments (e-shop);</p>
+                  </div>
+                  <div class="doc-col-ro">
+                    <p>Astăzi <strong><span class="live-field" data-field="date">.........................</span></strong> 202..., în București, între:</p>
+                    <p>1. <strong>IRIS Solutions AD</strong>, înregistrată la registrul Comerțului și registrul entităților legale non-profit (CRRNPLE) la Agenția Registrului, având CUI 208455895, cu sediul social, adresa de conducere: Sofia, Blvd. Hristo Smirnenski 78, fl. 4, denumită în continuare “Furnizorul”, pe de o parte,</p>
+                    <p style="text-align: center; margin: 4px 0;">și</p>
+                    <p>2. <strong><span class="live-field" data-field="companyName">.......................................................................</span></strong>, înregistrat în CRRNPLE la Agenția Registrului, având CUI <strong><span class="live-field" data-field="companyEik">..................................</span></strong>, cu sediul social și adresa de conducere: <strong><span class="live-field" data-field="companyAddress">.....................................................................................................................................................</span></strong>, reprezentată de <strong><span class="live-field" data-field="companyRepresentative">...................................................................................................</span></strong>, cu CNP <strong><span class="live-field" data-field="companyRepresentativePin">..............................</span></strong>, telefon: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong>, denumită în continuare “Comerciantul”, pe de altă parte</p>
+                    <p style="margin-top: 10px;">Denumite împreună Părțile, Întrucât:</p>
+                    <p>a) Furnizorul este o instituție de plată autorizată, care furnizează servicii de plată în temeiul art. 4, pct. 7 și pct. 8 din Legea privind serviciile de plată și sistemele de plată (un serviciu de inițiere a plăților și un serviciu de furnizare de informații despre cont), conform Hotărârii Nr. 316 din 17.09.2019 a BNB.</p>
+                    <p>b) Furnizorul furnizează soluția software – Terminal de plată, prin care Comerciantul poate utiliza serviciile pentru inițierea plății.</p>
+                    <p>c) Comerciantul este o entitate juridică care furnizează o gamă largă de bunuri/servicii și este beneficiarul serviciilor de plată.</p>
+                    <p>d) Comerciantul dorește să utilizeze serviciile pentru inițierea plății pentru a oferi Clienților săi o oportunitate suplimentară de a plăti pentru bunurile/serviciile oferite de Comerciant legate de:</p>
+                    <p> plăți online (magazin electronic);</p>
+                  </div>
+                </div>
+              </div>
+              <div class="page-footer">
+                <span class="page-footer-right">Pagina 3 din 14</span>
+              </div>
+            </div>
           </div>
-        
+
+
+          <div class="page-gap-divider"><span class="gap-line"></span><span class="gap-badge">● PREVIZUALIZARE PAGINA 4 ●</span><span class="gap-line"></span></div>
           <div class="doc-page-card" id="pageCard4">
             <div class="page-top-tab">
               <span class="page-tab-badge">PAGINA 4 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet ro-a4-sheet" id="docSheet4">
-              <img src="/ro/pages/contract_page_4.png" alt="Pagina 4">
-              
-            </div>
-            <div class="page-footer">
-              <span class="page-footer-right">Pagina 4 din 14</span>
+            <div class="a4-sheet" id="docSheet4" style="min-height: 1080px; padding: 48px 56px;">
+              <div class="page-content-area">
+                <div class="doc-bilingual-grid">
+                  <div class="doc-col-en">
+                    <p>e) The Parties wish to negotiate their relations in relation to the above, It was concluded the following Agreement for use of the services of payment initiation (Agreement), regarding the following:</p>
+<p>I. DEFINITIONS Art. 1. (1) For the purposes of this Agreement, the terms listed below shall have the following meaning, unless the context requires otherwise: - "Services" means the Payment initiation service within the meaning of Art. 4, item 7 of the PSPSA and Account information service, within the meaning of Art. 4, item 8 of the PSPSA. - "Payment initiation service" is an electronic payment service, in which at the request of the Merchant (with the explicit consent of the Customer, realized as per the implemented procedure of the payment service provider to service the Customer’s accounts) a payment is initiated (a payment order is generated and executed) from the Customer’s account in a bank/payment institution to the Мerchant's bank/payment account; - "Account information service" is an electronic payment service in which the Merchant receives information on the balances and movements on the payment accounts opened by him in banks/payment institutions; "Product" or “Payment terminal” is a software solution provided by the Provider, through which the Merchant can initiate payments to his Customers. "Customer" is any natural or legal person who wishes to pay through the technology realized by the Payment terminal for goods/services of the Merchant. (2) Unless the context suggests otherwise, the words used in singular also mean the plural form</p>
+                  </div>
+                  <div class="doc-col-ro">
+                    <p>e) Părțile doresc să-și negocieze relațiile în legătură cu cele de mai sus, S-a încheiat următorul Acord de utilizare a serviciilor de inițiere a plății (Acord), cu privire la următoarele:</p>
+<p>I. DEFINIȚII Art. 1. (1) În sensul prezentului Acord, termenii enumerați mai jos vor avea următorul înțeles, cu excepția cazului în care contextul cere altfel: - „Servicii” înseamnă serviciul de inițiere a plăților în sensul art. 4, pct. 7 din Serviciul PSPSA și de Informare cu privire la cont, în sensul art. 4, pct. 8 din PSPSA. - „Serviciul de inițiere a plății” este un serviciu de plată electronică, în care la solicitarea Comerciantului (cu acordul explicit al Clientului, realizat conform procedurii implementate de furnizorul de servicii de plată pentru deservirea conturilor Clientului) se inițiază o plată ( se generează și se execută un ordin de plată) din contul Clientului într-o bancă/instituție de plată către banca/contul de plată al Comerciantului; - „Serviciul de informare cu privire la cont” este un serviciu de plată electronică în care Comerciantul primește informații despre soldurile și mișcările din conturile de plăți deschise de acesta în bănci/instituții de plată; „Produsul” sau „Terminalul de plată” este o soluție software furnizată de Furnizor, prin care Comerciantul poate iniția plăți către Clienții săi. „Client” este orice persoană fizică sau juridică ce dorește să plătească prin tehnologia realizată de Terminalul de Plată pentru bunuri/servicii ale Comerciantului.</p>
+<p>(2) Cu excepția cazului în care contextul sugerează altfel, cuvintele folosite la singular înseamnă și</p>
+                  </div>
+                </div>
+              </div>
+              <div class="page-footer">
+                <span class="page-footer-right">Pagina 4 din 14</span>
+              </div>
             </div>
           </div>
     
 
-          
-          <!-- Divider -->
-          <div class="page-gap-divider">
-            <span class="gap-line"></span>
-            <span class="gap-badge">● PREVIZUALIZARE PAGINA 5 ●</span>
-            <span class="gap-line"></span>
-          </div>
-        
+          <div class="page-gap-divider"><span class="gap-line"></span><span class="gap-badge">● PREVIZUALIZARE PAGINA 5 ●</span><span class="gap-line"></span></div>
           <div class="doc-page-card" id="pageCard5">
             <div class="page-top-tab">
               <span class="page-tab-badge">PAGINA 5 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet ro-a4-sheet" id="docSheet5">
-              <img src="/ro/pages/contract_page_5.png" alt="Pagina 5">
-              
-            </div>
-            <div class="page-footer">
-              <span class="page-footer-right">Pagina 5 din 14</span>
+            <div class="a4-sheet" id="docSheet5" style="min-height: 1080px; padding: 48px 56px;">
+              <div class="page-content-area">
+                <div class="doc-bilingual-grid">
+                  <div class="doc-col-en">
+                    <p>of these words, and the words used in plural form, mean the same words in singular form.</p>
+<div class="doc-chapter-h2">II. SUBJECT</div>
+<p>Art. 2. (1) The following Agreement regulates the provision of the Services through the Products. (2) The Merchant’s use of the Account information service for one or more payment accounts, registered at one or more payment service providers includes: a) Information on the list of the payment accounts; b) Information on the balances of the payment accounts; c) Details and movements on the payment accounts. (3) Payments between the Customers and the Merchant will be made through the Products after a successful registration and identification of the Merchant and integration with Provider’s payment system, depending on whether it is paid in online/at land based store or by document / invoice. (4) The Provider is a payment intermediary, but he has is not a part of the  legal relationship between the Merchant and its clients, related to the business activities carried out by the Merchant. The Provider is  not liable for abuses and harmful actions performed by the Customers, as well as for errors or problems on the part of the banks/payment institutions servicing the respective accounts of the Merchant and/or the Customers.</p>
+<p>III. PROVISION OF SERVICES Art. 3. (1) The provision of the Account information service is performed in accordance with the standards implemented by the account service provider(s), whose client is the Merchant. (2) Payment through the Payment initiation service is related to the execution of payment</p>
+                  </div>
+                  <div class="doc-col-ro">
+                    <p>forma de plural a acestor cuvinte, iar cuvintele folosite la forma plural înseamnă aceleași cuvinte la singular.</p>
+<p>II OBIECTUL</p>
+<p>Art. 2. (1) Următorul Acord reglementează furnizarea Serviciilor prin Produse. (2) Utilizarea de către Comerciant a serviciului de informații despre cont pentru unul sau mai multe conturi de plată, înregistrate la unul sau mai mulți furnizori de servicii de plată include: a) Informații privind lista conturilor de plăți; b) Informații privind soldurile conturilor de plăți; c) Detalii și mișcări asupra conturilor de plăți. (3) Plățile între Clienți și Comerciant se vor face prin Produse după înregistrarea și identificarea cu succes a Comerciantului și integrarea cu sistemul de plată al Furnizorului, în funcție de faptul că se plătește în magazin online/fizic sau prin document/factură. (4) Furnizorul este un intermediar de plată, dar nu face parte din raportul juridic dintre Comerciant și clienții săi, legat de activitățile comerciale desfășurate de Comerciant. Furnizorul nu este răspunzător pentru abuzurile și acțiunile vătămătoare efectuate de Clienți, precum și pentru erorile sau problemele din partea băncilor/instituțiilor de plată care deservesc conturile respective ale Comerciantului și/sau Clienților.</p>
+<p>III. FURNIZAREA DE SERVICII Art. 3. (1) Furnizarea serviciului de Informare despre cont se realizează în conformitate cu standardele implementate de furnizorul (furnizorii) de servicii ai contului, al cărui client este Comerciantul. (2) Plata prin serviciul de inițiere a plăților este legată de executarea tranzacțiilor de plată către un</p>
+                  </div>
+                </div>
+              </div>
+              <div class="page-footer">
+                <span class="page-footer-right">Pagina 5 din 14</span>
+              </div>
             </div>
           </div>
     
 
-          
-          <!-- Divider -->
-          <div class="page-gap-divider">
-            <span class="gap-line"></span>
-            <span class="gap-badge">● PREVIZUALIZARE PAGINA 6 ●</span>
-            <span class="gap-line"></span>
-          </div>
-        
+          <div class="page-gap-divider"><span class="gap-line"></span><span class="gap-badge">● PREVIZUALIZARE PAGINA 6 ●</span><span class="gap-line"></span></div>
           <div class="doc-page-card" id="pageCard6">
             <div class="page-top-tab">
               <span class="page-tab-badge">PAGINA 6 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet ro-a4-sheet" id="docSheet6">
-              <img src="/ro/pages/contract_page_6.png" alt="Pagina 6">
-              
-              <!-- Live Overlay Page 6 -->
-              <div class="live-fields-overlay">
-                <!-- Art. 4 EN Bank -->
-                <div style="position: absolute; left: 12.85%; top: 35.5%; width: 36.7%; height: 4.5%; background: #ffffff; font-family: 'Calibri', 'Inter', sans-serif; font-size: 10.5px; line-height: 1.35; color: #000000; z-index: 10;">
-                  • Bank/Payment institution: <strong><span class="live-field" data-field="bankName">..................................................</span></strong><br>• IBAN: <strong><span class="live-field" data-field="bankIban">......................................................................</span></strong>
-                </div>
-                <!-- Art. 4 RO Bank -->
-                <div style="position: absolute; left: 50.72%; top: 32.0%; width: 39.47%; height: 4.5%; background: #ffffff; font-family: 'Calibri', 'Inter', sans-serif; font-size: 10.5px; line-height: 1.35; color: #000000; z-index: 10;">
-                  • Bancă/Instituție de plată: <strong><span class="live-field" data-field="bankName">..................................................</span></strong><br>• IBAN: <strong><span class="live-field" data-field="bankIban">......................................................................</span></strong>
-                </div>
-
-                <!-- Art. 5 EN Rep -->
-                <div style="position: absolute; left: 12.85%; top: 51.0%; width: 36.7%; height: 9.8%; background: #ffffff; font-family: 'Calibri', 'Inter', sans-serif; font-size: 10.5px; line-height: 1.35; color: #000000; z-index: 10;">
-                  Name: <strong><span class="live-field" data-field="companyRepresentative">..................................................</span></strong><br>Email: <strong><span class="live-field" data-field="contactEmail">..................................................</span></strong><br>CNP: <strong><span class="live-field" data-field="companyRepresentativePin">..............................</span></strong><br>Phone Number: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong><br>Authorized location / website: <strong><span class="live-field" data-field="merchantWebsite">..................................................</span></strong>
-                </div>
-                <!-- Art. 5 RO Rep -->
-                <div style="position: absolute; left: 50.72%; top: 49.0%; width: 39.47%; height: 9.8%; background: #ffffff; font-family: 'Calibri', 'Inter', sans-serif; font-size: 10.5px; line-height: 1.35; color: #000000; z-index: 10;">
-                  Nume: <strong><span class="live-field" data-field="companyRepresentative">..................................................</span></strong><br>Email: <strong><span class="live-field" data-field="contactEmail">..................................................</span></strong><br>CNP: <strong><span class="live-field" data-field="companyRepresentativePin">..............................</span></strong><br>Număr de telefon: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong><br>Locația autorizată / website: <strong><span class="live-field" data-field="merchantWebsite">..................................................</span></strong>
+            <div class="a4-sheet" id="docSheet6" style="min-height: 1080px; padding: 48px 56px;">
+              <div class="page-content-area">
+                <div class="doc-bilingual-grid">
+                  <div class="doc-col-en">
+                    <p>transactions to an account specified by the Merchant. The transfer operation itself is performed by the bank/payment institution which services the Customer's account, and the Provider is not liable for its implementation, as long as he has provided a timely proper payment order to the bank/payment institution. Art. 4. Unless otherwise is specified in the generated payment order, the initiated payments are executed immediately (according to the conditions of the respective bank/payment operator servicing the Customer’s account). Payments ordered by Customers to the Merchant are executed on the following account(s) of the Merchant:</p>
+<p>• Bank/Payment institution:… • IBAN: <strong><span class="live-field" data-field="bankIban">......................................................................</span></strong>… Art. 5. The Merchant expressly authorizes the below-mentioned employees or representatives, to carry out any activities necessary to implement, access and manage the payment services, according to the provisions of the Agreement: Name …………….. Email …………….. CNP ………………. Phone Number ………………….. Authorized location ……………..</p>
+<div class="doc-chapter-h2">IV. RIGHTS AND OBLIGATIONS OF THE</div>
+<p>PARTIES Art. 6. The Provider undertakes: (1) To provide access to the Product(s) and the related systems and, if necessary, to instruct the Merchant’s employees in order to ensure the use of the Services, as agreed in this Agreement; (2) to maintain its systems and the possibility for realization of the Services throughout the duration of the Agreement;</p>
+<p>(3) to ensure an opportunity for the use of the Product(s) “24/7” (twenty-four hours a day, seven days a week) by fixing any problems that</p>
+                  </div>
+                  <div class="doc-col-ro">
+                    <p>cont specificat de Comerciant. Operațiunea de transfer în sine este efectuată de banca/instituția de plată care deservește contul Clientului, iar Furnizorul nu este răspunzător pentru implementarea acesteia, atâta timp cât a furnizat băncii/instituției de plată în timp util un ordin de plată corespunzător. Art. 4. Dacă nu se specifică altfel în ordinul de plată generat, plățile inițiate sunt executate imediat (conform condițiilor băncii/operatorului de plată respectiv care deservește contul Clientului). Plățile comandate de Clienți către Comerciant sunt executate în următorul(oarele) cont(uri) ale Comerciantului:</p>
+<p>• Bancă/Instituție de plată: <strong><span class="live-field" data-field="bankName">..................................................</span></strong>… • IBAN: <strong><span class="live-field" data-field="bankIban">......................................................................</span></strong>… Art. 5. Comerciantul autorizează în mod expres angajații sau reprezentanții menționați mai jos, să desfășoare orice activități necesare implementării, accesării și administrării serviciilor de plată, conform prevederilor Acordului: Nume …………….. Email …………….. PIN ………………. Număr de telefon ………………….. Locația autorizată ……………..</p>
+<div class="doc-chapter-h2">IV. DREPTURI ȘI OBLIGAȚII ALE</div>
+<p>PĂRȚILOR Art. 6. Furnizorul se angajează: (1) Să ofere acces la Produsul(ele) și sistemele aferente și, dacă este necesar, să instruiască angajații Comerciantului pentru a asigura utilizarea Serviciilor, așa cum este convenit în prezentul Acord; (2) să mențină sistemele și posibilitatea de realizare a Serviciilor pe toată durata Acordului;</p>
+<p>(3) să asigure o oportunitate de utilizare a Produsului (produselor) „24/7” (douăzeci și patru de ore pe zi, șapte zile pe săptămână) prin remedierea oricăror</p>
+                  </div>
                 </div>
               </div>
-        
-            </div>
-            <div class="page-footer">
-              <span class="page-footer-right">Pagina 6 din 14</span>
+              <div class="page-footer">
+                <span class="page-footer-right">Pagina 6 din 14</span>
+              </div>
             </div>
           </div>
     
 
-          
-          <!-- Divider -->
-          <div class="page-gap-divider">
-            <span class="gap-line"></span>
-            <span class="gap-badge">● PREVIZUALIZARE PAGINA 7 ●</span>
-            <span class="gap-line"></span>
-          </div>
-        
+          <div class="page-gap-divider"><span class="gap-line"></span><span class="gap-badge">● PREVIZUALIZARE PAGINA 7 ●</span><span class="gap-line"></span></div>
           <div class="doc-page-card" id="pageCard7">
             <div class="page-top-tab">
               <span class="page-tab-badge">PAGINA 7 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet ro-a4-sheet" id="docSheet7">
-              <img src="/ro/pages/contract_page_7.png" alt="Pagina 7">
-              
-            </div>
-            <div class="page-footer">
-              <span class="page-footer-right">Pagina 7 din 14</span>
+            <div class="a4-sheet" id="docSheet7" style="min-height: 1080px; padding: 48px 56px;">
+              <div class="page-content-area">
+                <div class="doc-bilingual-grid">
+                  <div class="doc-col-en">
+                    <p>occur as agreed in the Agreement; (4) to perform the requested Services within the stipulated normative and the agreed in this Agreement terms, only based on the explicit consent of the user of the payment service;. For the avoidance of doubt, regarding the payment initiation service, the Provider does not perform the money transfers from/to the Merchant's account; (5) to notify the Merchant for any received payment dispute (complaint), together with the reasons for it and other related information. The notification should be provided to the Merchant as soon as possible; (6) to maintain the Product and the possibility to use the Services; (7) to provide instructions for the use and other instructions for working with the Product. (8) to access only the information from designated payment accounts and related payment transactions. Art. 7. The Merchant undertakes: (1) to provide the necessary identification data;</p>
+<p>(2) to perform installation/integration and/or other actions necessary for the usage of the Products; (3) to pay, agreed fees and commissions in accordance with Appendix № 1 to this Agreement;</p>
+<p>(4) to accept payments through the Payment initiation service for the entire period of the Agreement in his commercial site or on his website and/or platform;</p>
+<p>(5) to not charge the Customers with any fees or commissions for payment through the Payment initiation service;</p>
+<p>(6) to initiate payments in good faith, only for</p>
+                  </div>
+                  <div class="doc-col-ro">
+                    <p>probleme care apar conform Acordului; (4)  să presteze Serviciile solicitate în conformitate cu normativul stipulat și în termenii conveniți în prezentul Acord, numai pe baza consimțământului explicit al utilizatorului serviciului de plată; Pentru evitarea oricărui dubiu, cu privire la serviciul de inițiere a plății, Furnizorul nu efectuează transferurile de bani din/în contul Comerciantului;</p>
+<p>(5) să notifice Comerciantul pentru orice dispută (reclamație) de plată primită, împreună cu motivele acesteia și alte informații conexe. Notificarea ar trebui să fie furnizată Comerciantului cât de curând posibil,; (6) să mențină Produsul și posibilitatea de a utiliza Serviciile; (7) să furnizeze instrucțiuni de utilizare și alte instrucțiuni pentru lucrul cu Produsul. (8) să acceseze numai informațiile din conturile de plată desemnate și tranzacțiile de plată aferente. Art. 7. Comerciantul își asumă: (1) să furnizeze datele de identificare necesare;</p>
+<p>(2) să realizeze instalarea/integrarea și/sau alte acțiuni necesare pentru utilizarea Produselor; (3) să plătească taxele și comisioanele convenite în conformitate cu Anexa Nr. 1 a acestui Acord;</p>
+<p>(4) să accepte plățile prin serviciul de inițiere a plăților pentru întreaga perioadă a Acordului în locația sa comercială sau pe website-ul și/sau platforma sa;</p>
+<p>(5) să nu perceapă Clienților nicio taxă sau comision pentru plata prin serviciul de inițiere a plăților;</p>
+<p>(6) să inițieze plăți cu bună-credință, numai pentru bunurile sau serviciile efectiv solicitate/furnizate;</p>
+                  </div>
+                </div>
+              </div>
+              <div class="page-footer">
+                <span class="page-footer-right">Pagina 7 din 14</span>
+              </div>
             </div>
           </div>
     
 
-          
-          <!-- Divider -->
-          <div class="page-gap-divider">
-            <span class="gap-line"></span>
-            <span class="gap-badge">● PREVIZUALIZARE PAGINA 8 ●</span>
-            <span class="gap-line"></span>
-          </div>
-        
+          <div class="page-gap-divider"><span class="gap-line"></span><span class="gap-badge">● PREVIZUALIZARE PAGINA 8 ●</span><span class="gap-line"></span></div>
           <div class="doc-page-card" id="pageCard8">
             <div class="page-top-tab">
               <span class="page-tab-badge">PAGINA 8 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet ro-a4-sheet" id="docSheet8">
-              <img src="/ro/pages/contract_page_8.png" alt="Pagina 8">
-              
-            </div>
-            <div class="page-footer">
-              <span class="page-footer-right">Pagina 8 din 14</span>
+            <div class="a4-sheet" id="docSheet8" style="min-height: 1080px; padding: 48px 56px;">
+              <div class="page-content-area">
+                <div class="doc-bilingual-grid">
+                  <div class="doc-col-en">
+                    <p>actually requested/provided goods or services;</p>
+<p>(7) in case of abuse, unauthorized payments, in the provided by the law cases (and this Agreement) or in case a complaint or а refusal of the Customers is upheld, to refund the amounts paid by the Customer, unless the latter is not an obligation of the respective Payment service provider servicing the account under the PSPSPA; (8) to follow the guidelines and instructions of the Provider in connection with the use of the Products;</p>
+<p>(9) to provide to its Customers in a suitable way information about the possibility of making payments through the Payment terminal. The information under the previous sentence includes an announcement on the website and/or in the mobile application operated by the Merchant;</p>
+<p>(10) not to use, access or store any kind of data for purposes other than the provision of the service explicitly requested by the client.</p>
+<p>V. FEES AND COMMISSIONS Art. 8.  (1) The Provider charges fees and commissions in accordance with Appendix 1. (2) The Merchant will be invoiced monthly for the services provided in the past  month, based on the transaction report available in the merchant dashboard. (3) The invoices will be issued in Euro. (4) The payment will be made by the Merchant, according to the details stated on the invoice. (5) In case the respective bank/payment institution servicing the Customer’s or the Merchant’s account charges fees for execution of payment orders which are due by the recipient of the funds, the respective fees will be charged to the Merchant. For the avoidance of any doubt, the fees referred to in this paragraph are due to the respective bank/payment institution, and not to</p>
+                  </div>
+                  <div class="doc-col-ro">
+                    <p>(7) în caz de abuz, plăți neautorizate, în cazurile prevăzute de lege (și prezentul Acord) sau în cazul în care se admite o plângere sau un refuz al Clienților, rambursarea sumelor plătite de către Client, cu excepția cazului în care aceasta din urma nu este o obligație a furnizorului de servicii de plată respectiv care deservește contul în cadrul PSPSPA; (8) să urmeze indicațiile și instrucțiunile Furnizorului în legătură cu utilizarea Produselor;</p>
+<p>(9) să furnizeze Clienților săi într-un mod adecvat informaţii despre posibilitatea efectuării plăților prin Terminalul de Plată. Informațiile din teza anterioară includ un anunț pe site-ul web și/sau în aplicația mobilă operată de Comerciant;</p>
+<p>(10) să nu utilizeze, să nu acceseze și să nu stocheze niciun fel de date în alte scopuri decât prestarea serviciului solicitat în mod explicit de către client.</p>
+<p>V. TAXE ȘI COMISIOANE Art. 8. (1) Furnizorul percepe taxe și comisioane în conformitate cu Anexa 1. (2) Comerciantului i se va factura lunar pentru serviciile furnizate în ultima lună, pe baza raportului de tranzacție disponibil în tabloul de bord al comerciantului. (3) Facturile vor fi emise în Euro. (4) Plata se va face de către Comerciant, conform detaliilor menționate pe factura. (5) În cazul în care banca/instituția de plată respectivă care deservește contul Clientului sau Comerciantului percepe comisioane pentru executarea ordinelor de plată care sunt datorate de către destinatarul fondurilor, comisioanele respective vor fi percepute Comerciantului. Pentru evitarea oricărui dubiu, comisioanele la care se face referire în acest alineat se datorează băncii/instituției</p>
+                  </div>
+                </div>
+              </div>
+              <div class="page-footer">
+                <span class="page-footer-right">Pagina 8 din 14</span>
+              </div>
             </div>
           </div>
     
 
-          
-          <!-- Divider -->
-          <div class="page-gap-divider">
-            <span class="gap-line"></span>
-            <span class="gap-badge">● PREVIZUALIZARE PAGINA 9 ●</span>
-            <span class="gap-line"></span>
-          </div>
-        
+          <div class="page-gap-divider"><span class="gap-line"></span><span class="gap-badge">● PREVIZUALIZARE PAGINA 9 ●</span><span class="gap-line"></span></div>
           <div class="doc-page-card" id="pageCard9">
             <div class="page-top-tab">
               <span class="page-tab-badge">PAGINA 9 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet ro-a4-sheet" id="docSheet9">
-              <img src="/ro/pages/contract_page_9.png" alt="Pagina 9">
-              
-            </div>
-            <div class="page-footer">
-              <span class="page-footer-right">Pagina 9 din 14</span>
+            <div class="a4-sheet" id="docSheet9" style="min-height: 1080px; padding: 48px 56px;">
+              <div class="page-content-area">
+                <div class="doc-bilingual-grid">
+                  <div class="doc-col-en">
+                    <p>the Provider.</p>
+<p>VI. INTELLECTUAL PROPERTY RIGHTS Art. 9. (1) The Parties agree that this Agreement does not establish or transfer any intellectual property rights and/or licensing rights on assets and objects of intellectual property of currently existing objects, unless expressly stated otherwise. (2) For the duration of the Agreement, the Merchant receives a limited, non-exclusive, non- transferable right to use the Products and software solutions of the Provider, related to the provision of the Services. The Provider may provide mandatory instructions for the use of the Products and other of his software products to which the Merchant has access, as well as limit their use in case of culpable failure of the Merchant to fulfil the obligations under this Agreement. (3) The Provider is considered the creator and holder of the copyright on the Product(s) and any other software products created by them and specified in the Agreement. (4) The Provider have the right to use the logo and the name of the Merchant and to indicate him as its partner on it`s websites, software products/platforms and correspondence, without paying any fee.</p>
+<p>VII. CONFIDENTIALITY Art. 10. (1) The Parties agree to keep strictly confidential all clauses of this Agreement and any other non-public (confidential) information related to their joint work on the implementation of the Agreement, explicitly indicated by the respective party as such. Confidential information is considered to be data about Customers or their accounts and transfers. (2) No party is entitled to provide information to third parties related to the production and trade activities, as well as any other information obtained in the pre-contractual process, at the</p>
+                  </div>
+                  <div class="doc-col-ro">
+                    <p>de plată respective, și nu Furnizorului.</p>
+<div class="doc-chapter-h2">VI. DREPTURI DE PROPRIETATE</div>
+<p>INTELECTUALĂ Art. 9. (1) Părțile convin că prezentul Acord nu stabilește și nu transferă niciun drept de proprietate intelectuală și/sau drepturi de licențiere asupra activelor și obiectelor de proprietate intelectuală a obiectelor existente în prezent, cu excepția cazului în care se prevede în mod expres altfel. (2) Pe durata Acordului, Comerciantul primește un drept limitat, neexclusiv, netransferabil de a utiliza Produsele și soluțiile software ale Furnizorului, legate de furnizarea Serviciilor. Furnizorul poate furniza instrucțiuni obligatorii pentru utilizarea Produselor și a altor produse software ale sale la care Comerciantul are acces, precum și să limiteze utilizarea acestora în cazul neîndeplinirii din culpă de către Comerciant a obligațiilor din prezentul Acord. (3) Furnizorul este considerat creatorul și deținătorul drepturilor de autor asupra Produsului (Produselor) și a oricăror alte produse software create de acesta și specificate în Acord. (4) Furnizorul are dreptul de a utiliza logo-ul și numele Comerciantului și de a-l indica ca partener pe site-urile lor web, produsele/platformele software și corespondență, fără a plăti nicio taxă.</p>
+<p>VII. CONFIDENȚIALITATE Art. 10. (1) Părțile convin să păstreze strict confidențiale toate clauzele prezentului Acord și orice alte informații non-publice (confidențiale) legate de activitatea lor comună privind punerea în aplicare a Acordului, indicate în mod explicit de partea respectivă ca atare. Informațiile confidențiale sunt considerate date despre Clienți sau despre conturile și transferurile acestora. (2) Nicio parte nu este îndreptățită să furnizeze terților informații referitoare la activitățile de producție și comerț, precum și orice alte informații obținute în procesul precontractual, la momentul</p>
+                  </div>
+                </div>
+              </div>
+              <div class="page-footer">
+                <span class="page-footer-right">Pagina 9 din 14</span>
+              </div>
             </div>
           </div>
     
 
-          
-          <!-- Divider -->
-          <div class="page-gap-divider">
-            <span class="gap-line"></span>
-            <span class="gap-badge">● PREVIZUALIZARE PAGINA 10 ●</span>
-            <span class="gap-line"></span>
-          </div>
-        
+          <div class="page-gap-divider"><span class="gap-line"></span><span class="gap-badge">● PREVIZUALIZARE PAGINA 10 ●</span><span class="gap-line"></span></div>
           <div class="doc-page-card" id="pageCard10">
             <div class="page-top-tab">
               <span class="page-tab-badge">PAGINA 10 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet ro-a4-sheet" id="docSheet10">
-              <img src="/ro/pages/contract_page_10.png" alt="Pagina 10">
-              
-            </div>
-            <div class="page-footer">
-              <span class="page-footer-right">Pagina 10 din 14</span>
+            <div class="a4-sheet" id="docSheet10" style="min-height: 1080px; padding: 48px 56px;">
+              <div class="page-content-area">
+                <div class="doc-bilingual-grid">
+                  <div class="doc-col-en">
+                    <p>time of reaching agreement or in the course of the execution of the Agreement, designated by the disclosing party as a trade secret. (3) Any distribution of confidential information to third parties that: is not duly authorized by the disclosing party; is not required for the implementation of this Agreement; and has been made without prior commitment of third parties to protect the confidentiality, identical to the one under this article, is a breach of the Agreement and will be sanctioned in accordance with applicable law in the Republic of Bulgaria. An exception is made only for the presentation of information to competent state bodies and institutions, within the scope of their powers, in accordance with the duly established statutory procedure. (4) The personalized security elements of the user of the payment services are not accessible to other parties, with the exception of the user and the issuer of the personalized security elements, as well as that their transmission by the provider is carried out through safe and efficient channels.</p>
+<div class="doc-chapter-h2">VIII. PENALTIES AND COMPENSATION</div>
+<p>Art. 11. (1) Unless otherwise is agreed, in case of a delay in performance of a monetary obligation, the defaulting party owns the non-defaulting party a penalty of 0.5 % per day on the value of the delayed performance, but not more than 10 % of the value of the delayed performance. (2) The non-defaulting party may claim compensation for damages and lost profits in the general order, in case they exceed the amount of the penalties agreed in the Agreement.</p>
+<div class="doc-chapter-h2">IX. COMMUNICATION BETWEEN THE</div>
+<p>PARTIES</p>
+<p>Art. 12. The Agreement is concluded in Romanian and English languages. Unless the Parties expressly agree otherwise, all notifications and messages between them, their communication regarding the implementation, amendment or termination of the Agreement will be in   English language.</p>
+                  </div>
+                  <div class="doc-col-ro">
+                    <p>încheierii acordului sau în cursul executării Acordului, desemnat de partea care dezvăluie drept secret comercial. (3) Orice distribuire de informații confidențiale către terți care: nu este autorizată în mod corespunzător de partea care dezvăluie; nu este necesară pentru implementarea prezentului Acord; și a fost făcută fără angajamentul prealabil al terților de a proteja confidențialitatea, identică cu cea din acest articol, reprezintă o încălcare a Acordului și va fi sancționată în conformitate cu legislația aplicabilă în Republica Bulgaria. Se face excepție numai pentru prezentarea de informații către organele și instituțiile abilitate ale statului, în sfera atribuțiilor acestora, în conformitate cu procedura statutară stabilită în mod corespunzător. (4) Elementele de securitate personalizate ale utilizatorului serviciilor de plată nu sunt accesibile altor părți, cu excepția utilizatorului și a emitentului elementelor de securitate personalizate, precum și că transmiterea acestora de către furnizor se realizează prin și canale eficiente.</p>
+<p>VIII. PENALITĂȚI ȘI COMPENSAȚII Art. 11. (1) Cu excepția cazului în care se convine altfel, în cazul întârzierii în executarea unei obligații bănești, partea care se află în culpă datorează părții care nu se află în culpă o penalizare de 0,5 % pe zi din valoarea prestației întârziate, dar nu mai mult de 10 % din valoarea prestației întârziate. (2) Partea care nu se află în culpă poate pretinde despăgubiri pentru prejudicii și profituri pierdute în ordinea generală, în cazul în care acestea depășesc cuantumul penalităților convenite în Acord.</p>
+<div class="doc-chapter-h2">IX. COMUNICAREA ÎNTRE PĂRȚI</div>
+<p>Art. 12. Acordul este încheiat în limbile română și engleză. Cu excepția cazului în care părțile convin în mod expres altfel, toate notificările și mesajele dintre ele, comunicarea acestora cu privire la implementarea, modificarea sau rezilierea Acordului se va face în limba engleză.</p>
+                  </div>
+                </div>
+              </div>
+              <div class="page-footer">
+                <span class="page-footer-right">Pagina 10 din 14</span>
+              </div>
             </div>
           </div>
     
 
-          
-          <!-- Divider -->
-          <div class="page-gap-divider">
-            <span class="gap-line"></span>
-            <span class="gap-badge">● PREVIZUALIZARE PAGINA 11 ●</span>
-            <span class="gap-line"></span>
-          </div>
-        
+          <div class="page-gap-divider"><span class="gap-line"></span><span class="gap-badge">● PREVIZUALIZARE PAGINA 11 ●</span><span class="gap-line"></span></div>
           <div class="doc-page-card" id="pageCard11">
             <div class="page-top-tab">
               <span class="page-tab-badge">PAGINA 11 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet ro-a4-sheet" id="docSheet11">
-              <img src="/ro/pages/contract_page_11.png" alt="Pagina 11">
-              
-              <!-- Live Overlay Page 11 -->
-              <div class="live-fields-overlay">
-                <!-- EN Correspondence -->
-                <div style="position: absolute; left: 12.85%; top: 23.0%; width: 36.7%; height: 6.2%; background: #ffffff; font-family: 'Calibri', 'Inter', sans-serif; font-size: 10.5px; line-height: 1.35; color: #000000; z-index: 10;">
-                  Address: <strong><span class="live-field" data-field="contactAddress">......................................................................</span></strong><br>E-mail: <strong><span class="live-field" data-field="contactEmail">..................................................</span></strong><br>Telephone: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong>
-                </div>
-                <!-- RO Correspondence -->
-                <div style="position: absolute; left: 50.72%; top: 23.0%; width: 39.47%; height: 6.2%; background: #ffffff; font-family: 'Calibri', 'Inter', sans-serif; font-size: 10.5px; line-height: 1.35; color: #000000; z-index: 10;">
-                  Adresa: <strong><span class="live-field" data-field="contactAddress">......................................................................</span></strong><br>E-mail: <strong><span class="live-field" data-field="contactEmail">..................................................</span></strong><br>Telefon: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong>
+            <div class="a4-sheet" id="docSheet11" style="min-height: 1080px; padding: 48px 56px;">
+              <div class="page-content-area">
+                <div class="doc-bilingual-grid">
+                  <div class="doc-col-en">
+                    <p>Art. 13. (1) The Parties will use the following data for correspondence: For the  Provider: Address: <strong><span class="live-field" data-field="contactAddress">......................................................................</span></strong> Sofia, Bulgaria, Blvd. Hristo Smirnenski 78, fl. 4 E-mail: <strong><span class="live-field" data-field="contactEmail">..................................................</span></strong> sales@irisbgsf.com Telephone: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong> + 359 889 209 055 For the Merchant: Address: <strong><span class="live-field" data-field="contactAddress">......................................................................</span></strong> E-mail: <strong><span class="live-field" data-field="contactEmail">..................................................</span></strong> Telephone: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong> (2) In case of electronic correspondence, the information and documents are deemed to be received when they are received in the recipient’s information system. (3) In the event of change of the correspondence details, the respective party shall inform the other accordingly. Until the notification, the indicated data for correspondence is considered up-to-date, and all the notifications and messages to the party at its old address will be considered validly delivered and received.</p>
+<p>X. TERM OF THE AGREEMENT.</p>
+<p>CHANGES AND TERMINATION Art. 14. (1) This Agreement shall enter into force on the date of its conclusion by the Parties and is not limited in time. (2) The Agreement may be terminated in the following cases:</p>
+<p>- by mutual agreement of the Parties; - unilaterally, with 1-month notice by the Merchant or 2-month notice by the Provider; - unilaterally, without notice, by the non- defaulting party in case of systematic breach of the Agreement. A threefold breach of an obligation under the Agreement, committed within 12 calendar months, is considered systematic; - without delay, in case a normative change, judicial decision or other act does not allow the Provider to provide the Service(s) anymore.</p>
+                  </div>
+                  <div class="doc-col-ro">
+                    <p>Art. 13. (1) Părțile vor folosi datele următoarele pentru corespondență: Pentru  Furnizor: Adresa: <strong><span class="live-field" data-field="contactAddress">......................................................................</span></strong> Sofia, Bulgaria, Blvd. Hristo Smirnenski 78, fl. 4 E-mail: <strong><span class="live-field" data-field="contactEmail">..................................................</span></strong> sales@irisbgsf.com Telephone: + 359 889 209 055 Pentru Comerciant: Adresa: <strong><span class="live-field" data-field="contactAddress">......................................................................</span></strong> E-mail: <strong><span class="live-field" data-field="contactEmail">..................................................</span></strong> Telefon: <strong><span class="live-field" data-field="contactPhone">..............................</span></strong> (2) În cazul corespondenței electronice, informațiile și documentele se consideră primite atunci când sunt primite în sistemul informatic al destinatarului. (3) În cazul modificării detaliilor de corespondență, partea respectivă va informa cealaltă în consecință. Până la notificare, datele indicate pentru corespondență sunt considerate la zi, iar toate sesizările și mesajele către parte la vechea ei adresă vor fi considerate valabil livrate și primite.</p>
+<p>X. DURATA ACORDULUI. MODIFICĂRI ȘI</p>
+<p>REZILIERE Art. 14. (1) Prezentul Acord intră în vigoare la data încheierii lui de către Părți și nu este limitat în timp. (2) Acordul poate fi reziliat în următoarele cazuri:</p>
+<p>- prin acordul comun al Părților; - unilateral, cu un preaviz de 1 lună din partea Comerciantului sau cu un preaviz de 2 luni din partea Furnizorului; - în mod unilateral, fără preaviz, de către partea care nu este în culpă în cazul încălcării sistematice a Acordului. O încălcare triplă a unei obligații în temeiul Acordului, săvârșită în termen de 12 luni calendaristice, este considerată sistematică; - fără întârziere, în cazul în care o modificare normativă, o decizie judecătorească sau alt act nu permite Furnizorului să mai furnizeze Serviciul(ile).</p>
+                  </div>
                 </div>
               </div>
-        
-            </div>
-            <div class="page-footer">
-              <span class="page-footer-right">Pagina 11 din 14</span>
+              <div class="page-footer">
+                <span class="page-footer-right">Pagina 11 din 14</span>
+              </div>
             </div>
           </div>
     
 
-          
-          <!-- Divider -->
-          <div class="page-gap-divider">
-            <span class="gap-line"></span>
-            <span class="gap-badge">● PREVIZUALIZARE PAGINA 12 ●</span>
-            <span class="gap-line"></span>
-          </div>
-        
+          <div class="page-gap-divider"><span class="gap-line"></span><span class="gap-badge">● PREVIZUALIZARE PAGINA 12 ●</span><span class="gap-line"></span></div>
           <div class="doc-page-card" id="pageCard12">
             <div class="page-top-tab">
               <span class="page-tab-badge">PAGINA 12 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet ro-a4-sheet" id="docSheet12">
-              <img src="/ro/pages/contract_page_12.png" alt="Pagina 12">
-              
-            </div>
-            <div class="page-footer">
-              <span class="page-footer-right">Pagina 12 din 14</span>
+            <div class="a4-sheet" id="docSheet12" style="min-height: 1080px; padding: 48px 56px;">
+              <div class="page-content-area">
+                <div class="doc-bilingual-grid">
+                  <div class="doc-col-en">
+                    <p>(3) In the event of non-fulfilment of an obligation under this Agreement, the non-defaulting Party may rescind it, by giving the defaulting Party an adequate period of time to reform its conduct. In case the breach is not remedied within this period of time, the Agreement is deemed rescinded. (4) The Parties do not owe compensation and penalties upon termination or rescission of the Agreement, unless the termination/rescission is due to non-fulfilment of an undertaken obligation. Art. 15. The following Agreement does not impose an obligation regarding the number of payments made through the Service.</p>
+<p>XI. MAINTENANCE Art. 16. (1) The Provider provides the Merchant with support for the proper functioning of the Product and Services for the term and under the terms of this Agreement, by troubleshooting each problem in this regard, as follows: The  product and services must be available 95% of the time during each 24-hour period. (2) Versioning – The Provider must update all APIs to the current or previous version of published Open Banking Technical Standards. (3) Maintenance Releases – The Provider will provide Merchant, with the latest Maintenance Releases generally available.  The Provider warrants that no Maintenance Release will adversely affect the existing facilities or functions of the services but will not be responsible for any necessary integration or re- integration with the App following a Maintenance Release, or any incompatibility issues. The Client will install all Maintenance Releases as soon as reasonably practicable after receipt. (5) SECURITY BREACH - In the event the</p>
+                  </div>
+                  <div class="doc-col-ro">
+                    <p>(3) În cazul neîndeplinirii unei obligații în temeiul prezentului Acord, partea care nu este în culpă a obligațiilor poate să îl rezilieze, acordând părții care îl încalcă o perioadă de timp adecvată pentru a-și reforma conduita. În cazul în care încălcarea nu este remediată în acest interval de timp, Acordul se consideră reziliat. (4) Părțile nu datorează compensații și penalități la rezilierea sau terminarea Acordului, cu excepția cazului în care rezilierea/terminarea se datorează neîndeplinirii unei obligații asumate. Art. 15. Următorul Acord nu impune o obligație cu privire la numărul de plăți realizate prin intermediul Serviciului.</p>
+<p>XI. ÎNTREȚINEREA Art. 16. (1) Furnizorul oferă Comerciantului asistență pentru buna funcționare a Produsului și Serviciilor pe perioada și în condițiile prezentului Acord, prin depanarea fiecărei probleme în acest sens, după cum urmează. Produsul și serviciile trebuie să fie disponibile 95% din timp în fiecare perioadă de 24 de ore. (2) Versiune – Furnizorul trebuie să actualizeze toate API-urile la versiunea curentă sau anterioară a Standardelor tehnice Open Banking publicate. (3) Versiuni de întreținere – Furnizorul va furniza Comerciantului cele mai recente versiuni de întreținere disponibile în general.  Furnizorul garantează că nicio Versiune de întreținere nu va afecta negativ instalațiile sau funcțiile existente ale serviciilor, dar nu va fi responsabil pentru nicio integrare sau reintegrare necesară cu Aplicația ca urmare a unei Versiuni de întreținere sau orice probleme de incompatibilitate. Clientul va instala toate Versiunile de întreținere cât mai curând posibil după primire. (5) ÎNCĂLCAREA SECURITATII - În cazul în care Furnizorul confirmă orice încălcare a securității care</p>
+                  </div>
+                </div>
+              </div>
+              <div class="page-footer">
+                <span class="page-footer-right">Pagina 12 din 14</span>
+              </div>
             </div>
           </div>
     
 
-          
-          <!-- Divider -->
-          <div class="page-gap-divider">
-            <span class="gap-line"></span>
-            <span class="gap-badge">● PREVIZUALIZARE PAGINA 13 ●</span>
-            <span class="gap-line"></span>
-          </div>
-        
+          <div class="page-gap-divider"><span class="gap-line"></span><span class="gap-badge">● PREVIZUALIZARE PAGINA 13 ●</span><span class="gap-line"></span></div>
           <div class="doc-page-card" id="pageCard13">
             <div class="page-top-tab">
               <span class="page-tab-badge">PAGINA 13 DIN 14 • ACORD-CADRU</span>
             </div>
-            <div class="a4-sheet ro-a4-sheet" id="docSheet13">
-              <img src="/ro/pages/contract_page_13.png" alt="Pagina 13">
-              
-            </div>
-            <div class="page-footer">
-              <span class="page-footer-right">Pagina 13 din 14</span>
+            <div class="a4-sheet" id="docSheet13" style="min-height: 1080px; padding: 48px 56px;">
+              <div class="page-content-area">
+                <div class="doc-bilingual-grid">
+                  <div class="doc-col-en">
+                    <p>Provider confirms any breach of security involving its facilities, networks or systems and any unauthorized disclosure of, or access to, Personal Data, the Provider will  (i)  without undue delay promptly notify the Merchant, of the Security  Breach;  and  (ii) provide all reasonable help for the Merchant to investigate and remedy the Security Breach.</p>
+<p>XII. ADDITIONAL PROVISIONS Art. 17. Any article, paragraph or item of the Agreement, or any other provision which is or becomes invalid, illegal or inapplicable will be removed and treated as such only to the extent of this invalidity, illegality or inapplicability, and will not affect or breach the other provisions. Art. 18. The following Agreement may be modified, amended or supplemented only with the written approval of the Parties. Art. 19. The content of the Agreement cannot be interpreted as formation or establishment of any other relationship between the Parties, different than that of independent contractors. Art. 20. (1) Upon signing of the Agreement, the Merchant shall receive a copy of the document “General Terms And Conditions Of Iris Solutions AD For The Use Of Payment Terminal Product ”, and agrees to fully comply to it.</p>
+<p>(2) The Provider has the right to change the General Terms and Conditions under para. 1, for which he has to send in advance a notification to the Merchant through the Product or the channels under Art. 12. In case the Merchant does not agree with the amended General Terms and Conditions, the Provider has the right to terminate unilaterally and without prior notice the Agreement, if the provision of the Services is impossible or significantly difficult without the acceptance of the updated General Terms and Conditions by the Merchant. (3) In case of discrepancy between what is agreed in the Agreement and the General Terms and Conditions under para. 1, the provisions of the Agreement shall prevail.</p>
+                  </div>
+                  <div class="doc-col-ro">
+                    <p>implică instalațiile, rețelele sau sistemele sale și orice dezvăluire neautorizată a datelor cu caracter personal sau accesul la acestea, Furnizorul (i) va notifica prompt Comerciantul, fără întârzieri nejustificate, despre încălcarea securității; și (ii) va furniza Comerciantului tot ajutorul rezonabil pentru a investiga și a remedia încălcarea securității.</p>
+<p>XII. PREVEDERI SUPLIMENTARE Art. 17. Orice articol, alineat sau element al Acordului sau orice altă prevedere care este sau devine invalidă, ilegală sau inaplicabilă va fi eliminată și tratată ca atare numai în măsura acestei invalidități, ilegalități sau inaplicabilități și nu va afecta sau încălca celelalte prevederi. Art. 18. Următorul Acord poate fi modificat, schimbat sau completat numai cu aprobarea scrisă a Părților. Art. 19. Conținutul Acordului nu poate fi interpretat ca formare sau stabilire a oricărei alte relații între Părți, diferită de cea a contractanților independenți. Art. 20. (1) La semnarea Acordului, Comerciantul va primi o copie a documentului “Termenii și condițiile generale ale Iris Solutions AD pentru utilizarea produsului terminal de plată” și este de acord sa se conformeze acestuia.</p>
+<p>(2) Furnizorul are dreptul de a modifica Termenii și Condițiile Generale conform alin. 1, pentru care trebuie să trimită în prealabil o notificare Comerciantului prin Produs sau canalele prevăzute la art. 12. În cazul în care Comerciantul nu este de acord cu Termenii și Condițiile Generale modificate, Furnizorul are dreptul de a rezilia unilateral și fără notificare prealabilă Acordul, dacă furnizarea Serviciilor este imposibilă sau semnificativ dificilă fără acceptarea Condițiilor și Termenilor Generali actualizați de către Comerciant. (3) În caz de neconcordanță între ceea ce este convenit în Acord și Termenii și Condițiile generale de la alin. 1, vor prevala prevederile Acordului.</p>
+                  </div>
+                </div>
+              </div>
+              <div class="page-footer">
+                <span class="page-footer-right">Pagina 13 din 14</span>
+              </div>
             </div>
           </div>
     
 
-          
-          <!-- Divider -->
-          <div class="page-gap-divider">
-            <span class="gap-line"></span>
-            <span class="gap-badge">● PREVIZUALIZARE PAGINA 14 ●</span>
-            <span class="gap-line"></span>
-          </div>
-        
+          <div class="page-gap-divider"><span class="gap-line"></span><span class="gap-badge">● PREVIZUALIZARE PAGINA 14 ●</span><span class="gap-line"></span></div>
           <div class="doc-page-card" id="pageCard14">
             <div class="page-top-tab">
               <span class="page-tab-badge">PAGINA 14 DIN 14 • ACORD-CADRU ȘI SEMNĂTURI</span>
             </div>
-            <div class="a4-sheet ro-a4-sheet" id="docSheet14">
-              <img src="/ro/pages/contract_page_14.png" alt="Pagina 14">
-              
-              <!-- Live Overlay Page 14 -->
-              <div class="live-fields-overlay">
-                <!-- Contract Signatures: For the Merchant -->
-                <div class="sig-slot-box" id="contractMerchantSigSlotEn" style="position: absolute; left: 12.85%; top: 67.2%; width: 22%; height: 4.8%; border: 1px dashed #94A3B8; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.92); z-index: 10; pointer-events: auto;">
-                  <span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ For the Merchant ]</span>
-                </div>
-                <div class="sig-slot-box contract-merchant-sig-slot" id="contractMerchantSigSlot" style="position: absolute; left: 50.72%; top: 65.5%; width: 24%; height: 4.8%; border: 1px dashed #94A3B8; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.92); z-index: 10; pointer-events: auto;">
-                  <span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ Pentru Comerciant ]</span>
-                </div>
+            <div class="a4-sheet" id="docSheet14" style="min-height: 1080px; padding: 48px 56px;">
+              <div class="page-content-area">
+                <div class="doc-bilingual-grid">
+                  <div class="doc-col-en">
+                    <p>Art. 21. The following Agreement will be governed by and interpreted in accordance with the Bulgarian law.</p>
+                    <p>Art. 22. (1) In the event of any dispute, raised claims, issues and differences, arising out of or in connection with the following Agreement, the Parties shall use reasonable efforts to resolve this disputes, claims, issues and differences. For this goal to be achieved, they will consult and negotiate together, with good will and understanding of the mutual interests, in order to reach a fair and impartial decision that satisfies the parties, within 7 (seven) working days as of the arising of the dispute.</p>
+                    <p>(2) In case of impossibility for an agreement to be reached, the disputes shall be referred for resolution by the competent Bulgarian courts with seat in the city of Sofia.</p>
+                    <p>The following Agreement is drawn up and signed in two identical copies, one for each of the Parties.</p>
+                    <p>An integral part of the Agreement is:<br>Annex 1<br>General terms for Payment terminals</p>
+                    
+                    <div style="margin-top: 25px;">
+                      <p><strong>For the Provider:</strong></p>
+                      <div style="display:inline-flex; align-items:center; gap:6px; padding:6px 10px; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:4px; font-size:11px; color:#1E3A8A; font-weight:600; margin: 4px 0 15px 0;">
+                        <span>✓ [ Signed: IRIS Solutions ]</span>
+                      </div>
+                      <p><strong>For the Merchant:</strong></p>
+                      <div class="sig-slot-box" id="contractMerchantSigSlotEn" style="width: 200px; height: 50px; border: 1px dashed #94A3B8; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #FAFAFA; margin-top: 4px;">
+                        <span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ For the Merchant ]</span>
+                      </div>
+                    </div>
 
-                <!-- General Terms Signatures: For the Merchant -->
-                <div class="sig-slot-box" id="contractMerchantTermsSigSlotEn" style="position: absolute; left: 12.85%; top: 83.0%; width: 22%; height: 4.8%; border: 1px dashed #94A3B8; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.92); z-index: 10; pointer-events: auto;">
-                  <span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ For the Merchant ]</span>
-                </div>
-                <div class="sig-slot-box contract-merchant-terms-sig-slot" id="contractMerchantTermsSigSlot" style="position: absolute; left: 50.72%; top: 81.5%; width: 24%; height: 4.8%; border: 1px dashed #94A3B8; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.92); z-index: 10; pointer-events: auto;">
-                  <span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ Pentru Comerciant ]</span>
+                    <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #E2E8F0;">
+                      <p><strong>* I have received a copy and I agree that the General Terms and Conditions of Iris Solutions AD regarding the use of the Payment terminal Product apply in our relations.</strong></p>
+                      <p style="margin-top: 10px;"><strong>For the Merchant:</strong></p>
+                      <div class="sig-slot-box" id="contractMerchantTermsSigSlotEn" style="width: 200px; height: 50px; border: 1px dashed #94A3B8; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #FAFAFA; margin-top: 4px;">
+                        <span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ For the Merchant ]</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="doc-col-ro">
+                    <p>Art. 21. Următorul Acord va fi guvernat și interpretat în conformitate cu legea bulgară.</p>
+                    <p>Art. 22. (1) În cazul oricărei dispute, pretenții ridicate, probleme și diferențe, care decurg din sau în legătură cu următorul Acord, Părțile vor depune eforturi rezonabile pentru a soluționa aceste dispute, pretenții, probleme și diferențe. Pentru atingerea acestui scop, se vor consulta și negocia împreună, cu bunăvoință și înțelegere a intereselor reciproce, pentru a ajunge la o decizie justă și imparțială care să satisfacă părțile, în termen de 7 (șapte) zile lucrătoare de la apariția disputei.</p>
+                    <p>(2) În cazul imposibilității de a se ajunge la un acord, litigiile vor fi supuse soluționării de către instanțele bulgare competente cu sediul în orașul Sofia.</p>
+                    <p>Următorul Acord este întocmit și semnat în două exemplare identice, câte unul pentru fiecare dintre Părți.</p>
+                    <p>O parte integrantă a Acordului este:<br>Anexa 1<br>Condiții generale pentru Terminalele de plată</p>
+
+                    <div style="margin-top: 25px;">
+                      <p><strong>Pentru Furnizor:</strong></p>
+                      <div style="display:inline-flex; align-items:center; gap:6px; padding:6px 10px; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:4px; font-size:11px; color:#1E3A8A; font-weight:600; margin: 4px 0 15px 0;">
+                        <span>✓ [ Semnat electronic: IRIS Solutions ]</span>
+                      </div>
+                      <p><strong>Pentru Comerciant:</strong></p>
+                      <div class="sig-slot-box contract-merchant-sig-slot" id="contractMerchantSigSlot" style="width: 200px; height: 50px; border: 1px dashed #94A3B8; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #FAFAFA; margin-top: 4px;">
+                        <span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ Pentru Comerciant ]</span>
+                      </div>
+                    </div>
+
+                    <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #E2E8F0;">
+                      <p><strong>* Am primit o copie și sunt de acord că Termenii și condițiile generale ale Iris Solutions AD privind utilizarea Produsului Terminal de plată se aplică în relațiile noastre.</strong></p>
+                      <p style="margin-top: 10px;"><strong>Pentru Comerciant:</strong></p>
+                      <div class="sig-slot-box contract-merchant-terms-sig-slot" id="contractMerchantTermsSigSlot" style="width: 200px; height: 50px; border: 1px dashed #94A3B8; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #FAFAFA; margin-top: 4px;">
+                        <span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ Pentru Comerciant ]</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-        
-            </div>
-            <div class="page-footer">
-              <span class="page-footer-right">Pagina 14 din 14</span>
+              <div class="page-footer">
+                <span class="page-footer-right">Pagina 14 din 14</span>
+              </div>
             </div>
           </div>
-    
 
-          <!-- ===================================================================
-               DIVIDER: ANEXA 1 (PAGINILE 15 - 16)
-               =================================================================== -->
+
           <div class="page-gap-divider appendix-page-divider">
             <span class="gap-line"></span>
             <span class="gap-badge appendix-badge">● ANEXA NR. 1 • PAGINĂ SEPARATĂ (PAGINILE 15 - 16) ●</span>
@@ -867,57 +959,97 @@
             <div class="page-top-tab">
               <span class="page-tab-badge appendix-tab-badge">ANEXA NR. 1 • PAGINA 1 DIN 2 (ENG)</span>
             </div>
-            <div class="a4-sheet appendix-a4-sheet ro-a4-sheet" id="docSheetAppendix1">
-              <img src="/ro/pages/appendix_page_1.png" alt="Anexa 1 Pagina 1">
-              
-              <!-- Live Overlay Appendix Page 1 -->
-              <div class="live-fields-overlay">
-                <!-- Fee item 3 Commission EN -->
-                <div style="position: absolute; left: 9.8%; top: 50.8%; width: 80%; height: 3.5%; background: #ffffff; display: flex; align-items: center; font-family: 'Calibri', 'Inter', sans-serif; font-size: 12.5px; color: #000000; z-index: 10;">
-                  3. Payment initiation fee – <strong id="appCommissionDisplayEn" class="live-field" style="color: #1F3864; font-size: 13.5px; margin: 0 4px;">0.25%</strong> of the transaction value. The fee is due by the 10th of the month following the month of implementation.
+            <div class="a4-sheet appendix-a4-sheet" id="docSheetAppendix1" style="min-height: 1080px; padding: 52px 65px; font-family: 'Calibri', 'Inter', sans-serif;">
+              <div class="page-content-area">
+                <div style="text-align: center; margin-bottom: 24px;">
+                  <h2 style="font-size: 16px; font-weight: bold; margin: 0 0 4px 0;">Annex 1</h2>
+                  <p style="font-size: 13px; margin: 4px 0;">to</p>
+                  <h3 style="font-size: 14.5px; font-weight: bold; line-height: 1.4; margin: 4px 0 20px 0;">FRAMEWORK AGREEMENT FOR THE PROVISION OF PAYMENT INITIATION SERVICES</h3>
                 </div>
 
-                <!-- Signature slot EN -->
-                <div class="sig-slot-box" id="appendixMerchantSigSlotEn" style="position: absolute; left: 64.2%; top: 74.8%; width: 25%; height: 4.8%; border: 1px dashed #94A3B8; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.92); z-index: 10; pointer-events: auto;">
-                  <span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ For the Merchant ]</span>
+                <p style="font-size: 13px; line-height: 1.5; text-align: justify; margin-bottom: 16px;">Iris Solutions AD is a company for innovative fintech services. The company is a payment service provider licensed by the Bulgarian National Bank under Art. 4, items 7 and 8 of the Payment and Settlement Services Act – payment initiation services and account information services.</p>
+
+                <h3 style="text-align: center; font-size: 14px; font-weight: bold; margin: 20px 0 6px 0;">SERVICES AND SOLUTIONS</h3>
+                <h4 style="text-align: center; font-size: 15px; font-weight: bold; color: #ED7C31; margin-bottom: 18px;">Payment terminal IRISPay</h4>
+
+                <p style="font-size: 13px; line-height: 1.5; text-align: justify; margin-bottom: 20px;">The software application (IRISPay) is a payment terminal allowing the merchant to initiate payment to their customers, with the company providing support and integration of banks and payment institutions registered in Bulgaria, Romania and Greece and others.</p>
+
+                <div style="font-size: 13px; line-height: 1.6; margin-bottom: 20px;">
+                  <p style="margin-bottom: 10px;">• Integration fee – <strong>20 EUR</strong>. The fee is due upon signing the agreement.</p>
+                  <p style="margin-bottom: 10px;">• Monthly maintenance fee - <strong>5 EUR</strong>. The fee is due at the beginning of the month to which it applies.</p>
+                  <p style="margin-bottom: 10px;">• Payment initiation fee – <strong id="appCommissionDisplayEn" class="live-field" style="color: #1F3864; font-size: 14px;">0.25%</strong> of the transaction value. The fee is due by the 10th of the month following the month of implementation.</p>
+                </div>
+
+                <p style="font-size: 12px; color: #475569; margin-bottom: 45px;">* All prices are excluding VAT. No VAT is due for the fees under item 3.</p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px;">
+                  <div>
+                    <p style="font-weight: bold; margin-bottom: 8px;">For the Provider:</p>
+                    <div style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:4px; font-size:12px; color:#1E3A8A; font-weight:600;">
+                      <span>✓ [ Signed: IRIS Solutions ]</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p style="font-weight: bold; margin-bottom: 8px;">For the Merchant:</p>
+                    <div class="sig-slot-box" id="appendixMerchantSigSlotEn" style="width: 220px; height: 55px; border: 1px dashed #94A3B8; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #FAFAFA;">
+                      <span style="font-size: 11px; color: #94A3B8; font-style: italic;">[ For the Merchant ]</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="page-footer">
-              <span class="page-footer-right">Anexa 1 • Pagina 1 din 2</span>
+              <div class="page-footer">
+                <span class="page-footer-right">Anexa 1 • Pagina 1 din 2</span>
+              </div>
             </div>
           </div>
 
 
-          <!-- Divider -->
-          <div class="page-gap-divider">
-            <span class="gap-line"></span>
-            <span class="gap-badge">● PREVIZUALIZARE ANEXA 1 • PAGINA 2 ●</span>
-            <span class="gap-line"></span>
-          </div>
-
+          <div class="page-gap-divider"><span class="gap-line"></span><span class="gap-badge">● PREVIZUALIZARE ANEXA 1 • PAGINA 2 ●</span><span class="gap-line"></span></div>
           <div class="doc-page-card appendix-page-card" id="pageCardAppendix">
             <div class="page-top-tab">
               <span class="page-tab-badge appendix-tab-badge">ANEXA NR. 1 • PAGINA 2 DIN 2 (RON)</span>
             </div>
-            <div class="a4-sheet appendix-a4-sheet ro-a4-sheet" id="docSheetAppendix">
-              <img src="/ro/pages/appendix_page_2.png" alt="Anexa 1 Pagina 2">
-              
-              <!-- Live Overlay Appendix Page 2 -->
-              <div class="live-fields-overlay">
-                <!-- Fee item 3 Commission RO -->
-                <div style="position: absolute; left: 9.8%; top: 31.8%; width: 80%; height: 3.5%; background: #ffffff; display: flex; align-items: center; font-family: 'Calibri', 'Inter', sans-serif; font-size: 12.5px; color: #000000; z-index: 10;">
-                  3. Taxă de inițiere a plății – <strong id="appCommissionDisplay" class="live-field" style="color: #1F3864; font-size: 13.5px; margin: 0 4px;">0.25%</strong> din valoarea tranzacției. Taxa se plătește până la data de 10 a lunii următoare lunii implementării.
+            <div class="a4-sheet appendix-a4-sheet" id="docSheetAppendix" style="min-height: 1080px; padding: 52px 65px; font-family: 'Calibri', 'Inter', sans-serif;">
+              <div class="page-content-area">
+                <div style="text-align: center; margin-bottom: 24px;">
+                  <h2 style="font-size: 16px; font-weight: bold; margin: 0 0 4px 0;">Anexa 1</h2>
+                  <p style="font-size: 13px; margin: 4px 0;">la</p>
+                  <h3 style="font-size: 14.5px; font-weight: bold; line-height: 1.4; margin: 4px 0 20px 0;">ACORD-CADRU PENTRU FURNIZAREA SERVICIILOR DE INIȚIERE A PLĂȚII</h3>
                 </div>
 
-                <!-- Signature slot RO -->
-                <div class="sig-slot-box appendix-merchant-sig-slot" id="appendixMerchantSigSlot" style="position: absolute; left: 64.2%; top: 55.8%; width: 25%; height: 4.8%; border: 1px dashed #94A3B8; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.92); z-index: 10; pointer-events: auto;">
-                  <span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ Pentru Comerciant ]</span>
+                <p style="font-size: 13px; line-height: 1.5; text-align: justify; margin-bottom: 16px;">Iris Solutions AD este o companie care oferă servicii fintech inovatoare. Compania este un furnizor de servicii de plată licențiat de Banca Națională a Bulgariei în temeiul articolului 4, punctele 7 și 8 din Legea privind serviciile de plată și decontare - servicii de inițiere a plăților și servicii de informare a contului..</p>
+
+                <h3 style="text-align: center; font-size: 14px; font-weight: bold; margin: 20px 0 6px 0;">SERVICII ȘI SOLUȚII</h3>
+                <h4 style="text-align: center; font-size: 15px; font-weight: bold; color: #ED7C31; margin-bottom: 18px;">Terminal de plată IRISPay</h4>
+
+                <p style="font-size: 13px; line-height: 1.5; text-align: justify; margin-bottom: 20px;">Aplicația software (IRISPay) este un terminal de plată care permite comerciantului să inițieze plăți către clienții săi, compania asigurând asistență și integrare cu bănci și instituții de plată înregistrate în Bulgaria, România, Grecia și alte țări..</p>
+
+                <div style="font-size: 13px; line-height: 1.6; margin-bottom: 20px;">
+                  <p style="margin-bottom: 10px;">1. Taxă de integrare – <strong>20 EUR</strong>. Taxa se datorează la semnarea contractului.</p>
+                  <p style="margin-bottom: 10px;">2. Taxă lunară de întreținere - <strong>5 EUR</strong>. Taxa se plătește la începutul lunii căreia i se aplică.</p>
+                  <p style="margin-bottom: 10px;">3. Taxă de inițiere a plății – <strong id="appCommissionDisplay" class="live-field" style="color: #1F3864; font-size: 14px;">0.25%</strong> din valoarea tranzacției. Taxa se plătește până la data de 10 a lunii următoare lunii implementării.</p>
+                </div>
+
+                <p style="font-size: 12px; color: #475569; margin-bottom: 45px;">* Toate prețurile sunt fără TVA. Nu se datorează TVA pentru taxele de la punctul 3..</p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px;">
+                  <div>
+                    <p style="font-weight: bold; margin-bottom: 8px;">Pentru Furnizor:</p>
+                    <div style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:4px; font-size:12px; color:#1E3A8A; font-weight:600;">
+                      <span>✓ [ Semnat electronic: IRIS Solutions ]</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p style="font-weight: bold; margin-bottom: 8px;">Pentru Comerciant:</p>
+                    <div class="sig-slot-box appendix-merchant-sig-slot" id="appendixMerchantSigSlot" style="width: 220px; height: 55px; border: 1px dashed #94A3B8; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #FAFAFA;">
+                      <span style="font-size: 11px; color: #94A3B8; font-style: italic;">[ Pentru Comerciant ]</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="page-footer">
-              <span class="page-footer-right">Anexa 1 • Pagina 2 din 2</span>
+              <div class="page-footer">
+                <span class="page-footer-right">Anexa 1 • Pagina 2 din 2</span>
+              </div>
             </div>
           </div>
 
