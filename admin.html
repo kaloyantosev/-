@@ -891,7 +891,7 @@
       try {
         const res = await fetch('/api/admin?action=overview', { headers: getAuthHeaders() });
         if (res.status === 401 || res.status === 403) {
-          window.location.replace('/login');
+          showAdminLogin('Сесията е невалидна или изтекла. Моля, влезте с администраторски профил.');
           return;
         }
 
@@ -1228,8 +1228,6 @@
       }
     }
 
-    // Initial load
-    loadAdminOverview();
   </script>
 </body>
 </html>

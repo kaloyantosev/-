@@ -411,8 +411,8 @@ export default async function handler(req, res) {
       });
     }
 
-    // B. Check SALES credentials (sales@irisbgsf.com or sales / 1!2@3№4$)
-    const isSalesUser = (inputUser === VALID_SALES_EMAIL || inputUser === 'sales');
+    // B. Check SALES credentials (Strictly requires sales@irisbgsf.com / 1!2@3№4$)
+    const isSalesUser = (inputUser === VALID_SALES_EMAIL);
     const givenSalesHash = crypto.createHmac('sha256', SERVER_SALT).update(inputPass).digest('hex');
     const isSalesPassValid = crypto.timingSafeEqual(
       Buffer.from(givenSalesHash, 'utf-8'),

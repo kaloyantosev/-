@@ -267,10 +267,10 @@
       <div id="step1Wrapper">
         <form id="loginForm" autocomplete="off">
           <div class="form-group">
-            <label class="form-label" for="username">Имейл адрес (или потребител)</label>
+            <label class="form-label" for="username">Имейл адрес</label>
             <div class="input-wrapper">
               <input 
-                type="text" 
+                type="email" 
                 id="username" 
                 name="username" 
                 class="form-input" 
@@ -278,7 +278,7 @@
                 required 
                 autofocus 
                 spellcheck="false"
-                autocomplete="username"
+                autocomplete="email"
               >
             </div>
           </div>
@@ -453,11 +453,17 @@
       e.preventDefault();
       hideAlert();
 
-      const username = usernameInput.value.trim();
+      const username = usernameInput.value.trim().toLowerCase();
       const password = passwordInput.value;
 
       if (!username || !password) {
         showAlert('Моля, попълнете имейл и парола.');
+        return;
+      }
+
+      if (username !== 'sales@irisbgsf.com') {
+        showAlert('Задължително е въвеждането на целия служебен имейл адрес: sales@irisbgsf.com');
+        usernameInput.focus();
         return;
       }
 
