@@ -2302,3 +2302,67 @@ input.is-invalid, select.is-invalid {
     max-width: 100% !important;
   }
 }
+
+/* ==========================================================================
+   Bilingual 2-Column Contract Grid (Left: English, Right: Romanian)
+   ========================================================================== */
+.doc-bilingual-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  column-gap: 28px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  font-family: 'Calibri', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: 12.8px !important;
+  line-height: 1.5 !important;
+  color: #000000 !important;
+  text-align: justify !important;
+  text-justify: inter-word !important;
+}
+
+.doc-col-en,
+.doc-col-ro {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  box-sizing: border-box !important;
+}
+
+.doc-col-en {
+  padding-right: 14px !important;
+  border-right: 1px solid #CBD5E1 !important;
+}
+
+.doc-col-ro {
+  padding-left: 14px !important;
+}
+
+.doc-bilingual-grid p {
+  margin: 0 0 10px 0 !important;
+}
+
+.doc-bilingual-grid strong {
+  font-weight: 700 !important;
+  color: #000000 !important;
+}
+
+.doc-chapter-h2 {
+  font-family: 'Calibri', 'Inter', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 13.5px !important;
+  margin: 14px 0 8px 0 !important;
+  text-align: center !important;
+  text-transform: uppercase !important;
+  color: #000000 !important;
+  letter-spacing: 0.3px !important;
+}
+
+.sig-slot-box {
+  background: transparent !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+}
+
