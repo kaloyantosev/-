@@ -363,34 +363,46 @@ document.addEventListener('DOMContentLoaded', () => {
   if (canvas && ctx) {
     let painting = false;
 
+    function getCanvasCoordinates(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      let clientX = e.clientX;
+      let clientY = e.clientY;
+      if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      }
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
+    }
+
     function startPosition(e) {
       painting = true;
       hasDrawn = true;
-      const rect = canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const coords = getCanvasCoordinates(e);
       ctx.beginPath();
-      ctx.moveTo(clientX - rect.left, clientY - rect.top);
+      ctx.moveTo(coords.x, coords.y);
     }
 
     function finishedPosition() {
+      if (!painting) return;
       painting = false;
       ctx.beginPath();
     }
 
     function draw(e) {
       if (!painting) return;
-      e.preventDefault();
-      const rect = canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      if (e.cancelable) e.preventDefault();
+      const coords = getCanvasCoordinates(e);
       ctx.lineWidth = 2.5;
       ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
       ctx.strokeStyle = '#1F3864';
-      ctx.lineTo(clientX - rect.left, clientY - rect.top);
+      ctx.lineTo(coords.x, coords.y);
       ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(clientX - rect.left, clientY - rect.top);
     }
 
     canvas.addEventListener('mousedown', startPosition);
@@ -398,9 +410,15 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseleave', finishedPosition);
 
-    canvas.addEventListener('touchstart', startPosition, { passive: false });
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.cancelable) e.preventDefault();
+      startPosition(e);
+    }, { passive: false });
     canvas.addEventListener('touchend', finishedPosition);
-    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchmove', (e) => {
+      if (e.cancelable) e.preventDefault();
+      draw(e);
+    }, { passive: false });
   }
 
   if (clearCanvasBtn && ctx && canvas) {
@@ -408,6 +426,8 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       hasDrawn = false;
       resetSignatureStatus();
+      const feedback = document.getElementById('sigAppliedNotice');
+      if (feedback) feedback.style.display = 'none';
     });
   }
 
@@ -461,23 +481,43 @@ document.addEventListener('DOMContentLoaded', () => {
       badgeAppendix.textContent = 'Nesemnat';
       badgeAppendix.className = 'status-badge';
     }
-    if (contractMerchantSigSlot) {
-      contractMerchantSigSlot.innerHTML = '<span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ Pentru Comerciant ]</span>';
+    const defaultPlaceholder = '<span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ Pentru Comerciant ]</span>';
+    const defaultPlaceholderEn = '<span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ For the Merchant ]</span>';
+
+    const slots = [
+      { el: contractMerchantSigSlot, html: defaultPlaceholder },
+      { el: contractMerchantSigSlotEn, html: defaultPlaceholderEn },
+      { el: contractMerchantTermsSigSlot, html: defaultPlaceholder },
+      { el: contractMerchantTermsSigSlotEn, html: defaultPlaceholderEn },
+      { el: appendixMerchantSigSlot, html: defaultPlaceholder },
+      { el: appendixMerchantSigSlotEn, html: defaultPlaceholderEn }
+    ];
+
+    slots.forEach(s => {
+      if (s.el) {
+        s.el.innerHTML = s.html;
+        s.el.style.border = '1px dashed #94A3B8';
+        s.el.style.background = '#FAFAFA';
+      }
+    });
+
+    const statusBoxContract = document.getElementById('statusBoxContract');
+    const statusBoxAppendix = document.getElementById('statusBoxAppendix');
+    if (statusBoxContract) {
+      const icon = statusBoxContract.querySelector('.status-icon');
+      if (icon) {
+        icon.textContent = '●';
+        icon.className = 'status-icon pending';
+        icon.style.color = '#F59E0B';
+      }
     }
-    if (contractMerchantSigSlotEn) {
-      contractMerchantSigSlotEn.innerHTML = '<span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ For the Merchant ]</span>';
-    }
-    if (contractMerchantTermsSigSlot) {
-      contractMerchantTermsSigSlot.innerHTML = '<span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ Pentru Comerciant ]</span>';
-    }
-    if (contractMerchantTermsSigSlotEn) {
-      contractMerchantTermsSigSlotEn.innerHTML = '<span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ For the Merchant ]</span>';
-    }
-    if (appendixMerchantSigSlot) {
-      appendixMerchantSigSlot.innerHTML = '<span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ Pentru Comerciant ]</span>';
-    }
-    if (appendixMerchantSigSlotEn) {
-      appendixMerchantSigSlotEn.innerHTML = '<span style="font-size: 10px; color: #94A3B8; font-style: italic;">[ For the Merchant ]</span>';
+    if (statusBoxAppendix) {
+      const icon = statusBoxAppendix.querySelector('.status-icon');
+      if (icon) {
+        icon.textContent = '●';
+        icon.className = 'status-icon pending';
+        icon.style.color = '#F59E0B';
+      }
     }
   }
 
@@ -488,17 +528,18 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (currentSigMode === 'type') {
       const text = (typedSigInput?.value || '').trim() || (companyRepInput?.value || '').trim() || 'Ion Popescu';
       const off = document.createElement('canvas');
-      off.width = 320;
-      off.height = 80;
+      off.width = 400;
+      off.height = 100;
       const octx = off.getContext('2d');
-      octx.clearRect(0, 0, 320, 80);
-      octx.font = `italic 26px "${activeTypedFont}", cursive, sans-serif`;
+      octx.clearRect(0, 0, 400, 100);
+      octx.font = `italic 32px "${activeTypedFont}", cursive, sans-serif`;
       octx.fillStyle = '#1F3864';
-      octx.fillText(text, 10, 48);
+      octx.textBaseline = 'middle';
+      octx.fillText(text, 15, 45);
       octx.beginPath();
-      octx.moveTo(10, 56);
-      octx.quadraticCurveTo(110, 68, 260, 54);
-      octx.lineWidth = 1.6;
+      octx.moveTo(15, 65);
+      octx.quadraticCurveTo(140, 80, 320, 62);
+      octx.lineWidth = 2;
       octx.strokeStyle = 'rgba(31, 56, 100, 0.7)';
       octx.stroke();
       return off.toDataURL('image/png');
@@ -529,17 +570,84 @@ document.addEventListener('DOMContentLoaded', () => {
         badgeAppendix.className = 'status-badge signed';
       }
 
-      const imgHtml = `<img src="${sigData}" alt="Semnătură Comerciant" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
-      if (contractMerchantSigSlot) contractMerchantSigSlot.innerHTML = imgHtml;
-      if (contractMerchantSigSlotEn) contractMerchantSigSlotEn.innerHTML = imgHtml;
-      if (contractMerchantTermsSigSlot) contractMerchantTermsSigSlot.innerHTML = imgHtml;
-      if (contractMerchantTermsSigSlotEn) contractMerchantTermsSigSlotEn.innerHTML = imgHtml;
-      if (appendixMerchantSigSlot) appendixMerchantSigSlot.innerHTML = imgHtml;
-      if (appendixMerchantSigSlotEn) appendixMerchantSigSlotEn.innerHTML = imgHtml;
+      const statusBoxContract = document.getElementById('statusBoxContract');
+      const statusBoxAppendix = document.getElementById('statusBoxAppendix');
+      if (statusBoxContract) {
+        const icon = statusBoxContract.querySelector('.status-icon');
+        if (icon) {
+          icon.textContent = '✓';
+          icon.className = 'status-icon signed';
+          icon.style.color = '#059669';
+        }
+      }
+      if (statusBoxAppendix) {
+        const icon = statusBoxAppendix.querySelector('.status-icon');
+        if (icon) {
+          icon.textContent = '✓';
+          icon.className = 'status-icon signed';
+          icon.style.color = '#059669';
+        }
+      }
 
-      showToast('Semnătura a fost aplicată pe Contract și Anexa 1!');
+      const imgHtml = `<img src="${sigData}" alt="Semnătură Comerciant" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block; margin: auto;">`;
+      const allSlots = [
+        contractMerchantSigSlot,
+        contractMerchantSigSlotEn,
+        contractMerchantTermsSigSlot,
+        contractMerchantTermsSigSlotEn,
+        appendixMerchantSigSlot,
+        appendixMerchantSigSlotEn
+      ];
+
+      allSlots.forEach(slot => {
+        if (slot) {
+          slot.innerHTML = imgHtml;
+          slot.style.border = '1.5px solid #10B981';
+          slot.style.background = '#ECFDF5';
+        }
+      });
+
+      // In-card confirmation notice
+      let feedback = document.getElementById('sigAppliedNotice');
+      if (!feedback) {
+        feedback = document.createElement('div');
+        feedback.id = 'sigAppliedNotice';
+        feedback.style.marginTop = '12px';
+        feedback.style.padding = '10px 14px';
+        feedback.style.background = '#ECFDF5';
+        feedback.style.border = '1px solid #A7F3D0';
+        feedback.style.borderRadius = '6px';
+        feedback.style.fontSize = '13px';
+        feedback.style.color = '#065F46';
+        feedback.style.textAlign = 'center';
+        applySignatureBtn.parentNode.appendChild(feedback);
+      }
+      feedback.style.display = 'block';
+      feedback.innerHTML = `<strong>✓ Semnătura a fost aplicată pe Contract și Anexa 1!</strong><div style="font-size: 11px; color: #047857; margin-top: 3px;">Puteți vedea semnătura în paginile 8 și 9 ale documentului.</div>`;
+
+      showToast('Semnătura a fost aplicată cu succes!');
+
+      // Smooth scroll to signature slot
+      const targetSlot = contractMerchantSigSlot || appendixMerchantSigSlot;
+      if (targetSlot) {
+        targetSlot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     });
   }
+
+  // Allow clicking on any signature slot on document pages to focus the signature card
+  document.querySelectorAll('.sig-slot-box').forEach(slot => {
+    slot.style.cursor = 'pointer';
+    slot.title = 'Faceți clic pentru a semna';
+    slot.addEventListener('click', () => {
+      const sigCard = document.getElementById('signatureSectionCard');
+      if (sigCard) {
+        sigCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        sigCard.style.outline = '2px solid #00bff2';
+        setTimeout(() => { sigCard.style.outline = 'none'; }, 1500);
+      }
+    });
+  });
 
   // Toast Helper
   function showToast(msg, type = 'success') {
