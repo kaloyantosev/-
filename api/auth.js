@@ -455,7 +455,7 @@ export default async function handler(req, res) {
     } catch (e) {}
 
     const newCode = String(Math.floor(100000 + Math.random() * 900000));
-    let targetEmail = process.env.AUTH_2FA_EMAIL || 'kaloyan.tosev@gmail.com';
+    let targetEmail = process.env.AUTH_2FA_EMAIL || 'sales@irisbgsf.com';
     try {
       const settings = await getSettings();
       if (settings?.twoFaEmail) targetEmail = settings.twoFaEmail;
@@ -528,7 +528,7 @@ export default async function handler(req, res) {
 
       // First time or trust expired: Generate and send 6-digit 2FA code
       const code = String(Math.floor(100000 + Math.random() * 900000));
-      let target2FaEmail = process.env.AUTH_2FA_EMAIL || 'kaloyan.tosev@gmail.com';
+      let target2FaEmail = process.env.AUTH_2FA_EMAIL || 'sales@irisbgsf.com';
       try {
         const settings = await getSettings();
         if (settings?.twoFaEmail) target2FaEmail = settings.twoFaEmail;
@@ -592,7 +592,7 @@ export default async function handler(req, res) {
 
       // First time or trust expired: Generate and send 6-digit 2FA code
       const code = String(Math.floor(100000 + Math.random() * 900000));
-      let target2FaEmail = process.env.AUTH_2FA_EMAIL || 'kaloyan.tosev@gmail.com';
+      let target2FaEmail = process.env.AUTH_2FA_EMAIL || 'sales@irisbgsf.com';
       try {
         const settings = await getSettings();
         if (settings?.twoFaEmail) target2FaEmail = settings.twoFaEmail;

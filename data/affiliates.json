@@ -78,9 +78,27 @@
       "commission": "0.25%",
       "country": "ro",
       "date": "2026-10-21T11:12:25.852Z"
+    },
+    {
+      "id": "cnt_1792665844681_qazla",
+      "affiliateSlug": null,
+      "companyName": "Test Romania SRL",
+      "companyEik": "RO12345678",
+      "commission": "0.25%",
+      "country": "ro",
+      "date": "2026-10-22T10:44:04.681Z"
+    },
+    {
+      "id": "cnt_1792665845543_54x98",
+      "affiliateSlug": null,
+      "companyName": "Тест България ООД",
+      "companyEik": "208455895",
+      "commission": "0.49%",
+      "country": "bg",
+      "date": "2026-10-22T10:44:05.543Z"
     }
   ],
-  "updatedAt": "2026-10-21T11:12:25.852Z",
+  "updatedAt": "2026-10-22T10:44:05.543Z",
   "customLinks": [
     {
       "id": "cl_1792581080780_p6dln",
@@ -133,7 +151,7 @@
     "integrationFee": "0 EUR",
     "monthlyFee": "0 EUR",
     "contractRecipientEmail": "sales@irisbgsf.com",
-    "twoFaEmail": "kaloyan.tosev@gmail.com",
+    "twoFaEmail": "sales@irisbgsf.com",
     "dashboardCardsOrder": [
       "partners",
       "total",
@@ -142,6 +160,7 @@
     ],
     "portalTitle": "Портал за подписване на договор",
     "bnbBadgeText": "Лицензирана институция от БНБ",
-    "termsUrl": "https://irisbgsf.com"
+    "termsUrl": "https://irisbgsf.com",
+    "contractRecipientRoEmail": "kaloyan.tosev@gmail.com"
   }
 }

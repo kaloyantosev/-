@@ -498,7 +498,7 @@
       <form id="admin2FaForm" style="display: none;">
         <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; margin-bottom: 18px; text-align: center;">
           <div style="font-size: 13px; color: #475569; margin-bottom: 4px;">Изпратен е 6-цифрен код за сигурност към:</div>
-          <strong id="admin2FaTargetEmail" style="color: #0F172A; font-size: 14px;">kaloyan.tosev@gmail.com</strong>
+          <strong id="admin2FaTargetEmail" style="color: #0F172A; font-size: 14px;">sales@irisbgsf.com</strong>
         </div>
 
         <div class="admin-login-field">
@@ -641,15 +641,21 @@
         <form id="emailSettingsForm">
           <div class="form-grid">
             <div class="admin-field-group">
-              <label for="setContractRecipient">Имейл за получаване на подписани договори:</label>
+              <label for="setContractRecipient">Имейл за договори (България & Общи):</label>
               <input type="email" id="setContractRecipient" class="admin-input" placeholder="sales@irisbgsf.com">
-              <span style="font-size: 11.5px; color: #64748B;">Тук се изпращат уведомленията с прикрепения подписан PDF договор.</span>
+              <span style="font-size: 11.5px; color: #64748B;">Тук се изпращат уведомленията с прикрепения подписан PDF договор за България.</span>
+            </div>
+
+            <div class="admin-field-group">
+              <label for="setContractRecipientRo">Имейл за договори (Румъния):</label>
+              <input type="email" id="setContractRecipientRo" class="admin-input" placeholder="kaloyan.tosev@gmail.com">
+              <span style="font-size: 11.5px; color: #64748B;">Тук се изпращат румънските договори (România).</span>
             </div>
 
             <div class="admin-field-group">
               <label for="setTwoFaEmail">Имейл за получаване на 2FA кодове при вход:</label>
-              <input type="email" id="setTwoFaEmail" class="admin-input" placeholder="kaloyan.tosev@gmail.com">
-              <span style="font-size: 11.5px; color: #64748B;">Кодовете за двуфакторна автентикация на sales@irisbgsf.com се доставят на този адрес.</span>
+              <input type="email" id="setTwoFaEmail" class="admin-input" placeholder="sales@irisbgsf.com">
+              <span style="font-size: 11.5px; color: #64748B;">Кодовете за двуфакторна автентикация (Authentication) се доставят на този адрес.</span>
             </div>
           </div>
 
@@ -1136,7 +1142,10 @@
         document.getElementById('setBnbBadgeText').value = s.bnbBadgeText || 'Лицензирана институция от БНБ';
 
         document.getElementById('setContractRecipient').value = s.contractRecipientEmail || 'sales@irisbgsf.com';
-        document.getElementById('setTwoFaEmail').value = s.twoFaEmail || 'kaloyan.tosev@gmail.com';
+        if (document.getElementById('setContractRecipientRo')) {
+          document.getElementById('setContractRecipientRo').value = s.contractRecipientRoEmail || 'kaloyan.tosev@gmail.com';
+        }
+        document.getElementById('setTwoFaEmail').value = s.twoFaEmail || 'sales@irisbgsf.com';
 
         // Reorder container cards according to saved order
         if (Array.isArray(s.dashboardCardsOrder) && s.dashboardCardsOrder.length > 0) {
@@ -1375,7 +1384,8 @@
       e.preventDefault();
       const settings = {
         contractRecipientEmail: document.getElementById('setContractRecipient').value.trim() || 'sales@irisbgsf.com',
-        twoFaEmail: document.getElementById('setTwoFaEmail').value.trim() || 'kaloyan.tosev@gmail.com'
+        contractRecipientRoEmail: document.getElementById('setContractRecipientRo')?.value.trim() || 'kaloyan.tosev@gmail.com',
+        twoFaEmail: document.getElementById('setTwoFaEmail').value.trim() || 'sales@irisbgsf.com'
       };
 
       const res = await fetch('/api/admin?action=settings', {
