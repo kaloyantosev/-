@@ -1,6 +1,6 @@
 /**
  * IRIS Pay România | Semnare electronică contract
- * Script pentru sincronizare date în timp real, căutare ANAF, semnătură electronică și trimitere API (country: 'ro')
+ * Script complet pentru sincronizare date în timp real, căutare ANAF, navigare automată, semnătură electronică și trimitere API (country: 'ro')
  */
 
 (function () {
@@ -30,6 +30,8 @@
       mode === 'type' ? 'sigContentType' : 'sigContentUpload'
     );
     if (targetContent) targetContent.classList.add('active');
+
+    scrollToDocSection('pageCard14');
 
     if (mode === 'type') {
       const repVal = (document.getElementById('companyRepresentative')?.value || '').trim();
@@ -223,19 +225,48 @@
       feedback.innerHTML = `<strong>✓ Semnătura a fost aplicată pe Contract și Anexa 1!</strong><div style="font-size: 11px; color: #047857; margin-top: 3px;">Puteți vedea semnătura în paginile 14 și 16 ale documentului.</div>`;
     }
 
+    scrollToDocSection('pageCard14');
     showToast('Semnătura a fost aplicată cu succes!');
   };
 
+  // Smooth scroll helper to keep document viewport focused on current section
+  function scrollToDocSection(pageCardId) {
+    const docViewport = document.getElementById('docViewport');
+    const targetCard = document.getElementById(pageCardId);
+    if (!docViewport || !targetCard) return;
+
+    const viewportRect = docViewport.getBoundingClientRect();
+    const cardRect = targetCard.getBoundingClientRect();
+    const targetScrollTop = docViewport.scrollTop + (cardRect.top - viewportRect.top) - 15;
+
+    docViewport.scrollTo({
+      top: Math.max(0, targetScrollTop),
+      behavior: 'smooth'
+    });
+  }
+
+  // Live Field Updating with Smooth Re-animation on Keystrokes
   function updateLiveField(fieldName, value) {
-    document.querySelectorAll(`.live-field[data-field="${fieldName}"]`).forEach(el => {
-      if (value) {
-        el.textContent = value;
+    const targets = document.querySelectorAll(`.live-field[data-field="${fieldName}"]`);
+    const cleanVal = (value || '').trim();
+
+    targets.forEach(el => {
+      const oldVal = el.textContent;
+      if (cleanVal) {
+        if (oldVal !== cleanVal) {
+          el.textContent = cleanVal;
+          el.classList.remove('text-animating');
+          // Trigger DOM reflow to immediately play highlight animation
+          void el.offsetWidth;
+          el.classList.add('text-animating');
+        }
         el.classList.add('filled');
         el.classList.remove('underlined');
       } else {
         el.textContent = '.........................';
         el.classList.remove('filled');
-        el.classList.add('underlined');
+        el.classList.remove('underlined');
+        el.classList.remove('text-animating');
       }
     });
   }
@@ -255,7 +286,7 @@
     const toast = document.getElementById('toastNotification');
     if (!toast) return;
     toast.textContent = msg;
-    toast.style.background = (type === 'error') ? '#DC2626' : '#1F3864';
+    toast.style.background = (type === 'error') ? '#DC2626' : (type === 'info' ? '#0369A1' : '#1F3864');
     toast.style.display = 'block';
     setTimeout(() => { toast.style.display = 'none'; }, 3400);
   }
@@ -268,6 +299,7 @@
   async function lookupRomanianCompany(cuiVal) {
     const eikFeedbackMsg = document.getElementById('eikFeedbackMsg');
     const companyVerifyBanner = document.getElementById('companyVerifyBanner');
+    const companyInputsWrapper = document.getElementById('companyInputsWrapper');
     const companyNameInput = document.getElementById('companyName');
     const companyAddressInput = document.getElementById('companyAddress');
     const contactAddressInput = document.getElementById('contactAddress');
@@ -278,6 +310,8 @@
 
     const cleanDigits = cuiVal.replace(/^RO/i, '').replace(/\D/g, '');
     if (!cleanDigits || cleanDigits.length < 2) return;
+
+    scrollToDocSection('pageCard3');
 
     if (eikFeedbackMsg) {
       eikFeedbackMsg.style.display = 'block';
@@ -321,12 +355,7 @@
 
           if (companyVerifyBanner) {
             companyVerifyBanner.style.display = 'flex';
-            companyVerifyBanner.innerHTML = `
-              <div class="verify-prompt-left" style="display:flex; align-items:center; gap:8px;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                <span><strong>Companie identificată:</strong> ${escapeHtml(data.name)}</span>
-              </div>
-            `;
+            companyVerifyBanner.classList.remove('is-verified');
           }
 
           showToast('Datele companiei au fost preluate cu succes!', 'success');
@@ -389,8 +418,43 @@
     const sigFileInput = document.getElementById('sigFileInput');
     const canvas = document.getElementById('sigCanvas');
     const canvasWatermark = document.getElementById('canvasWatermark') || document.querySelector('.canvas-watermark');
+    const companyVerifyBanner = document.getElementById('companyVerifyBanner');
+    const btnVerifyDataYes = document.getElementById('btnVerifyDataYes');
+    const btnVerifyDataNo = document.getElementById('btnVerifyDataNo');
+    const eikFeedbackMsg = document.getElementById('eikFeedbackMsg');
+    const companyInputsWrapper = document.getElementById('companyInputsWrapper');
 
-    // 1. Compute today's date and prefill
+    // 1. Detect custom commission token & partner referral
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      let detectedCustomToken = urlParams.get('c') || urlParams.get('custom');
+      let detectedPartnerSlug = urlParams.get('ref') || urlParams.get('affiliate');
+
+      if (detectedPartnerSlug) {
+        window.irisCurrentAffiliate = detectedPartnerSlug.toLowerCase().trim();
+      }
+
+      if (detectedCustomToken) {
+        window.irisCustomToken = detectedCustomToken.trim();
+        fetch(`/api/custom-link?token=${encodeURIComponent(window.irisCustomToken)}`)
+          .then(async (res) => {
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.valid && data.commission) {
+                const commDisplay = document.getElementById('appCommissionDisplay');
+                const commDisplayEn = document.getElementById('appCommissionDisplayEn');
+                if (commDisplay) commDisplay.textContent = data.commission;
+                if (commDisplayEn) commDisplayEn.textContent = data.commission;
+              }
+            }
+          })
+          .catch(() => {});
+      }
+    } catch (e) {
+      console.warn('URL param error:', e);
+    }
+
+    // 2. Compute today's date and prefill
     const today = new Date();
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -398,18 +462,17 @@
     const todayDmy = `${dd}.${mm}.${yyyy}`;
     const todayYmd = `${yyyy}-${mm}-${dd}`;
 
-    if (contractDateInput) {
+    if (contractDateInput && !contractDateInput.value) {
       contractDateInput.value = todayDmy;
     }
-    updateLiveField('date', todayDmy);
-
     if (hiddenNativeDatePicker) {
       hiddenNativeDatePicker.value = todayYmd;
     }
 
-    // 2. Calendar Trigger
+    // 3. Calendar Trigger
     if (btnCalendarTrigger && hiddenNativeDatePicker) {
       btnCalendarTrigger.addEventListener('click', () => {
+        scrollToDocSection('pageCard3');
         if (typeof hiddenNativeDatePicker.showPicker === 'function') {
           hiddenNativeDatePicker.showPicker();
         } else {
@@ -424,6 +487,7 @@
           const formatted = `${d}.${m}.${y}`;
           if (contractDateInput) contractDateInput.value = formatted;
           updateLiveField('date', formatted);
+          scrollToDocSection('pageCard3');
         }
       });
     }
@@ -437,82 +501,27 @@
       });
     }
 
-    // 3. Live Sync Bindings
-    function bindSync(inputEl, fieldName) {
-      if (!inputEl) return;
-      inputEl.addEventListener('input', () => {
-        updateLiveField(fieldName, inputEl.value.trim());
+    // 4. Verification Banner Buttons
+    if (btnVerifyDataYes) {
+      btnVerifyDataYes.addEventListener('click', () => {
+        if (companyVerifyBanner) companyVerifyBanner.style.display = 'none';
+        if (eikFeedbackMsg) eikFeedbackMsg.style.display = 'none';
+        if (companyInputsWrapper) companyInputsWrapper.classList.add('is-verified');
+        showToast('Datele companiei au fost confirmate!', 'success');
       });
     }
 
-    bindSync(companyNameInput, 'companyName');
-    bindSync(companyAddressInput, 'companyAddress');
-    bindSync(companyRepPinInput, 'companyRepresentativePin');
-    bindSync(bankIbanInput, 'bankIban');
-    bindSync(contactAddressInput, 'contactAddress');
-    bindSync(contactEmailInput, 'contactEmail');
-    bindSync(contactPhoneInput, 'contactPhone');
-
-    // Representative Name listener (also syncs with typed signature)
-    if (companyRepInput) {
-      companyRepInput.addEventListener('input', () => {
-        const val = companyRepInput.value.trim();
-        updateLiveField('companyRepresentative', val);
-        if (typedSigInput && !typedSigInput.dataset.userEdited) {
-          typedSigInput.value = val;
-          updateTypedFontSamples();
-          if (currentSigMode === 'type' && val.length >= 2) {
-            applyTypedSignatureLive();
-          }
-        }
+    if (btnVerifyDataNo) {
+      btnVerifyDataNo.addEventListener('click', () => {
+        if (companyVerifyBanner) companyVerifyBanner.style.display = 'none';
+        if (eikFeedbackMsg) eikFeedbackMsg.style.display = 'none';
+        if (companyInputsWrapper) companyInputsWrapper.classList.remove('is-verified');
+        if (companyNameInput) companyNameInput.focus();
+        showToast('Puteți corecta manual câmpurile de mai jos.', 'info');
       });
     }
 
-    // Address Checkbox
-    if (sameAddressCheckbox && companyAddressInput && contactAddressInput) {
-      sameAddressCheckbox.addEventListener('change', () => {
-        if (sameAddressCheckbox.checked) {
-          contactAddressInput.value = companyAddressInput.value;
-          contactAddressInput.disabled = true;
-          updateLiveField('contactAddress', companyAddressInput.value.trim());
-        } else {
-          contactAddressInput.disabled = false;
-        }
-      });
-
-      companyAddressInput.addEventListener('input', () => {
-        if (sameAddressCheckbox.checked) {
-          contactAddressInput.value = companyAddressInput.value;
-          updateLiveField('contactAddress', companyAddressInput.value.trim());
-        }
-      });
-    }
-
-    // Bank Selection
-    if (bankNameSelect) {
-      bankNameSelect.addEventListener('change', () => {
-        if (bankNameSelect.value === 'custom') {
-          if (customBankInputWrapper) customBankInputWrapper.style.display = 'block';
-          if (customBankInput) {
-            customBankInput.focus();
-            updateLiveField('bankName', customBankInput.value.trim());
-          }
-        } else {
-          if (customBankInputWrapper) customBankInputWrapper.style.display = 'none';
-          updateLiveField('bankName', bankNameSelect.value);
-        }
-      });
-    }
-
-    if (customBankInput) {
-      customBankInput.addEventListener('input', () => {
-        if (bankNameSelect?.value === 'custom') {
-          updateLiveField('bankName', customBankInput.value.trim());
-        }
-      });
-    }
-
-    // Website Management
+    // 5. Website Live Updating
     function updateWebsiteLive() {
       if (noWebsiteCheckbox && noWebsiteCheckbox.checked) {
         updateLiveField('merchantWebsite', 'Fără website');
@@ -529,8 +538,93 @@
       updateLiveField('merchantWebsite', sites.join(', '));
     }
 
+    // 6. Comprehensive Field Sync Function
+    function syncAllFields() {
+      if (companyEikInput) updateLiveField('companyEik', companyEikInput.value);
+      if (companyNameInput) updateLiveField('companyName', companyNameInput.value);
+      if (companyAddressInput) updateLiveField('companyAddress', companyAddressInput.value);
+      if (companyRepInput) updateLiveField('companyRepresentative', companyRepInput.value);
+      if (companyRepPinInput) updateLiveField('companyRepresentativePin', companyRepPinInput.value);
+
+      const bVal = (bankNameSelect?.value === 'custom') ? (customBankInput?.value || '') : (bankNameSelect?.value || '');
+      updateLiveField('bankName', bVal);
+      if (bankIbanInput) updateLiveField('bankIban', bankIbanInput.value);
+
+      updateWebsiteLive();
+
+      if (contactAddressInput) updateLiveField('contactAddress', contactAddressInput.value);
+      if (contactEmailInput) updateLiveField('contactEmail', contactEmailInput.value);
+      if (contactPhoneInput) updateLiveField('contactPhone', contactPhoneInput.value);
+
+      const dVal = contractDateInput ? contractDateInput.value.trim() : '';
+      updateLiveField('date', dVal || todayDmy);
+    }
+
+    // 7. Live Sync Bindings
+    function bindSync(inputEl, fieldName, targetPage) {
+      if (!inputEl) return;
+      inputEl.addEventListener('input', () => {
+        updateLiveField(fieldName, inputEl.value.trim());
+      });
+      if (targetPage) {
+        inputEl.addEventListener('focus', () => {
+          scrollToDocSection(targetPage);
+        });
+      }
+    }
+
+    bindSync(companyEikInput, 'companyEik', 'pageCard3');
+    bindSync(contractDateInput, 'date', 'pageCard3');
+    bindSync(companyNameInput, 'companyName', 'pageCard3');
+    bindSync(companyAddressInput, 'companyAddress', 'pageCard3');
+    bindSync(companyRepPinInput, 'companyRepresentativePin', 'pageCard3');
+
+    bindSync(bankIbanInput, 'bankIban', 'pageCard6');
+    if (bankNameSelect) {
+      bankNameSelect.addEventListener('focus', () => scrollToDocSection('pageCard6'));
+      bankNameSelect.addEventListener('change', () => {
+        scrollToDocSection('pageCard6');
+        if (bankNameSelect.value === 'custom') {
+          if (customBankInputWrapper) customBankInputWrapper.style.display = 'block';
+          if (customBankInput) {
+            customBankInput.focus();
+            updateLiveField('bankName', customBankInput.value.trim());
+          }
+        } else {
+          if (customBankInputWrapper) customBankInputWrapper.style.display = 'none';
+          updateLiveField('bankName', bankNameSelect.value);
+        }
+      });
+    }
+
+    if (customBankInput) {
+      customBankInput.addEventListener('focus', () => scrollToDocSection('pageCard6'));
+      customBankInput.addEventListener('input', () => {
+        if (bankNameSelect?.value === 'custom') {
+          updateLiveField('bankName', customBankInput.value.trim());
+        }
+      });
+    }
+
+    if (merchantWebsiteInput) {
+      merchantWebsiteInput.addEventListener('focus', () => scrollToDocSection('pageCard6'));
+      merchantWebsiteInput.addEventListener('input', () => {
+        updateWebsiteLive();
+      });
+    }
+
+    if (extraWebsite1) {
+      extraWebsite1.addEventListener('focus', () => scrollToDocSection('pageCard6'));
+      extraWebsite1.addEventListener('input', updateWebsiteLive);
+    }
+    if (extraWebsite2) {
+      extraWebsite2.addEventListener('focus', () => scrollToDocSection('pageCard6'));
+      extraWebsite2.addEventListener('input', updateWebsiteLive);
+    }
+
     if (noWebsiteCheckbox) {
       noWebsiteCheckbox.addEventListener('change', () => {
+        scrollToDocSection('pageCard6');
         if (noWebsiteCheckbox.checked) {
           if (merchantWebsiteInput) {
             merchantWebsiteInput.value = '';
@@ -545,14 +639,52 @@
       });
     }
 
-    if (merchantWebsiteInput) merchantWebsiteInput.addEventListener('input', updateWebsiteLive);
-    if (extraWebsite1) extraWebsite1.addEventListener('input', updateWebsiteLive);
-    if (extraWebsite2) extraWebsite2.addEventListener('input', updateWebsiteLive);
-
     if (extraWebsitesCheckbox && extraWebsitesWrapper) {
       extraWebsitesCheckbox.addEventListener('change', () => {
+        scrollToDocSection('pageCard6');
         extraWebsitesWrapper.style.display = extraWebsitesCheckbox.checked ? 'flex' : 'none';
         updateWebsiteLive();
+      });
+    }
+
+    bindSync(contactAddressInput, 'contactAddress', 'pageCard11');
+    bindSync(contactEmailInput, 'contactEmail', 'pageCard11');
+    bindSync(contactPhoneInput, 'contactPhone', 'pageCard11');
+
+    // Representative Name listener (syncs with document & typed signature)
+    if (companyRepInput) {
+      companyRepInput.addEventListener('focus', () => scrollToDocSection('pageCard3'));
+      companyRepInput.addEventListener('input', () => {
+        const val = companyRepInput.value.trim();
+        updateLiveField('companyRepresentative', val);
+        if (typedSigInput && !typedSigInput.dataset.userEdited) {
+          typedSigInput.value = val;
+          updateTypedFontSamples();
+          if (currentSigMode === 'type' && val.length >= 2) {
+            applyTypedSignatureLive();
+          }
+        }
+      });
+    }
+
+    // Address Checkbox
+    if (sameAddressCheckbox && companyAddressInput && contactAddressInput) {
+      sameAddressCheckbox.addEventListener('change', () => {
+        scrollToDocSection('pageCard11');
+        if (sameAddressCheckbox.checked) {
+          contactAddressInput.value = companyAddressInput.value;
+          contactAddressInput.disabled = true;
+          updateLiveField('contactAddress', companyAddressInput.value.trim());
+        } else {
+          contactAddressInput.disabled = false;
+        }
+      });
+
+      companyAddressInput.addEventListener('input', () => {
+        if (sameAddressCheckbox.checked) {
+          contactAddressInput.value = companyAddressInput.value;
+          updateLiveField('contactAddress', companyAddressInput.value.trim());
+        }
       });
     }
 
@@ -587,11 +719,13 @@
       });
     }
 
-    // 4. Electronic Signature Engine
+    // 8. Electronic Signature Engine
     if (canvas) {
       const ctx = canvas.getContext('2d');
       let painting = false;
       canvas.style.touchAction = 'none';
+
+      canvas.addEventListener('click', () => scrollToDocSection('pageCard14'));
 
       function getCanvasCoordinates(e) {
         const rect = canvas.getBoundingClientRect();
@@ -616,7 +750,6 @@
         const coords = getCanvasCoordinates(e);
         ctx.beginPath();
         ctx.moveTo(coords.x, coords.y);
-        // Draw initial dot immediately
         ctx.arc(coords.x, coords.y, 1.2, 0, Math.PI * 2);
         ctx.fillStyle = '#1F3864';
         ctx.fill();
@@ -628,7 +761,6 @@
         if (!painting) return;
         painting = false;
         ctx.beginPath();
-        // Automatically reflect drawn signature to slots
         const sigData = getSignatureImageBase64();
         if (sigData) {
           applySignatureToSlots(sigData, false, '', '');
@@ -680,6 +812,7 @@
 
     // Type signature input
     if (typedSigInput) {
+      typedSigInput.addEventListener('focus', () => scrollToDocSection('pageCard14'));
       typedSigInput.addEventListener('input', (e) => {
         typedSigInput.dataset.userEdited = 'true';
         updateTypedFontSamples();
@@ -703,6 +836,7 @@
           if (uploadPreviewImg) uploadPreviewImg.src = uploadedSigBase64;
           if (uploadPreviewWrapper) uploadPreviewWrapper.style.display = 'block';
           applySignatureToSlots(uploadedSigBase64, false, '', '');
+          scrollToDocSection('pageCard14');
         };
         reader.readAsDataURL(file);
       });
@@ -727,6 +861,14 @@
         }
       });
     });
+
+    // Initial Full Sync across document
+    syncAllFields();
+
+    // Smoothly scroll document viewport to Page 3 (contract preamble) on startup
+    setTimeout(() => {
+      scrollToDocSection('pageCard3');
+    }, 280);
 
     // Form Submission
     if (submitContractBtn) {

@@ -94,6 +94,20 @@
       padding: 1px 3px;
       border-radius: 3px;
     }
+
+    @keyframes liveFieldPulse {
+      0% {
+        background-color: rgba(0, 191, 242, 0.45);
+      }
+      100% {
+        background-color: rgba(0, 191, 242, 0.08);
+      }
+    }
+
+    .live-field.text-animating {
+      animation: textFadeInSoft 0.4s ease-out, liveFieldPulse 0.75s ease-out forwards !important;
+      display: inline;
+    }
   </style>
 </head>
 <body>
@@ -157,7 +171,22 @@
           <div class="eik-fullwidth-feedback-row">
             <span id="eikFeedbackMsg" class="field-hint-msg">Introduceți CUI pentru completare automată din registrul oficial ANAF</span>
           </div>
-          <div id="companyVerifyBanner" class="company-verify-banner" style="display:none; margin-bottom: 12px;"></div>
+          <div id="companyVerifyBanner" class="company-verify-banner" style="display: none; margin-bottom: 12px;">
+            <div class="verify-prompt-left">
+              <span class="verify-icon">✓</span>
+              <span class="verify-question">Datele companiei au fost identificate. Sunt corecte?</span>
+            </div>
+            <div class="verify-actions">
+              <button type="button" class="btn-verify-action btn-verify-yes" id="btnVerifyDataYes" title="Confirmă datele">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Da</span>
+              </button>
+              <button type="button" class="btn-verify-action btn-verify-no" id="btnVerifyDataNo" title="Corectează datele">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <span>Nu</span>
+              </button>
+            </div>
+          </div>
 
           <div id="companyInputsWrapper" class="company-inputs-box">
             <div class="input-group">
@@ -1079,6 +1108,6 @@
   <!-- Toast Notification -->
   <div id="toastNotification" class="toast"></div>
 
-  <script src="/ro/app.js?v=20261022_3"></script>
+  <script src="/ro/app.js?v=20261022_5"></script>
 </body>
 </html>
