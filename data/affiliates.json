@@ -96,9 +96,36 @@
       "commission": "0.49%",
       "country": "bg",
       "date": "2026-10-22T10:44:05.543Z"
+    },
+    {
+      "id": "cnt_1792666980208_c9r3h",
+      "affiliateSlug": null,
+      "companyName": "Тест ЕООД",
+      "companyEik": "123456789",
+      "commission": "0.49%",
+      "country": "bg",
+      "date": "2026-10-22T11:03:00.208Z"
+    },
+    {
+      "id": "cnt_1792667462946_lvhut",
+      "affiliateSlug": null,
+      "companyName": "Тест Договор БГ",
+      "companyEik": "201234567",
+      "commission": "0.49%",
+      "country": "bg",
+      "date": "2026-10-22T11:11:02.946Z"
+    },
+    {
+      "id": "cnt_1792667472095_49faa",
+      "affiliateSlug": null,
+      "companyName": "Test Romania SRL",
+      "companyEik": "RO12345678",
+      "commission": "0.25%",
+      "country": "ro",
+      "date": "2026-10-22T11:11:12.095Z"
     }
   ],
-  "updatedAt": "2026-10-22T10:44:05.543Z",
+  "updatedAt": "2026-10-22T11:11:12.095Z",
   "customLinks": [
     {
       "id": "cl_1792581080780_p6dln",

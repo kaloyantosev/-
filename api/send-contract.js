@@ -327,7 +327,10 @@ ${isRo ? 'CUI / ЕИК' : 'ЕИК'}: ${companyEik}
     const apiKey = process.env.RESEND_API_KEY;
     if (apiKey) {
       try {
-        const fromAddress = process.env.EMAIL_FROM || 'IRIS Pay <onboarding@resend.dev>';
+        const defaultFrom = (targetEmail && String(targetEmail).includes('@irisbgsf.com'))
+          ? 'IRIS Pay <sales@irisbgsf.com>'
+          : 'IRIS Pay <onboarding@resend.dev>';
+        const fromAddress = process.env.EMAIL_FROM || defaultFrom;
         const resendPayload = {
           from: fromAddress,
           to: [targetEmail],

@@ -280,6 +280,11 @@ async function send2FaEmail({ to, code, role = 'sales' }) {
   `.trim();
 
   try {
+    const defaultFrom = (to && String(to).includes('@irisbgsf.com'))
+      ? 'IRIS Pay Security <sales@irisbgsf.com>'
+      : 'IRIS Pay Security <onboarding@resend.dev>';
+    const fromAddress = process.env.EMAIL_FROM || defaultFrom;
+
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -287,14 +292,15 @@ async function send2FaEmail({ to, code, role = 'sales' }) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM || 'IRIS Pay Security <onboarding@resend.dev>',
+        from: fromAddress,
         to: [to],
         subject: emailSubject,
         text: `Вашият код за сигурност в IRIS Pay Сайт за Договори е: ${code} (валиден 10 минути).`,
         html
       })
     });
-    console.log('[2FA Email Resend status]:', res.status);
+    const resText = await res.text();
+    console.log('[2FA Email Resend status]:', res.status, resText);
     return res.ok;
   } catch (err) {
     console.error('[2FA Email Error]:', err);
