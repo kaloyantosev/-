@@ -1615,6 +1615,11 @@ body.generating-pdf .a4-sheet {
 .placed-merchant-sig {
   display: inline-block;
   padding: 0 2px;
+  color: #000000 !important;
+}
+
+.placed-merchant-sig * {
+  color: #000000 !important;
 }
 
 .placed-merchant-sig.drawn img {

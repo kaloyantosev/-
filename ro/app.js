@@ -487,30 +487,31 @@ document.addEventListener('DOMContentLoaded', () => {
       const clean = val.replace(/^RO/i, '').replace(/\D/g, '');
       if (clean.length < 5) {
         if (companyVerifyBanner) companyVerifyBanner.style.display = 'none';
+        if (eikFeedbackMsg) {
+          eikFeedbackMsg.style.display = 'block';
+          eikFeedbackMsg.className = 'field-hint-msg';
+          eikFeedbackMsg.textContent = 'Introduceți CUI pentru completare automată din registrul oficial ANAF';
+        }
         return;
       }
 
       eikDebounceTimer = setTimeout(() => {
         handleEikLookup(val);
-      }, 450);
+      }, 350);
+    });
+
+    companyEikInput.addEventListener('blur', () => {
+      const val = companyEikInput.value.trim();
+      const clean = val.replace(/^RO/i, '').replace(/\D/g, '');
+      if (clean.length >= 5) {
+        handleEikLookup(val);
+      }
     });
 
     companyEikInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         handleEikLookup(companyEikInput.value.trim());
-      }
-    });
-  }
-
-  if (btnVerifyCui) {
-    btnVerifyCui.addEventListener('click', () => {
-      const val = companyEikInput ? companyEikInput.value.trim() : '';
-      if (val) {
-        handleEikLookup(val);
-      } else {
-        showToast('Vă rugăm să introduceți un CUI / CIF pentru verificare.', 'error');
-        if (companyEikInput) companyEikInput.focus();
       }
     });
   }
@@ -591,7 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.lineWidth = 2.4;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.strokeStyle = '#1F3864';
+    ctx.strokeStyle = '#000000';
     canvas.style.touchAction = 'none';
 
     function getCoords(e) {
@@ -619,7 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.beginPath();
       ctx.moveTo(c.x, c.y);
       ctx.arc(c.x, c.y, 1.2, 0, Math.PI * 2);
-      ctx.fillStyle = '#1F3864';
+      ctx.fillStyle = '#000000';
       ctx.fill();
       ctx.beginPath();
       ctx.moveTo(c.x, c.y);
@@ -709,7 +710,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (selectedFontFamily === 'Great Vibes') fontClass = 'style-vibes';
       if (selectedFontFamily === 'Playfair Display') fontClass = 'style-serif';
 
-      return `<div class="placed-merchant-sig typed"><div class="font-sample ${fontClass}" style="font-size:24px; line-height:1.2; color:#1E3A8A; font-style:italic;">${escapeHtml(sigText)}</div></div>`;
+      return `<div class="placed-merchant-sig typed"><div class="font-sample ${fontClass}" style="font-size:24px; line-height:1.2; color:#000000; font-style:italic;">${escapeHtml(sigText)}</div></div>`;
     } else if (currentSigMode === 'upload' && uploadedImgDataUrl) {
       return `<div class="placed-merchant-sig drawn"><img src="${uploadedImgDataUrl}" alt="Semnătură" style="max-height:48px; max-width:100%; display:block;"></div>`;
     }
@@ -973,6 +974,36 @@ document.addEventListener('DOMContentLoaded', () => {
         websiteVal = sites.join(', ');
       }
 
+      // Capture merchant signature image as pure black PNG Base64
+      let sigBase64 = null;
+      try {
+        if (currentSigMode === 'draw' && hasDrawn && canvas) {
+          sigBase64 = canvas.toDataURL('image/png');
+        } else if (currentSigMode === 'upload' && uploadedImgDataUrl) {
+          sigBase64 = uploadedImgDataUrl;
+        } else {
+          // Render typed signature in black
+          const sigText = (typedSigInput && typedSigInput.value.trim()) || compRep || 'Reprezentant';
+          const off = document.createElement('canvas');
+          off.width = 320;
+          off.height = 80;
+          const octx = off.getContext('2d');
+          octx.clearRect(0, 0, 320, 80);
+          octx.font = 'italic 28px "Segoe Script", "Homemade Apple", "Brush Script MT", cursive, sans-serif';
+          octx.fillStyle = '#000000';
+          octx.fillText(sigText, 10, 48);
+          octx.beginPath();
+          octx.moveTo(10, 56);
+          octx.quadraticCurveTo(110, 70, 260, 54);
+          octx.lineWidth = 1.8;
+          octx.strokeStyle = '#000000';
+          octx.stroke();
+          sigBase64 = off.toDataURL('image/png');
+        }
+      } catch (sigErr) {
+        console.warn('[RO Signature capture error]:', sigErr);
+      }
+
       const payload = {
         country: 'ro',
         targetEmail: 'kaloyan.tosev@gmail.com',
@@ -988,6 +1019,7 @@ document.addEventListener('DOMContentLoaded', () => {
         contactEmail: emailVal,
         contactPhone: phoneVal,
         contractDate: cDate,
+        signatureImageBase64: sigBase64,
         affiliateRef: window.irisCurrentAffiliate || null,
         customToken: window.irisCustomToken || null
       };

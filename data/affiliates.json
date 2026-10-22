@@ -123,9 +123,18 @@
       "commission": "0.25%",
       "country": "ro",
       "date": "2026-10-22T11:11:12.095Z"
+    },
+    {
+      "id": "cnt_1792668818956_q8ekb",
+      "affiliateSlug": null,
+      "companyName": "Dedeman SRL",
+      "companyEik": "2816464",
+      "commission": "0.25%",
+      "country": "ro",
+      "date": "2026-10-22T11:33:38.956Z"
     }
   ],
-  "updatedAt": "2026-10-22T11:11:12.095Z",
+  "updatedAt": "2026-10-22T11:33:38.956Z",
   "customLinks": [
     {
       "id": "cl_1792581080780_p6dln",
