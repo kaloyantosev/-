@@ -138,13 +138,14 @@
             <div class="input-group col-half">
               <label for="companyEik">CUI / CIF <span class="req">*</span></label>
               <div class="eik-field-container">
-                <input type="text" id="companyEik" placeholder="ex. RO12345678 sau 12345678" maxlength="14" required autocomplete="off">
+                <input type="text" id="companyEik" placeholder="ex. RO14399840 sau 14399840" maxlength="14" required autocomplete="off">
+                <button type="button" class="btn-verify-eik" id="btnVerifyCui" onclick="window.triggerVerifyCui && window.triggerVerifyCui()" title="Verifică CUI în ANAF">Verifică</button>
               </div>
             </div>
             <div class="input-group col-half">
               <label for="contractDate">Data contractului <span class="req">*</span></label>
               <div class="dmy-date-input-wrapper">
-                <input type="text" id="contractDate" placeholder="ZZ.LL.AAAA" maxlength="10" autocomplete="off" required>
+                <input type="text" id="contractDate" value="22.10.2026" placeholder="ZZ.LL.AAAA" maxlength="10" autocomplete="off" required>
                 <input type="date" id="hiddenNativeDatePicker" tabindex="-1" aria-hidden="true" style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;">
                 <button type="button" class="btn-calendar-trigger" id="btnCalendarTrigger" title="Alege data din calendar">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
@@ -283,15 +284,15 @@
           </div>
 
           <div class="sig-mode-tabs">
-            <button type="button" class="sig-tab-btn active" data-mode="draw">
+            <button type="button" class="sig-tab-btn active" data-mode="draw" onclick="window.switchSigTab && window.switchSigTab('draw')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
               Desenare
             </button>
-            <button type="button" class="sig-tab-btn" data-mode="type">
+            <button type="button" class="sig-tab-btn" data-mode="type" onclick="window.switchSigTab && window.switchSigTab('type')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
               Text
             </button>
-            <button type="button" class="sig-tab-btn" data-mode="upload">
+            <button type="button" class="sig-tab-btn" data-mode="upload" onclick="window.switchSigTab && window.switchSigTab('upload')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
               Fișier
             </button>
@@ -301,7 +302,7 @@
           <div class="sig-tab-content active" id="sigContentDraw">
             <div class="canvas-wrapper">
               <canvas id="sigCanvas" width="450" height="140"></canvas>
-              <div class="canvas-watermark">Semnați aici folosind mouse-ul sau ecranul tactil</div>
+              <div class="canvas-watermark" id="canvasWatermark">Semnați aici folosind mouse-ul sau ecranul tactil</div>
             </div>
             <div class="canvas-actions">
               <button type="button" class="btn-subtle" id="clearCanvasBtn">
@@ -330,15 +331,15 @@
               <input type="text" id="typedSigInput" placeholder="Ion Popescu">
             </div>
             <div class="font-preview-list">
-              <div class="font-card active" data-font="Homemade Apple">
+              <div class="font-card active" data-font="Homemade Apple" onclick="window.selectFontCard && window.selectFontCard(this, 'Homemade Apple')">
                 <span class="font-name-label">Stil 1 (Scris de mână)</span>
                 <span class="font-sample style-script" id="sample1">Ion Popescu</span>
               </div>
-              <div class="font-card" data-font="Great Vibes">
+              <div class="font-card" data-font="Great Vibes" onclick="window.selectFontCard && window.selectFontCard(this, 'Great Vibes')">
                 <span class="font-name-label">Stil 2 (Caligrafic)</span>
                 <span class="font-sample style-vibes" id="sample2">Ion Popescu</span>
               </div>
-              <div class="font-card" data-font="Playfair Display">
+              <div class="font-card" data-font="Playfair Display" onclick="window.selectFontCard && window.selectFontCard(this, 'Playfair Display')">
                 <span class="font-name-label">Stil 3 (Clasic)</span>
                 <span class="font-sample style-serif" id="sample3">Ion Popescu</span>
               </div>
@@ -360,7 +361,7 @@
 
           <div class="apply-signature-box">
             <div class="signature-buttons-row">
-              <button type="button" class="btn-primary-compact" id="applySignatureBtn">
+              <button type="button" class="btn-primary-compact" id="applySignatureBtn" onclick="window.applySignatureNow && window.applySignatureNow()">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
                 <span>Semnează Contractul și Anexa</span>
               </button>
@@ -491,7 +492,7 @@
               <div class="page-content-area">
                 <div class="doc-bilingual-grid">
                   <div class="doc-col-en">
-                    <p>Today <span class="live-field" data-field="date">.........................</span>, in Bucharest, between:</p>
+                    <p>Today <span class="live-field filled" data-field="date">22.10.2026</span>, in Bucharest, between:</p>
                     <p><strong>1. IRIS Solutions AD</strong>, registered in the Commercial register and register of non-profit legal entities (CRRNPLE) at the Registry Agency, with UIC 208455895, with headquarters, address of management: Sofia, Blvd. Hristo Smirnenski 78, fl. 4, hereby referred to as “The Provider”, on the one hand,</p>
                     <p>and</p>
                     <p><strong>2. <span class="live-field" data-field="companyName">.........................</span></strong>, registered in the CRRNPLE at the Registry Agency, with UIC <strong><span class="live-field" data-field="companyEik">.........................</span></strong>, with headquarters and address of management: <strong><span class="live-field" data-field="companyAddress">.........................</span></strong>, represented by <strong><span class="live-field" data-field="companyRepresentative">.........................</span></strong>, with PIN <strong><span class="live-field" data-field="companyRepresentativePin">.........................</span></strong>, telephone: <strong><span class="live-field" data-field="contactPhone">.........................</span></strong>, hereby referred to as “Merchant”, on the other hand</p>
@@ -504,7 +505,7 @@
                     <p style="padding-left: 16px;"> online payments (e-shop);</p>
                   </div>
                   <div class="doc-col-ro">
-                    <p>Astăzi <span class="live-field" data-field="date">.........................</span>, în București, între:</p>
+                    <p>Astăzi <span class="live-field filled" data-field="date">22.10.2026</span>, în București, între:</p>
                     <p><strong>1. IRIS Solutions AD</strong>, înregistrată la registrul Comerțului și registrul entităților legale non-profit (CRRNPLE) la Agenția Registrului, având CUI 208455895, cu sediul social, adresa de conducere: Sofia, Blvd. Hristo Smirnenski 78, fl. 4, denumită în continuare “Furnizorul”, pe de o parte,</p>
                     <p>și</p>
                     <p><strong>2. <span class="live-field" data-field="companyName">.........................</span></strong>, înregistrat în CRRNPLE la Agenția Registrului, având CUI <strong><span class="live-field" data-field="companyEik">.........................</span></strong>, cu sediul social și adresa de conducere: <strong><span class="live-field" data-field="companyAddress">.........................</span></strong>, reprezentată de <strong><span class="live-field" data-field="companyRepresentative">.........................</span></strong>, cu CNP <strong><span class="live-field" data-field="companyRepresentativePin">.........................</span></strong>, telefon: <strong><span class="live-field" data-field="contactPhone">.........................</span></strong>, denumită în continuare “Comerciantul”, pe de o parte</p>
@@ -1064,7 +1065,9 @@
           </div>
 
         </div>
-      </main>
+      </div>
+    </section>
+  </main>
 
   <!-- Loading Screen Overlay -->
   <div id="loadingScreenOverlay" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.85); z-index:9999; align-items:center; justify-content:center; flex-direction:column; color:#FFFFFF;">
@@ -1076,6 +1079,6 @@
   <!-- Toast Notification -->
   <div id="toastNotification" class="toast"></div>
 
-  <script src="/ro/app.js"></script>
+  <script src="/ro/app.js?v=20261022_3"></script>
 </body>
 </html>

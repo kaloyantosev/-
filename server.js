@@ -181,6 +181,9 @@ function serveFile(filePath, res) {
     }
     res.statusCode = 200;
     res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.end(content);
   });
 }
