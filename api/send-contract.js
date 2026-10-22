@@ -151,10 +151,13 @@ export default async function handler(req, res) {
       ? String(companyName).replace(/["'„“«»]/g, '').trim()
       : (isRo ? 'Comerciant' : 'Търговец');
     const commSubjectPart = customCommission ? ` - Индивидуална комисионна: ${customCommission}` : '';
-    const countrySubjectTag = isRo ? '[România / Румъния] ' : '';
-    const emailSubject = partnerDisplayName
-      ? `${countrySubjectTag}Подписан договор (${cleanCompName}) от Партньор "${partnerDisplayName}"${commSubjectPart}`
-      : `${countrySubjectTag}Подписан договор (${cleanCompName})${commSubjectPart}`;
+    const emailSubject = isRo
+      ? (partnerDisplayName
+          ? `Румъния - Подписан договор (${cleanCompName}) от Партньор "${partnerDisplayName}"${commSubjectPart}`
+          : `Румъния - Подписан договор (${cleanCompName})${commSubjectPart}`)
+      : (partnerDisplayName
+          ? `Подписан договор (${cleanCompName}) от Партньор "${partnerDisplayName}"${commSubjectPart}`
+          : `Подписан договор (${cleanCompName})${commSubjectPart}`);
     const displayDate = isRo
       ? (String(contractDate || '').trim() || new Date().toISOString().slice(0, 10))
       : formatBulgarianDate(contractDate);

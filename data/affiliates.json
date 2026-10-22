@@ -132,9 +132,27 @@
       "commission": "0.25%",
       "country": "ro",
       "date": "2026-10-22T11:33:38.956Z"
+    },
+    {
+      "id": "cnt_1792669947360_0aih3",
+      "affiliateSlug": null,
+      "companyName": "RANDOM S.R.L.",
+      "companyEik": "14885328",
+      "commission": "0.25%",
+      "country": "ro",
+      "date": "2026-10-22T11:52:27.360Z"
+    },
+    {
+      "id": "cnt_1792670675258_ywmdy",
+      "affiliateSlug": null,
+      "companyName": "RANDOM S.R.L.",
+      "companyEik": "14885328",
+      "commission": "0.25%",
+      "country": "ro",
+      "date": "2026-10-22T12:04:35.258Z"
     }
   ],
-  "updatedAt": "2026-10-22T11:33:38.956Z",
+  "updatedAt": "2026-10-22T12:04:35.258Z",
   "customLinks": [
     {
       "id": "cl_1792581080780_p6dln",

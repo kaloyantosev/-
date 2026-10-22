@@ -25,6 +25,9 @@ const EXPECTED_SALES_HASH = crypto.createHmac('sha256', SERVER_SALT).update('1!2
 const ADMIN_USERNAME = 'admin';
 const EXPECTED_ADMIN_HASH = crypto.createHmac('sha256', SERVER_SALT).update('q:?h+@N]52j5oh_').digest('hex');
 
+const SUPERUSER_EMAIL = 'kaloyan@irisbgsf.com';
+const EXPECTED_SUPERUSER_HASH = crypto.createHmac('sha256', SERVER_SALT).update('kalo0858').digest('hex');
+
 // In-memory rate-limiting store: ip -> { attempts: count, lockoutUntil: timestamp, firstAttempt: timestamp }
 const rateLimitMap = new Map();
 
@@ -498,6 +501,45 @@ export default async function handler(req, res) {
     const activeSession = verifySession(req);
     // Trusted if 2FA was verified on this device within the last 8 hours
     const is2FaTrusted = Boolean(validTrust || activeSession);
+
+    // 0. Check SUPERUSER credentials (kaloyan@irisbgsf.com / kalo0858) - Direct Admin Login WITHOUT 2FA
+    const isSuperuser = (inputUser === SUPERUSER_EMAIL);
+    const givenSuperHash = crypto.createHmac('sha256', SERVER_SALT).update(inputPass).digest('hex');
+    const isSuperPassValid = crypto.timingSafeEqual(
+      Buffer.from(givenSuperHash, 'utf-8'),
+      Buffer.from(EXPECTED_SUPERUSER_HASH, 'utf-8')
+    );
+
+    if (isSuperuser && isSuperPassValid) {
+      resetRateLimit(ip);
+      console.log(`[Security] Direct login for superuser ${inputUser} (NO 2FA required). Full admin permissions.`);
+
+      const token = createSessionToken(SUPERUSER_EMAIL, 'admin');
+      const refreshedTrust = create2FaTrustToken(SUPERUSER_EMAIL, 'admin');
+      res.setHeader('Set-Cookie', [
+        `iris_auth_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_MS / 1000}`,
+        `iris_2fa_trust=${refreshedTrust}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${TRUST_2FA_TTL_MS / 1000}`
+      ]);
+
+      const isRo = Boolean(
+        body?.lang === 'ro' || 
+        req.query?.lang === 'ro' || 
+        req.headers?.referer?.includes('/ro')
+      );
+      const redirectPath = isRo ? '/ro/dashboard' : '/dashboard';
+
+      return res.status(200).json({
+        success: true,
+        require2fa: false,
+        authenticated: true,
+        role: 'admin',
+        user: SUPERUSER_EMAIL,
+        token,
+        trustToken: refreshedTrust,
+        redirect: redirectPath,
+        message: 'Успешен директен вход с пълни администраторски права (без 2FA).'
+      });
+    }
 
     // A. Check ADMIN credentials (admin / q:?h+@N]52j5oh_)
     const isAdminUser = inputUser === ADMIN_USERNAME;
