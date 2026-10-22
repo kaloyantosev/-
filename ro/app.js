@@ -1,6 +1,6 @@
 /**
  * IRIS Pay România | Semnare electronică contract
- * Script pentru sincronizare date în timp real, semnătură și trimitere API (country: 'ro')
+ * Script pentru sincronizare date în timp real, căutare ANAF, semnătură și trimitere API (country: 'ro')
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -33,6 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitContractBtn = document.getElementById('submitContractBtn');
   const loadingOverlay = document.getElementById('loadingScreenOverlay');
   const toast = document.getElementById('toastNotification');
+
+  // Registry elements
+  const eikFeedbackMsg = document.getElementById('eikFeedbackMsg');
+  const companyVerifyBanner = document.getElementById('companyVerifyBanner');
 
   // Today's date in DD.MM.YYYY
   const today = new Date();
@@ -101,14 +105,27 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   bindSync(companyNameInput, 'companyName');
-  bindSync(companyEikInput, 'companyEik');
   bindSync(companyAddressInput, 'companyAddress');
-  bindSync(companyRepInput, 'companyRepresentative');
   bindSync(companyRepPinInput, 'companyRepresentativePin');
   bindSync(bankIbanInput, 'bankIban');
   bindSync(contactAddressInput, 'contactAddress');
   bindSync(contactEmailInput, 'contactEmail');
   bindSync(contactPhoneInput, 'contactPhone');
+
+  // Representative Name listener (also syncs with typed signature)
+  if (companyRepInput) {
+    companyRepInput.addEventListener('input', () => {
+      const val = companyRepInput.value.trim();
+      updateLiveField('companyRepresentative', val);
+      if (typedSigInput && !typedSigInput.dataset.userEdited) {
+        typedSigInput.value = val;
+        updateTypedFontSamples();
+        if (currentSigMode === 'type' && val.length >= 2) {
+          applyTypedSignatureLive();
+        }
+      }
+    });
+  }
 
   // Address Checkbox
   if (sameAddressCheckbox && companyAddressInput && contactAddressInput) {
@@ -198,6 +215,95 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // =========================================================================
+  // ROMANIAN COMPANY LOOKUP (Official free ANAF REST API)
+  // =========================================================================
+  let cuiDebounceTimer = null;
+
+  async function lookupRomanianCompany(cuiVal) {
+    const cleanDigits = cuiVal.replace(/^RO/i, '').replace(/\D/g, '');
+    if (!cleanDigits || cleanDigits.length < 2) return;
+
+    if (eikFeedbackMsg) {
+      eikFeedbackMsg.style.display = 'block';
+      eikFeedbackMsg.className = 'field-hint-msg';
+      eikFeedbackMsg.textContent = 'Se caută datele companiei în registrul oficial ANAF...';
+    }
+
+    try {
+      const resp = await fetch(`/api/company?country=ro&eik=${encodeURIComponent(cleanDigits)}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data && data.found && data.name) {
+          if (companyNameInput) {
+            companyNameInput.value = data.name;
+            updateLiveField('companyName', data.name);
+          }
+          if (companyAddressInput && data.address) {
+            companyAddressInput.value = data.address;
+            updateLiveField('companyAddress', data.address);
+            if (sameAddressCheckbox && sameAddressCheckbox.checked && contactAddressInput) {
+              contactAddressInput.value = data.address;
+              updateLiveField('contactAddress', data.address);
+            }
+          }
+          if (contactPhoneInput && !contactPhoneInput.value && data.phone) {
+            contactPhoneInput.value = data.phone;
+            updateLiveField('contactPhone', data.phone);
+          }
+
+          if (eikFeedbackMsg) {
+            eikFeedbackMsg.style.display = 'none';
+          }
+
+          if (companyVerifyBanner) {
+            companyVerifyBanner.style.display = 'flex';
+            companyVerifyBanner.innerHTML = `
+              <div class="verify-prompt-left" style="display:flex; align-items:center; gap:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <span><strong>Companie identificată în ANAF:</strong> ${data.name}</span>
+              </div>
+            `;
+          }
+
+          showToast('Datele companiei au fost preluate automat din ANAF!', 'success');
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('CUI lookup error:', err);
+    }
+
+    if (eikFeedbackMsg) {
+      eikFeedbackMsg.style.display = 'block';
+      eikFeedbackMsg.className = 'field-hint-msg';
+      eikFeedbackMsg.textContent = 'Compania nu a fost găsită automat. Puteți introduce datele manual.';
+    }
+  }
+
+  if (companyEikInput) {
+    companyEikInput.addEventListener('input', (e) => {
+      let raw = e.target.value.trim();
+      updateLiveField('companyEik', raw);
+
+      clearTimeout(cuiDebounceTimer);
+      const cleanDigits = raw.replace(/^RO/i, '').replace(/\D/g, '');
+      if (cleanDigits.length < 2) {
+        if (eikFeedbackMsg) {
+          eikFeedbackMsg.style.display = 'block';
+          eikFeedbackMsg.className = 'field-hint-msg';
+          eikFeedbackMsg.textContent = 'Introduceți CUI pentru completare automată din registrul oficial ANAF';
+        }
+        if (companyVerifyBanner) companyVerifyBanner.style.display = 'none';
+        return;
+      }
+
+      cuiDebounceTimer = setTimeout(() => {
+        lookupRomanianCompany(raw);
+      }, 450);
+    });
+  }
+
   // Detect custom commission token & partner slug from Romanian URL
   let detectedCustomToken = null;
   let detectedPartnerSlug = null;
@@ -209,19 +315,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (urlParams.get('ref')) detectedPartnerSlug = urlParams.get('ref').trim();
     if (urlParams.get('affiliate')) detectedPartnerSlug = urlParams.get('affiliate').trim();
 
-    // Check pathname: e.g. /ro, /ro/smartbill, /ro/c/token, /ro/smartbill/token
     const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
     const segments = rawPath.split('/').filter(Boolean);
 
-    // If starts with 'ro'
     if (segments.length >= 2 && segments[0].toLowerCase() === 'ro') {
       const rest = segments.slice(1);
       if (rest.length === 2) {
         if (rest[0].toLowerCase() === 'c') {
-          // /ro/c/:token
           detectedCustomToken = rest[1].trim();
         } else {
-          // /ro/:partner/:token
           detectedPartnerSlug = rest[0].toLowerCase().trim();
           detectedCustomToken = rest[1].trim();
         }
@@ -249,56 +351,36 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('[IRIS Pay RO] Custom commission token detected:', detectedCustomToken);
 
     fetch(`/api/custom-link?token=${encodeURIComponent(detectedCustomToken)}`)
-      .then(async (res) => {
-        const banner = document.getElementById('customFeeNotificationBanner');
-        const commDisplay = document.getElementById('appCommissionDisplay');
-        const commDisplayEn = document.getElementById('appCommissionDisplayEn');
+      .then(res => res.json())
+      .then(data => {
+        if (data.valid && data.rate) {
+          const rateFormatted = `${data.rate}%`;
+          const appFeeDisplay = document.getElementById('appCommissionDisplay');
+          const appFeeDisplayEn = document.getElementById('appCommissionDisplayEn');
+          if (appFeeDisplay) appFeeDisplay.textContent = rateFormatted;
+          if (appFeeDisplayEn) appFeeDisplayEn.textContent = rateFormatted;
 
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.valid && data.commission) {
-            window.irisCustomCommission = data.commission;
-            if (commDisplay) {
-              commDisplay.textContent = data.commission;
-              commDisplay.style.color = '#059669';
-            }
-            if (commDisplayEn) {
-              commDisplayEn.textContent = data.commission;
-              commDisplayEn.style.color = '#059669';
-            }
-
-            if (data.partnerSlug) {
-              window.irisCurrentAffiliate = data.partnerSlug;
-            }
-
-            if (banner) {
-              banner.style.display = 'block';
-              banner.style.background = '#F0FDF4';
-              banner.style.border = '1px solid #BBF7D0';
-              banner.style.color = '#166534';
-              const partnerNotice = data.partnerName ? ` de la partenerul <strong>${data.partnerName}</strong>` : '';
-              banner.innerHTML = `
-                <div style="display:flex;align-items:flex-start;gap:8px;">
-                  <span style="font-weight:700;font-size:15px;line-height:1;">✓</span>
-                  <div>
-                    <strong>Ofertă individuală${partnerNotice}:</strong> Contractul este generat cu un comision special de <strong>${data.commission}</strong> pentru inițierea plăților (Anexa 1).
-                  </div>
-                </div>
-              `;
-            }
-          }
-        } else if (res.status === 410) {
-          window.irisCustomTokenUsed = true;
+          const banner = document.getElementById('customFeeNotificationBanner');
           if (banner) {
             banner.style.display = 'block';
-            banner.style.background = '#FEF2F2';
+            banner.style.backgroundColor = '#EFF6FF';
+            banner.style.border = '1px solid #BFDBFE';
+            banner.style.color = '#1E40AF';
+            banner.innerHTML = `
+              <strong>Ofertă comercială personalizată aplicată:</strong><br>
+              Comision per inițiere de plată: <strong>${rateFormatted}</strong> (în loc de comisionul standard).
+            `;
+          }
+        } else if (data.used) {
+          window.irisCustomTokenUsed = true;
+          const banner = document.getElementById('customFeeNotificationBanner');
+          if (banner) {
+            banner.style.display = 'block';
+            banner.style.backgroundColor = '#FEF2F2';
             banner.style.border = '1px solid #FECACA';
             banner.style.color = '#991B1B';
             banner.innerHTML = `
-              <div style="text-align: center; padding: 4px 0;">
-                <div style="font-size: 14.5px; font-weight: 700; margin-bottom: 4px;">Acest link de unică folosință a fost deja utilizat</div>
-                <div style="font-size: 12.5px;">Contractul pentru această ofertă a fost deja semnat și trimis. Linkul a fost dezactivat.</div>
-              </div>
+              <strong>Atenție:</strong> Acest link de contract personalizat a fost deja semnat și utilizat.
             `;
           }
           if (submitContractBtn) {
@@ -311,13 +393,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // =========================================================================
-  // Signature Handling
+  // Electronic Signature Engine (Draw, Type, Upload)
   // =========================================================================
   let currentSigMode = 'draw';
   let isContractSigned = false;
   let isAppendixSigned = false;
   let hasDrawn = false;
   let activeTypedFont = 'Homemade Apple';
+  let lastGeneratedSigBase64 = null;
 
   const canvas = document.getElementById('sigCanvas');
   const ctx = canvas ? canvas.getContext('2d') : null;
@@ -346,22 +429,29 @@ document.addEventListener('DOMContentLoaded', () => {
       currentSigMode = btn.dataset.mode;
 
       if (currentSigMode === 'draw') {
-        document.getElementById('sigContentDraw').classList.add('active');
+        const el = document.getElementById('sigContentDraw');
+        if (el) el.classList.add('active');
       } else if (currentSigMode === 'type') {
-        document.getElementById('sigContentType').classList.add('active');
-        if (typedSigInput && !typedSigInput.value.trim() && companyRepInput) {
+        const el = document.getElementById('sigContentType');
+        if (el) el.classList.add('active');
+        if (typedSigInput && !typedSigInput.value.trim() && companyRepInput && companyRepInput.value.trim()) {
           typedSigInput.value = companyRepInput.value.trim();
-          updateTypedFontSamples();
+        }
+        updateTypedFontSamples();
+        if (typedSigInput && typedSigInput.value.trim().length >= 2) {
+          applyTypedSignatureLive();
         }
       } else if (currentSigMode === 'upload') {
-        document.getElementById('sigContentUpload').classList.add('active');
+        const el = document.getElementById('sigContentUpload');
+        if (el) el.classList.add('active');
       }
     });
   });
 
-  // Canvas Drawing
+  // Canvas Drawing Setup (Cross-device, mouse, pen, touch)
   if (canvas && ctx) {
     let painting = false;
+    canvas.style.touchAction = 'none';
 
     function getCanvasCoordinates(e) {
       const rect = canvas.getBoundingClientRect();
@@ -405,20 +495,27 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.stroke();
     }
 
-    canvas.addEventListener('mousedown', startPosition);
-    canvas.addEventListener('mouseup', finishedPosition);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseleave', finishedPosition);
+    // Pointer events support with window listeners
+    if (window.PointerEvent) {
+      canvas.addEventListener('pointerdown', startPosition);
+      canvas.addEventListener('pointermove', draw);
+      window.addEventListener('pointerup', finishedPosition);
+      window.addEventListener('pointercancel', finishedPosition);
+    } else {
+      canvas.addEventListener('mousedown', startPosition);
+      canvas.addEventListener('mousemove', draw);
+      window.addEventListener('mouseup', finishedPosition);
 
-    canvas.addEventListener('touchstart', (e) => {
-      if (e.cancelable) e.preventDefault();
-      startPosition(e);
-    }, { passive: false });
-    canvas.addEventListener('touchend', finishedPosition);
-    canvas.addEventListener('touchmove', (e) => {
-      if (e.cancelable) e.preventDefault();
-      draw(e);
-    }, { passive: false });
+      canvas.addEventListener('touchstart', (e) => {
+        if (e.cancelable) e.preventDefault();
+        startPosition(e);
+      }, { passive: false });
+      canvas.addEventListener('touchmove', (e) => {
+        if (e.cancelable) e.preventDefault();
+        draw(e);
+      }, { passive: false });
+      window.addEventListener('touchend', finishedPosition);
+    }
   }
 
   if (clearCanvasBtn && ctx && canvas) {
@@ -442,8 +539,121 @@ document.addEventListener('DOMContentLoaded', () => {
     if (s3) s3.textContent = text;
   }
 
+  // Generate Base64 Image
+  function getSignatureImageBase64() {
+    if (currentSigMode === 'draw') {
+      if (!hasDrawn || !canvas) return null;
+      lastGeneratedSigBase64 = canvas.toDataURL('image/png');
+      return lastGeneratedSigBase64;
+    } else if (currentSigMode === 'type') {
+      const text = (typedSigInput?.value || '').trim() || (companyRepInput?.value || '').trim() || 'Ion Popescu';
+      const off = document.createElement('canvas');
+      off.width = 400;
+      off.height = 100;
+      const octx = off.getContext('2d');
+      octx.clearRect(0, 0, 400, 100);
+      octx.font = `italic 30px "${activeTypedFont}", cursive, sans-serif`;
+      octx.fillStyle = '#1F3864';
+      octx.textBaseline = 'middle';
+      octx.fillText(text, 15, 45);
+      octx.beginPath();
+      octx.moveTo(15, 68);
+      octx.quadraticCurveTo(140, 82, 320, 65);
+      octx.lineWidth = 2;
+      octx.strokeStyle = 'rgba(31, 56, 100, 0.7)';
+      octx.stroke();
+      lastGeneratedSigBase64 = off.toDataURL('image/png');
+      return lastGeneratedSigBase64;
+    } else if (currentSigMode === 'upload') {
+      return uploadedSigBase64;
+    }
+    return lastGeneratedSigBase64;
+  }
+
+  // Apply signature to document slots
+  function applySignatureToSlots(sigData, isType, textVal, fontName) {
+    let contentHtml = '';
+    if (isType) {
+      let fontClass = 'style-script';
+      if (fontName === 'Great Vibes') fontClass = 'style-vibes';
+      if (fontName === 'Playfair Display') fontClass = 'style-serif';
+
+      contentHtml = `
+        <div class="placed-merchant-sig typed" style="padding:2px 4px; display:inline-block;">
+          <div class="font-sample ${fontClass}" style="font-size:24px; line-height:1.2; color:#1E3A8A; font-style:italic;">
+            ${escapeHtml(textVal)}
+          </div>
+        </div>
+      `;
+    } else {
+      contentHtml = `<img src="${sigData}" alt="Semnătură Comerciant" style="max-width:100%; max-height:100%; object-fit:contain; display:block;">`;
+    }
+
+    const allSlots = [
+      contractMerchantSigSlot,
+      contractMerchantSigSlotEn,
+      contractMerchantTermsSigSlot,
+      contractMerchantTermsSigSlotEn,
+      appendixMerchantSigSlot,
+      appendixMerchantSigSlotEn
+    ];
+
+    allSlots.forEach(slot => {
+      if (slot) {
+        slot.innerHTML = contentHtml;
+        slot.style.border = 'none';
+        slot.style.background = 'transparent';
+      }
+    });
+
+    isContractSigned = true;
+    isAppendixSigned = true;
+
+    if (badgeContract) {
+      badgeContract.textContent = 'Semnat';
+      badgeContract.className = 'status-badge signed';
+    }
+    if (badgeAppendix) {
+      badgeAppendix.textContent = 'Semnat';
+      badgeAppendix.className = 'status-badge signed';
+    }
+
+    const statusBoxContract = document.getElementById('statusBoxContract');
+    const statusBoxAppendix = document.getElementById('statusBoxAppendix');
+    if (statusBoxContract) {
+      const icon = statusBoxContract.querySelector('.status-icon');
+      if (icon) {
+        icon.textContent = '✓';
+        icon.className = 'status-icon signed';
+        icon.style.color = '#059669';
+      }
+    }
+    if (statusBoxAppendix) {
+      const icon = statusBoxAppendix.querySelector('.status-icon');
+      if (icon) {
+        icon.textContent = '✓';
+        icon.className = 'status-icon signed';
+        icon.style.color = '#059669';
+      }
+    }
+  }
+
+  function applyTypedSignatureLive() {
+    const text = (typedSigInput?.value || '').trim() || (companyRepInput?.value || '').trim();
+    if (text.length >= 2) {
+      const sigData = getSignatureImageBase64();
+      applySignatureToSlots(sigData, true, text, activeTypedFont);
+    }
+  }
+
   if (typedSigInput) {
-    typedSigInput.addEventListener('input', updateTypedFontSamples);
+    typedSigInput.addEventListener('input', (e) => {
+      typedSigInput.dataset.userEdited = 'true';
+      updateTypedFontSamples();
+      if (currentSigMode === 'type') {
+        applyTypedSignatureLive();
+      }
+    });
   }
 
   document.querySelectorAll('.font-card').forEach(card => {
@@ -451,6 +661,9 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.font-card').forEach(c => c.classList.remove('active'));
       card.classList.add('active');
       activeTypedFont = card.dataset.font;
+      if (currentSigMode === 'type') {
+        applyTypedSignatureLive();
+      }
     });
   });
 
@@ -463,6 +676,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const reader = new FileReader();
       reader.onload = (event) => {
         uploadedSigBase64 = event.target.result;
+        lastGeneratedSigBase64 = uploadedSigBase64;
         if (uploadPreviewImg) uploadPreviewImg.src = uploadedSigBase64;
         if (uploadPreviewWrapper) uploadPreviewWrapper.style.display = 'block';
       };
@@ -473,6 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function resetSignatureStatus() {
     isContractSigned = false;
     isAppendixSigned = false;
+    lastGeneratedSigBase64 = null;
     if (badgeContract) {
       badgeContract.textContent = 'Nesemnat';
       badgeContract.className = 'status-badge';
@@ -519,91 +734,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function getSignatureImageBase64() {
-    if (currentSigMode === 'draw') {
-      if (!hasDrawn || !canvas) return null;
-      return canvas.toDataURL('image/png');
-    } else if (currentSigMode === 'type') {
-      const text = (typedSigInput?.value || '').trim() || (companyRepInput?.value || '').trim() || 'Ion Popescu';
-      const off = document.createElement('canvas');
-      off.width = 400;
-      off.height = 100;
-      const octx = off.getContext('2d');
-      octx.clearRect(0, 0, 400, 100);
-      octx.font = `italic 32px "${activeTypedFont}", cursive, sans-serif`;
-      octx.fillStyle = '#1F3864';
-      octx.textBaseline = 'middle';
-      octx.fillText(text, 15, 45);
-      octx.beginPath();
-      octx.moveTo(15, 65);
-      octx.quadraticCurveTo(140, 80, 320, 62);
-      octx.lineWidth = 2;
-      octx.strokeStyle = 'rgba(31, 56, 100, 0.7)';
-      octx.stroke();
-      return off.toDataURL('image/png');
-    } else if (currentSigMode === 'upload') {
-      return uploadedSigBase64;
-    }
-    return null;
+  function escapeHtml(str) {
+    return str.replace(/[&<>'"]/g, tag => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    }[tag] || tag));
   }
 
   // Apply Signature Button
   if (applySignatureBtn) {
     applySignatureBtn.addEventListener('click', () => {
-      const sigData = getSignatureImageBase64();
-      if (!sigData) {
-        showToast('Vă rugăm să desenați, tastați sau încărcați o semnătură mai întâi.', 'error');
-        return;
-      }
-
-      isContractSigned = true;
-      isAppendixSigned = true;
-
-      if (badgeContract) {
-        badgeContract.textContent = 'Semnat';
-        badgeContract.className = 'status-badge signed';
-      }
-      if (badgeAppendix) {
-        badgeAppendix.textContent = 'Semnat';
-        badgeAppendix.className = 'status-badge signed';
-      }
-
-      const statusBoxContract = document.getElementById('statusBoxContract');
-      const statusBoxAppendix = document.getElementById('statusBoxAppendix');
-      if (statusBoxContract) {
-        const icon = statusBoxContract.querySelector('.status-icon');
-        if (icon) {
-          icon.textContent = '✓';
-          icon.className = 'status-icon signed';
-          icon.style.color = '#059669';
+      if (currentSigMode === 'type') {
+        const text = (typedSigInput?.value || '').trim() || (companyRepInput?.value || '').trim();
+        if (!text) {
+          showToast('Vă rugăm să introduceți numele dumneavoastră pentru semnătură în câmpul de text.', 'error');
+          if (typedSigInput) {
+            typedSigInput.focus();
+            typedSigInput.classList.add('shake-error');
+            setTimeout(() => typedSigInput.classList.remove('shake-error'), 600);
+          }
+          return;
         }
-      }
-      if (statusBoxAppendix) {
-        const icon = statusBoxAppendix.querySelector('.status-icon');
-        if (icon) {
-          icon.textContent = '✓';
-          icon.className = 'status-icon signed';
-          icon.style.color = '#059669';
+        const sigData = getSignatureImageBase64();
+        applySignatureToSlots(sigData, true, text, activeTypedFont);
+      } else {
+        const sigData = getSignatureImageBase64();
+        if (!sigData) {
+          showToast('Vă rugăm să desenați sau să încărcați o semnătură mai întâi.', 'error');
+          return;
         }
+        applySignatureToSlots(sigData, false, '', '');
       }
-
-      const imgHtml = `<img src="${sigData}" alt="Semnătură Comerciant" style="max-width: 100%; max-height: 100%; object-fit: contain; display: block;">`;
-      const allSlots = [
-        contractMerchantSigSlot,
-        contractMerchantSigSlotEn,
-        contractMerchantTermsSigSlot,
-        contractMerchantTermsSigSlotEn,
-        appendixMerchantSigSlot,
-        appendixMerchantSigSlotEn
-      ];
-
-      allSlots.forEach(slot => {
-        if (slot) {
-          slot.innerHTML = imgHtml;
-          slot.style.border = 'none';
-          slot.style.background = 'transparent';
-        }
-      });
 
       // In-card confirmation notice
       let feedback = document.getElementById('sigAppliedNotice');
@@ -621,7 +785,7 @@ document.addEventListener('DOMContentLoaded', () => {
         applySignatureBtn.parentNode.appendChild(feedback);
       }
       feedback.style.display = 'block';
-      feedback.innerHTML = `<strong>✓ Semnătura a fost aplicată pe Contract și Anexa 1!</strong><div style="font-size: 11px; color: #047857; margin-top: 3px;">Puteți vedea semnătura în paginile 8 și 9 ale documentului.</div>`;
+      feedback.innerHTML = `<strong>✓ Semnătura a fost aplicată pe Contract și Anexa 1!</strong><div style="font-size: 11px; color: #047857; margin-top: 3px;">Puteți vedea semnătura în paginile 14 și 16 ale documentului.</div>`;
 
       showToast('Semnătura a fost aplicată cu succes!');
 
@@ -695,12 +859,21 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (contactEmailError) contactEmailError.style.display = 'none';
 
-      // Check signature
+      // Check signature (Auto-apply if user typed name, drew or uploaded but forgot to click apply)
       if (!isContractSigned || !isAppendixSigned) {
-        showToast('Vă rugăm să aplicați semnătura pe Contract și Anexa 1 înainte de trimitere.', 'error');
-        const sigCard = document.getElementById('signatureSectionCard');
-        if (sigCard) sigCard.scrollIntoView({ behavior: 'smooth' });
-        return;
+        const textVal = (typedSigInput?.value || '').trim() || compRep;
+        if (currentSigMode === 'type' && textVal.length >= 2) {
+          applySignatureBtn.click();
+        } else if (currentSigMode === 'draw' && hasDrawn && canvas) {
+          applySignatureBtn.click();
+        } else if (currentSigMode === 'upload' && uploadedSigBase64) {
+          applySignatureBtn.click();
+        } else {
+          showToast('Vă rugăm să aplicați semnătura pe Contract și Anexa 1 înainte de trimitere.', 'error');
+          const sigCard = document.getElementById('signatureSectionCard');
+          if (sigCard) sigCard.scrollIntoView({ behavior: 'smooth' });
+          return;
+        }
       }
 
       // Check consents
@@ -807,9 +980,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function applyZoom() {
-      mainDocContainer.style.transform = `scale(${currentZoom / 100})`;
-      mainDocContainer.style.transformOrigin = 'top center';
       zoomLevelDisplay.textContent = `${currentZoom}%`;
+      const scale = currentZoom / 100;
+      mainDocContainer.style.transform = `scale(${scale})`;
+      mainDocContainer.style.transformOrigin = 'top center';
     }
   }
 });

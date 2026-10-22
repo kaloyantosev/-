@@ -1,11 +1,97 @@
 /**
- * Vercel Serverless Function: Real-time Bulgarian Commercial Register Lookup
- * Endpoint: /api/company?eik={eik}
- * Queries the official Registry Agency (Търговски регистър) and EU VIES National Database.
+ * Vercel Serverless Function: Real-time Commercial Register Lookup (Bulgaria & Romania)
+ * Endpoint: /api/company?eik={eik}&country={bg|ro}
+ * Queries:
+ * - Romania: Official ANAF REST API v9 & EU VIES National Database (100% Free)
+ * - Bulgaria: Registry Agency (Търговски регистър) & EU VIES National Database
  */
 
 export default async function handler(req, res) {
-  const eik = (req.query.eik || '').trim().replace(/\D/g, '');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+
+  const rawInput = (req.query.eik || req.query.cui || '').trim();
+  const countryParam = (req.query.country || '').toLowerCase();
+  const isRo = countryParam === 'ro' || rawInput.toUpperCase().startsWith('RO');
+
+  // =========================================================================
+  // ROMANIA: Free official ANAF v9 + EU VIES Lookup
+  // =========================================================================
+  if (isRo) {
+    const cuiClean = rawInput.replace(/^RO/i, '').replace(/\D/g, '');
+    if (!cuiClean || cuiClean.length < 2 || cuiClean.length > 10) {
+      return res.status(400).json({ error: 'Cod CUI invalid (trebuie să conțină între 2 și 10 cifre).' });
+    }
+
+    const numericCui = parseInt(cuiClean, 10);
+    const today = new Date().toISOString().split('T')[0];
+
+    // 1. Official ANAF REST API v9 (Ministry of Finance, Romania - 100% Free)
+    try {
+      const anafUrl = 'https://webservicesp.anaf.ro/api/PlatitorTvaRest/v9/tva';
+      const anafRes = await fetch(anafUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify([{ cui: numericCui, data: today }])
+      });
+
+      if (anafRes.ok) {
+        const anafData = await anafRes.json();
+        if (anafData && anafData.found && anafData.found.length > 0) {
+          const dg = anafData.found[0].date_generale;
+          if (dg && dg.denumire) {
+            return res.status(200).json({
+              uic: String(dg.cui || cuiClean),
+              name: dg.denumire.trim(),
+              address: (dg.adresa || '').trim(),
+              regCom: dg.nrRegCom || '',
+              phone: dg.telefon || '',
+              source: 'anaf',
+              found: true
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[ANAF] query error:', err.message);
+    }
+
+    // 2. Fallback to EU VIES National Database for Romania
+    try {
+      const viesUrl = `https://ec.europa.eu/taxation_customs/vies/rest-api/ms/RO/vat/${cuiClean}`;
+      const viesRes = await fetch(viesUrl, {
+        headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' }
+      });
+      if (viesRes.ok) {
+        const viesData = await viesRes.json();
+        if (viesData && viesData.isValid && viesData.name && viesData.name !== '---') {
+          return res.status(200).json({
+            uic: cuiClean,
+            name: viesData.name.trim(),
+            address: (viesData.address || '').replace(/\n/g, ', ').trim(),
+            source: 'vies_ro',
+            found: true
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('[VIES RO] query error:', err.message);
+    }
+
+    return res.status(200).json({
+      uic: cuiClean,
+      found: false,
+      error: 'Compania nu a fost găsită în registrul oficial ANAF.'
+    });
+  }
+
+  // =========================================================================
+  // BULGARIA: Registry Agency (Търговски регистър) & EU VIES Lookup
+  // =========================================================================
+  const eik = rawInput.replace(/\D/g, '');
 
   if (!eik || (eik.length !== 9 && eik.length !== 13)) {
     return res.status(400).json({ error: 'Невалиден ЕИК (трябва да е 9 или 13 цифри).' });

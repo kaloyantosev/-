@@ -354,9 +354,20 @@
   </div>
 
   <script>
-    // 1. Clear any existing tokens on login page so fresh authentication is always required
-    localStorage.removeItem('iris_auth_token');
-    sessionStorage.removeItem('iris_auth_token');
+    // 1. Check if already authenticated within 8 hours
+    const existingToken = localStorage.getItem('iris_auth_token') || sessionStorage.getItem('iris_auth_token');
+    if (existingToken) {
+      fetch('/api/auth?action=check', {
+        headers: { 'Authorization': 'Bearer ' + existingToken }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.authenticated) {
+          window.location.replace(data.role === 'admin' ? '/admin' : '/dashboard');
+        }
+      })
+      .catch(() => {});
+    }
 
     // 2. Elements
     const loginForm = document.getElementById('loginForm');
@@ -461,8 +472,8 @@
         return;
       }
 
-      if (username !== 'sales@irisbgsf.com') {
-        showAlert('Задължително е въвеждането на целия служебен имейл адрес: sales@irisbgsf.com');
+      if (username !== 'sales@irisbgsf.com' && username !== 'admin') {
+        showAlert('Задължително е въвеждането на служебен имейл (sales@irisbgsf.com) или admin.');
         usernameInput.focus();
         return;
       }
@@ -470,16 +481,24 @@
       setStep1Loading(true);
 
       try {
+        const trustToken = localStorage.getItem('iris_2fa_trust') || '';
         const res = await fetch('/api/auth', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'login', username, password })
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-2FA-Trust': trustToken
+          },
+          body: JSON.stringify({ action: 'login', username, password, trustToken })
         });
 
         const data = await res.json();
 
         if (res.ok && data.success) {
-          // If 2FA is required (Sales role)
+          if (data.trustToken) {
+            localStorage.setItem('iris_2fa_trust', data.trustToken);
+          }
+
+          // If 2FA is required (first time or trust expired)
           if (data.require2fa && data.ticket) {
             currentTicket = data.ticket;
             step1Wrapper.style.display = 'none';
@@ -493,9 +512,13 @@
             return;
           }
 
-          // Direct login (Admin role)
+          // Direct login (2FA bypassed for 8 hours or Admin)
           if (data.token) {
+            localStorage.setItem('iris_auth_token', data.token);
             sessionStorage.setItem('iris_auth_token', data.token);
+            if (data.role === 'admin') {
+              localStorage.setItem('iris_admin_token', data.token);
+            }
           }
           showAlert('Входът е успешен! Пренасочване...', true);
           window.location.replace(data.redirect || '/dashboard');
@@ -542,7 +565,14 @@
 
         if (res.ok && data.success) {
           if (data.token) {
+            localStorage.setItem('iris_auth_token', data.token);
             sessionStorage.setItem('iris_auth_token', data.token);
+            if (data.role === 'admin') {
+              localStorage.setItem('iris_admin_token', data.token);
+            }
+          }
+          if (data.trustToken) {
+            localStorage.setItem('iris_2fa_trust', data.trustToken);
           }
           showAlert('Успешна автентикация! Пренасочване...', true);
           window.location.replace(data.redirect || '/dashboard');

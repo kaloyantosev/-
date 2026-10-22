@@ -368,6 +368,21 @@
   </div>
 
   <script>
+    // 1. Check if already authenticated within 8 hours
+    const existingToken = localStorage.getItem('iris_auth_token') || sessionStorage.getItem('iris_auth_token');
+    if (existingToken) {
+      fetch('/api/auth?action=check', {
+        headers: { 'Authorization': 'Bearer ' + existingToken }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.authenticated) {
+          window.location.replace(data.role === 'admin' ? '/admin' : '/ro/dashboard');
+        }
+      })
+      .catch(() => {});
+    }
+
     // Elements
     const loginForm = document.getElementById('loginForm');
     const twoFaForm = document.getElementById('twoFaForm');
@@ -447,27 +462,45 @@
       setStep1Loading(true);
 
       try {
+        const trustToken = localStorage.getItem('iris_2fa_trust') || '';
         const res = await fetch('/api/auth', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, username: email, password })
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-2FA-Trust': trustToken
+          },
+          body: JSON.stringify({ email, username: email, password, lang: 'ro', trustToken })
         });
 
         const data = await res.json();
 
-        if (res.ok && data.require2fa && data.ticket) {
-          currentTicket = data.ticket;
-          twoFaTargetEmail.textContent = data.targetEmail || email;
-          step1Wrapper.style.display = 'none';
-          step2Wrapper.style.display = 'block';
-          pageTitle.textContent = 'Verificare în doi pași (2FA)';
-          pageSubtitle.textContent = 'Introduceți codul primit pe e-mail pentru securitate';
-          startResendCooldown();
-          twoFaCode.value = '';
-          twoFaCode.focus();
-        } else if (res.ok && data.authenticated) {
-          showAlert('Autentificare reușită! Se redirecționează...', true);
-          window.location.replace('/ro/dashboard');
+        if (res.ok && data.success) {
+          if (data.trustToken) {
+            localStorage.setItem('iris_2fa_trust', data.trustToken);
+          }
+
+          if (data.require2fa && data.ticket) {
+            currentTicket = data.ticket;
+            twoFaTargetEmail.textContent = data.targetEmail || email;
+            step1Wrapper.style.display = 'none';
+            step2Wrapper.style.display = 'block';
+            pageTitle.textContent = 'Verificare în doi pași (2FA)';
+            pageSubtitle.textContent = 'Introduceți codul primit pe e-mail pentru securitate';
+            startResendCooldown();
+            twoFaCode.value = '';
+            twoFaCode.focus();
+          } else if (data.token || data.authenticated) {
+            if (data.token) {
+              localStorage.setItem('iris_auth_token', data.token);
+              sessionStorage.setItem('iris_auth_token', data.token);
+              if (data.role === 'admin') {
+                localStorage.setItem('iris_admin_token', data.token);
+              }
+            }
+            showAlert('Autentificare reușită! Se redirecționează...', true);
+            const destination = (data.role === 'admin') ? '/admin' : (data.redirect || '/ro/dashboard');
+            window.location.replace(destination);
+          }
         } else {
           showAlert(data.error || 'E-mail sau parolă incorectă.');
           passwordInput.value = '';
@@ -511,7 +544,14 @@
 
         if (res.ok && data.success) {
           if (data.token) {
+            localStorage.setItem('iris_auth_token', data.token);
             sessionStorage.setItem('iris_auth_token', data.token);
+            if (data.role === 'admin') {
+              localStorage.setItem('iris_admin_token', data.token);
+            }
+          }
+          if (data.trustToken) {
+            localStorage.setItem('iris_2fa_trust', data.trustToken);
           }
           showAlert('Autentificare cu succes! Se redirecționează...', true);
           // If admin, go to /admin, otherwise go to /ro/dashboard

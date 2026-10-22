@@ -814,12 +814,28 @@
   <div id="adminToast" class="admin-toast"></div>
 
   <script>
-    // 1. Session verification & Admin Login handling
-    // Always clear persistent storage on /admin so admin login is required on every visit
-    localStorage.removeItem('iris_auth_token');
-    localStorage.removeItem('iris_admin_token');
+    // 1. Session verification & Admin Login handling (8-hour remember window)
     let currentAdminToken = null;
     let adminCurrentTicket = null;
+
+    const existingAdminToken = localStorage.getItem('iris_admin_token') || sessionStorage.getItem('iris_admin_token') || localStorage.getItem('iris_auth_token');
+    if (existingAdminToken) {
+      fetch('/api/auth?action=check', {
+        headers: { 'Authorization': 'Bearer ' + existingAdminToken }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.authenticated && (data.role === 'admin' || data.user === 'admin')) {
+          currentAdminToken = existingAdminToken;
+          showAdminApp();
+        } else {
+          showAdminLogin();
+        }
+      })
+      .catch(() => showAdminLogin());
+    } else {
+      showAdminLogin();
+    }
 
     const adminLoginSection = document.getElementById('adminLoginSection');
     const adminAppSection = document.getElementById('adminAppSection');
@@ -878,14 +894,21 @@
         adminLoginError.style.display = 'none';
 
         try {
+          const trustToken = localStorage.getItem('iris_2fa_trust') || '';
           const res = await fetch('/api/auth', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            headers: { 
+              'Content-Type': 'application/json',
+              'X-2FA-Trust': trustToken
+            },
+            body: JSON.stringify({ email, password, username: email, trustToken })
           });
 
           const data = await res.json();
           if (res.ok && data.success) {
+            if (data.trustToken) {
+              localStorage.setItem('iris_2fa_trust', data.trustToken);
+            }
             if (data.require2fa) {
               adminCurrentTicket = data.ticket;
               if (admin2FaTargetEmail && data.targetEmail) {
@@ -897,6 +920,8 @@
               setTimeout(() => admin2FaCode.focus(), 100);
             } else if (data.token && (data.role === 'admin' || data.user === 'admin')) {
               currentAdminToken = data.token;
+              localStorage.setItem('iris_admin_token', data.token);
+              localStorage.setItem('iris_auth_token', data.token);
               sessionStorage.setItem('iris_admin_token', data.token);
               showAdminApp();
             }
@@ -940,7 +965,12 @@
           const data = await res.json();
           if (res.ok && data.success && data.token) {
             currentAdminToken = data.token;
+            localStorage.setItem('iris_admin_token', data.token);
+            localStorage.setItem('iris_auth_token', data.token);
             sessionStorage.setItem('iris_admin_token', data.token);
+            if (data.trustToken) {
+              localStorage.setItem('iris_2fa_trust', data.trustToken);
+            }
             showAdminApp();
           } else {
             adminLoginError.textContent = data.error || 'Невалиден или изтекъл код.';

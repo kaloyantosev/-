@@ -5,6 +5,11 @@
  * Credentials:
  *   Sales: sales@irisbgsf.com / 1!2@3№4$ (Requires 2FA sent to kaloyan.tosev@gmail.com)
  *   Admin: admin / q:?h+@N]52j5oh_
+ * 
+ * 8-Hour Remember 2FA Policy:
+ *   Once 2FA is verified, the client receives an 8-hour cryptographic trust token (iris_2fa_trust).
+ *   Subsequent logins within 8 hours (BG, RO, or Admin) will verify credentials and log in directly
+ *   WITHOUT requesting a 2FA code via email.
  */
 
 import crypto from 'crypto';
@@ -27,6 +32,7 @@ const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 const ATTEMPTS_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const TRUST_2FA_TTL_MS = 8 * 60 * 60 * 1000; // 8 hours (No 2FA code required for 8 hours once verified)
 
 function getClientIp(req) {
   const forwarded = req.headers['x-forwarded-for'];
@@ -89,6 +95,86 @@ export function createSessionToken(username, role = 'sales') {
   const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
   const signature = crypto.createHmac('sha256', SERVER_SALT).update(payloadB64).digest('base64url');
   return `${payloadB64}.${signature}`;
+}
+
+/**
+ * Creates a cryptographically signed 8-hour 2FA trust token.
+ */
+export function create2FaTrustToken(username, role = 'sales') {
+  const payload = {
+    user: username,
+    role,
+    type: '2fa_trusted',
+    trustedUntil: Date.now() + TRUST_2FA_TTL_MS,
+    nonce: crypto.randomBytes(16).toString('hex')
+  };
+  const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto.createHmac('sha256', SERVER_SALT).update(payloadB64).digest('base64url');
+  return `${payloadB64}.${signature}`;
+}
+
+/**
+ * Extracts 2FA trust token from header, body, cookie, or query param.
+ */
+export function extractTrustToken(req) {
+  // 1. Header
+  const headerToken = req.headers['x-2fa-trust'];
+  if (headerToken && typeof headerToken === 'string' && headerToken.trim()) {
+    return headerToken.trim();
+  }
+
+  // 2. Body
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch (e) { body = {}; }
+  }
+  if (body?.trustToken && typeof body.trustToken === 'string' && body.trustToken.trim()) {
+    return body.trustToken.trim();
+  }
+
+  // 3. Cookie
+  const cookieHeader = req.headers['cookie'] || '';
+  const match = cookieHeader.match(/iris_2fa_trust=([^;]+)/);
+  if (match) {
+    return match[1].trim();
+  }
+
+  // 4. Query
+  if (req.query?.trustToken) {
+    return String(req.query.trustToken).trim();
+  }
+
+  return null;
+}
+
+/**
+ * Verifies if a 2FA trust token is valid and not expired (within 8 hours).
+ */
+export function verify2FaTrustToken(token) {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 2) return null;
+
+  const [payloadB64, signature] = parts;
+  if (!payloadB64 || !signature) return null;
+
+  const expectedSig = crypto.createHmac('sha256', SERVER_SALT).update(payloadB64).digest('base64url');
+  const sigBuf = Buffer.from(signature, 'utf-8');
+  const expBuf = Buffer.from(expectedSig, 'utf-8');
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf-8'));
+    if (!payload || payload.type !== '2fa_trusted') return null;
+    if (Date.now() > payload.trustedUntil) {
+      return null; // Expired (older than 8 hours)
+    }
+    return payload;
+  } catch (e) {
+    return null;
+  }
 }
 
 /**
@@ -271,7 +357,7 @@ export function verifySession(req) {
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-2FA-Trust');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -283,19 +369,23 @@ export default async function handler(req, res) {
   // 1. Session check endpoint
   if (req.method === 'GET' || action === 'check') {
     const session = verifySession(req);
+    const trustToken = extractTrustToken(req);
+    const trust = verify2FaTrustToken(trustToken);
     if (session) {
       return res.status(200).json({
         authenticated: true,
         user: session.user,
         role: session.role,
-        expiresAt: session.expiresAt
+        expiresAt: session.expiresAt,
+        twoFaTrusted: Boolean(trust)
       });
     }
-    return res.status(200).json({ authenticated: false });
+    return res.status(200).json({ authenticated: false, twoFaTrusted: Boolean(trust) });
   }
 
   // 2. Logout endpoint
   if (action === 'logout') {
+    // Clear session token cookie; keep 8-hour 2FA trust cookie so re-login within 8h only asks for password
     res.setHeader('Set-Cookie', 'iris_auth_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
     return res.status(200).json({ success: true, message: 'Успешен изход.' });
   }
@@ -316,21 +406,23 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: verification.error });
     }
 
-    // Success! Reset rate limit and issue full session token
+    // Success! Reset rate limit and issue full session token AND 8-hour trust token
     resetRateLimit(ip);
     const role = verification.role || (verification.email === 'admin' ? 'admin' : 'sales');
     const user = verification.email || (role === 'admin' ? 'admin' : VALID_SALES_EMAIL);
     const token = createSessionToken(user, role);
+    const trustToken = create2FaTrustToken(user, role);
     const expiresAt = Date.now() + SESSION_TTL_MS;
 
-    res.setHeader(
-      'Set-Cookie',
-      `iris_auth_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_MS / 1000}`
-    );
+    res.setHeader('Set-Cookie', [
+      `iris_auth_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_MS / 1000}`,
+      `iris_2fa_trust=${trustToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${TRUST_2FA_TTL_MS / 1000}`
+    ]);
 
     return res.status(200).json({
       success: true,
       token,
+      trustToken,
       user,
       role,
       expiresAt,
@@ -394,6 +486,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Моля, въведете имейл / потребител и парола.' });
     }
 
+    // Check if client presents a valid 8-hour 2FA trust token or an existing valid session
+    const rawTrust = extractTrustToken(req);
+    const validTrust = verify2FaTrustToken(rawTrust);
+    const activeSession = verifySession(req);
+    // Trusted if 2FA was verified on this device within the last 8 hours
+    const is2FaTrusted = Boolean(validTrust || activeSession);
+
     // A. Check ADMIN credentials (admin / q:?h+@N]52j5oh_)
     const isAdminUser = inputUser === ADMIN_USERNAME;
     const givenAdminHash = crypto.createHmac('sha256', SERVER_SALT).update(inputPass).digest('hex');
@@ -405,7 +504,29 @@ export default async function handler(req, res) {
     if (isAdminUser && isAdminPassValid) {
       resetRateLimit(ip);
 
-      // Generate 6-digit 2FA code for admin
+      // If 2FA trust is active (within 8 hours): BYPASS 2FA AUTH CODE!
+      if (is2FaTrusted) {
+        console.log(`[Security] Admin 2FA bypassed for ${inputUser} (8-hour trusted device active).`);
+        const token = createSessionToken('admin', 'admin');
+        const refreshedTrust = create2FaTrustToken('admin', 'admin');
+        res.setHeader('Set-Cookie', [
+          `iris_auth_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_MS / 1000}`,
+          `iris_2fa_trust=${refreshedTrust}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${TRUST_2FA_TTL_MS / 1000}`
+        ]);
+        return res.status(200).json({
+          success: true,
+          require2fa: false,
+          authenticated: true,
+          role: 'admin',
+          user: 'admin',
+          token,
+          trustToken: refreshedTrust,
+          redirect: '/admin',
+          message: 'Успешен администраторски вход (активна 8-часова доверена сесия).'
+        });
+      }
+
+      // First time or trust expired: Generate and send 6-digit 2FA code
       const code = String(Math.floor(100000 + Math.random() * 900000));
       let target2FaEmail = process.env.AUTH_2FA_EMAIL || 'kaloyan.tosev@gmail.com';
       try {
@@ -439,9 +560,38 @@ export default async function handler(req, res) {
     if (isSalesUser && isSalesPassValid) {
       resetRateLimit(ip);
 
-      // Generate 6-digit 2FA code
+      // Determine redirect path (BG dashboard vs RO dashboard)
+      const isRo = Boolean(
+        body?.lang === 'ro' || 
+        req.query?.lang === 'ro' || 
+        req.headers?.referer?.includes('/ro')
+      );
+      const redirectPath = isRo ? '/ro/dashboard' : '/dashboard';
+
+      // If 2FA trust is active (within 8 hours): BYPASS 2FA AUTH CODE!
+      if (is2FaTrusted) {
+        console.log(`[Security] Sales 2FA bypassed for ${inputUser} (8-hour trusted device active).`);
+        const token = createSessionToken(VALID_SALES_EMAIL, 'sales');
+        const refreshedTrust = create2FaTrustToken(VALID_SALES_EMAIL, 'sales');
+        res.setHeader('Set-Cookie', [
+          `iris_auth_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_MS / 1000}`,
+          `iris_2fa_trust=${refreshedTrust}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${TRUST_2FA_TTL_MS / 1000}`
+        ]);
+        return res.status(200).json({
+          success: true,
+          require2fa: false,
+          authenticated: true,
+          role: 'sales',
+          user: VALID_SALES_EMAIL,
+          token,
+          trustToken: refreshedTrust,
+          redirect: redirectPath,
+          message: 'Успешен вход в системата (активна 8-часова доверена сесия).'
+        });
+      }
+
+      // First time or trust expired: Generate and send 6-digit 2FA code
       const code = String(Math.floor(100000 + Math.random() * 900000));
-      // Send 2FA email (defaults to kaloyan.tosev@gmail.com, configurable in admin)
       let target2FaEmail = process.env.AUTH_2FA_EMAIL || 'kaloyan.tosev@gmail.com';
       try {
         const settings = await getSettings();
