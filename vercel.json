@@ -20,18 +20,6 @@
       "dest": "/ro/dashboard.html"
     },
     {
-      "src": "/ro/c/(.*)",
-      "dest": "/ro/index.html"
-    },
-    {
-      "src": "/ro/([^/]+)/([^/]+)",
-      "dest": "/ro/index.html"
-    },
-    {
-      "src": "/ro/([^/]+)",
-      "dest": "/ro/index.html"
-    },
-    {
       "src": "/ro/?$",
       "dest": "/ro/index.html"
     },
@@ -49,6 +37,18 @@
     },
     {
       "handle": "filesystem"
+    },
+    {
+      "src": "/ro/c/(.*)",
+      "dest": "/ro/index.html"
+    },
+    {
+      "src": "/ro/([^/]+)/([^/]+)",
+      "dest": "/ro/index.html"
+    },
+    {
+      "src": "/ro/([^/]+)",
+      "dest": "/ro/index.html"
     },
     {
       "src": "/c/(.*)",

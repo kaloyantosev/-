@@ -3,7 +3,7 @@
  * Arhitectură identică cu portalul principal, 100% sincronizat și stabil.
  */
 
-document.addEventListener('DOMContentLoaded', () => {
+function initRoPortal() {
   // =========================================================================
   // 1. Initial State & Elements
   // =========================================================================
@@ -1056,4 +1056,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial Sync
   syncAllFields();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initRoPortal);
+} else {
+  initRoPortal();
+}
