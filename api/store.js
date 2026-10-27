@@ -177,6 +177,11 @@ function ensureStoreArrays(st) {
       bnbBadgeText: 'Лицензирана институция от БНБ',
       termsUrl: 'https://irisbgsf.com'
     };
+  } else {
+    // Ensure twoFaEmail is never pointing to kaloyan.tosev from old KV/store state
+    if (st.settings.twoFaEmail && st.settings.twoFaEmail.toLowerCase().includes('kaloyan.tosev')) {
+      st.settings.twoFaEmail = 'sales@irisbgsf.com';
+    }
   }
   return st;
 }
@@ -777,6 +782,9 @@ export async function getSettings() {
 
 export async function updateSettings(newSettings) {
   const store = await loadStore();
+  if (newSettings && newSettings.twoFaEmail && newSettings.twoFaEmail.toLowerCase().includes('kaloyan.tosev')) {
+    newSettings.twoFaEmail = 'sales@irisbgsf.com';
+  }
   store.settings = {
     ...store.settings,
     ...newSettings

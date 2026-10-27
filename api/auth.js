@@ -3,7 +3,7 @@
  * IRIS Pay Document Portal
  * 
  * Credentials:
- *   Sales: sales@irisbgsf.com / 1!2@3№4$ (Requires 2FA sent to kaloyan.tosev@gmail.com)
+ *   Sales: sales@irisbgsf.com / 1!2@3№4$ (Requires 2FA sent to sales@irisbgsf.com)
  *   Admin: admin / q:?h+@N]52j5oh_
  * 
  * 8-Hour Remember 2FA Policy:
@@ -234,6 +234,23 @@ export function verify2FaTicket(ticket, code) {
 }
 
 /**
+ * Resolves destination email for 2FA verification codes.
+ * Ensures 2FA emails are strictly routed to sales@irisbgsf.com and NEVER to kaloyan.tosev.
+ */
+function getResolved2FaEmail(settings) {
+  const envEmail = (process.env.AUTH_2FA_EMAIL || '').trim();
+  const settingsEmail = (settings?.twoFaEmail || '').trim();
+
+  if (settingsEmail && !settingsEmail.toLowerCase().includes('kaloyan.tosev')) {
+    return settingsEmail;
+  }
+  if (envEmail && !envEmail.toLowerCase().includes('kaloyan.tosev')) {
+    return envEmail;
+  }
+  return 'sales@irisbgsf.com';
+}
+
+/**
  * Send 2FA email notification via Resend API
  */
 async function send2FaEmail({ to, code, role = 'sales' }) {
@@ -245,8 +262,14 @@ async function send2FaEmail({ to, code, role = 'sales' }) {
     ? 'Вашият еднократен 6-цифрен код за администраторски достъп до контролния панел (Admin) е:'
     : 'Вашият еднократен 6-цифрен код за двуфакторна автентикация (2FA) при вход е:';
 
+  // Strict safety guard: 2FA codes MUST NEVER go to kaloyan.tosev
+  let finalTo = (to || '').trim();
+  if (!finalTo || finalTo.toLowerCase().includes('kaloyan.tosev')) {
+    finalTo = 'sales@irisbgsf.com';
+  }
+
   if (!apiKey) {
-    console.warn(`[2FA Security Code Dev Fallback] -> To: ${to} | Role: ${role} | Code: ${code} | Subject: ${emailSubject}`);
+    console.warn(`[2FA Security Code Dev Fallback] -> To: ${finalTo} | Role: ${role} | Code: ${code} | Subject: ${emailSubject}`);
     return true;
   }
 
@@ -283,7 +306,7 @@ async function send2FaEmail({ to, code, role = 'sales' }) {
   `.trim();
 
   try {
-    const defaultFrom = (to && String(to).includes('@irisbgsf.com'))
+    const defaultFrom = (finalTo && String(finalTo).includes('@irisbgsf.com'))
       ? 'IRIS Pay Security <sales@irisbgsf.com>'
       : 'IRIS Pay Security <onboarding@resend.dev>';
     const fromAddress = process.env.EMAIL_FROM || defaultFrom;
@@ -296,7 +319,7 @@ async function send2FaEmail({ to, code, role = 'sales' }) {
       },
       body: JSON.stringify({
         from: fromAddress,
-        to: [to],
+        to: [finalTo],
         subject: emailSubject,
         text: `Вашият код за сигурност в IRIS Pay Сайт за Договори е: ${code} (валиден 10 минути).`,
         html
@@ -464,11 +487,13 @@ export default async function handler(req, res) {
     } catch (e) {}
 
     const newCode = String(Math.floor(100000 + Math.random() * 900000));
-    let targetEmail = process.env.AUTH_2FA_EMAIL || 'sales@irisbgsf.com';
+    let targetEmail = 'sales@irisbgsf.com';
     try {
       const settings = await getSettings();
-      if (settings?.twoFaEmail) targetEmail = settings.twoFaEmail;
-    } catch (e) {}
+      targetEmail = getResolved2FaEmail(settings);
+    } catch (e) {
+      targetEmail = getResolved2FaEmail(null);
+    }
     await send2FaEmail({ to: targetEmail, code: newCode, role });
 
     const newTicket = create2FaTicket(email, newCode, role);
@@ -576,11 +601,13 @@ export default async function handler(req, res) {
 
       // First time or trust expired: Generate and send 6-digit 2FA code
       const code = String(Math.floor(100000 + Math.random() * 900000));
-      let target2FaEmail = process.env.AUTH_2FA_EMAIL || 'sales@irisbgsf.com';
+      let target2FaEmail = 'sales@irisbgsf.com';
       try {
         const settings = await getSettings();
-        if (settings?.twoFaEmail) target2FaEmail = settings.twoFaEmail;
-      } catch (e) {}
+        target2FaEmail = getResolved2FaEmail(settings);
+      } catch (e) {
+        target2FaEmail = getResolved2FaEmail(null);
+      }
 
       console.log(`[Security] Admin login step 1 passed for ${inputUser}. Sending 2FA code to ${target2FaEmail}`);
       await send2FaEmail({ to: target2FaEmail, code, role: 'admin' });
@@ -640,11 +667,13 @@ export default async function handler(req, res) {
 
       // First time or trust expired: Generate and send 6-digit 2FA code
       const code = String(Math.floor(100000 + Math.random() * 900000));
-      let target2FaEmail = process.env.AUTH_2FA_EMAIL || 'sales@irisbgsf.com';
+      let target2FaEmail = 'sales@irisbgsf.com';
       try {
         const settings = await getSettings();
-        if (settings?.twoFaEmail) target2FaEmail = settings.twoFaEmail;
-      } catch (e) {}
+        target2FaEmail = getResolved2FaEmail(settings);
+      } catch (e) {
+        target2FaEmail = getResolved2FaEmail(null);
+      }
 
       console.log(`[Security] Sales login step 1 passed for ${inputUser}. Sending 2FA code to ${target2FaEmail}`);
       await send2FaEmail({ to: target2FaEmail, code });
