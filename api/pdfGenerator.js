@@ -33,8 +33,8 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
   const pdfDoc = await PDFDocument.load(contractBytes);
   pdfDoc.registerFontkit(fontkit);
 
-  const font = await pdfDoc.embedFont(fontRegularBytes, { features: { liga: false, calt: false } });
-  const fontBold = await pdfDoc.embedFont(fontBoldBytes, { features: { liga: false, calt: false } });
+  const font = await pdfDoc.embedFont(fontRegularBytes, { subset: true, features: { liga: false, calt: false } });
+  const fontBold = await pdfDoc.embedFont(fontBoldBytes, { subset: true, features: { liga: false, calt: false } });
 
   // Embed merchant signature image
   let sigImage = null;
@@ -434,7 +434,7 @@ function stripPhoneAndEmailFromAddress(addr) {
     });
   }
 
-  const pdfBytes = await pdfDoc.save();
+  const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
   return pdfBytes;
 }
 

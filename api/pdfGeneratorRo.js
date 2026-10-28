@@ -34,8 +34,8 @@ export async function generateContractRoPdf(data, assetsDir = 'assets') {
   const pdfDoc = await PDFDocument.load(contractBytes);
   pdfDoc.registerFontkit(fontkit);
 
-  const font = await pdfDoc.embedFont(fontRegularBytes, { features: { liga: false, calt: false } });
-  const fontBold = await pdfDoc.embedFont(fontBoldBytes, { features: { liga: false, calt: false } });
+  const font = await pdfDoc.embedFont(fontRegularBytes, { subset: true, features: { liga: false, calt: false } });
+  const fontBold = await pdfDoc.embedFont(fontBoldBytes, { subset: true, features: { liga: false, calt: false } });
 
   // Merchant signature
   let sigImage = null;
@@ -232,6 +232,6 @@ export async function generateContractRoPdf(data, assetsDir = 'assets') {
     appP2.drawImage(sigImage, { x: 382.0, y: appP2H - 495, width: 105, height: 35 });
   }
 
-  const pdfBytes = await pdfDoc.save();
+  const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
   return pdfBytes;
 }
