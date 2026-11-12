@@ -665,7 +665,7 @@ function initPartnerPortal() {
       const payload = {
         country: 'partner',
         contractType: 'partner',
-        targetEmail: 'kaloyan.tosev@gmail.com',
+        targetEmail: 'sales@irisbgsf.com',
         companyName: compName,
         companyEik: compEik,
         companyAddress: compAddress,

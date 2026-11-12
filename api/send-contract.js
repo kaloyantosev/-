@@ -149,7 +149,7 @@ export default async function handler(req, res) {
     // - Bulgarian / general contracts: send to sales@irisbgsf.com (configurable via settings.contractRecipientEmail)
     let targetEmail = 'sales@irisbgsf.com';
     if (isPartner) {
-      targetEmail = 'kaloyan.tosev@gmail.com';
+      targetEmail = 'sales@irisbgsf.com';
     } else {
       try {
         const settings = await getSettings();
