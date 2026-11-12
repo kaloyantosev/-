@@ -1626,23 +1626,28 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         if (currentSigMode === 'draw' && hasDrawn && canvas) {
           sigBase64 = canvas.toDataURL('image/png');
+        } else if (currentSigMode === 'upload' && typeof uploadedImgDataUrl !== 'undefined' && uploadedImgDataUrl) {
+          sigBase64 = uploadedImgDataUrl;
         } else {
-          // Render typed signature to offscreen canvas
+          // Render typed signature using the exact selected font in black, without any underline
           const sigText = (typedSigInput && typedSigInput.value.trim()) || compRep || 'Иван Иванов';
           const off = document.createElement('canvas');
-          off.width = 320;
-          off.height = 80;
           const octx = off.getContext('2d');
-          octx.clearRect(0, 0, 320, 80);
-          octx.font = 'italic 28px "Segoe Script", "Brush Script MT", cursive, sans-serif';
-          octx.fillStyle = '#0f3b8c';
-          octx.fillText(sigText, 10, 48);
-          octx.beginPath();
-          octx.moveTo(10, 56);
-          octx.quadraticCurveTo(110, 70, 260, 54);
-          octx.lineWidth = 1.8;
-          octx.strokeStyle = 'rgba(15, 59, 140, 0.7)';
-          octx.stroke();
+          let canvasFont = '34px "Homemade Apple", cursive';
+          if (selectedFontFamily === 'Great Vibes') {
+            canvasFont = '44px "Great Vibes", cursive';
+          } else if (selectedFontFamily === 'Playfair Display') {
+            canvasFont = 'italic 600 32px "Playfair Display", serif';
+          }
+          octx.font = canvasFont;
+          const textW = Math.ceil(octx.measureText(sigText).width);
+          off.width = Math.max(320, textW + 24);
+          off.height = 90;
+          octx.clearRect(0, 0, off.width, off.height);
+          octx.font = canvasFont;
+          octx.fillStyle = '#000000';
+          octx.textBaseline = 'middle';
+          octx.fillText(sigText, 12, 46);
           sigBase64 = off.toDataURL('image/png');
         }
       } catch (sigErr) {

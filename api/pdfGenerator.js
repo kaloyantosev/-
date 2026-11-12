@@ -325,11 +325,12 @@ function stripPhoneAndEmailFromAddress(addr) {
 
   // Merchant Slot 1: Placed directly under "За Търговеца:", strictly without printed name
   if (sigImage) {
+    const d1 = sigImage.scaleToFit(145, 24);
     p9.drawImage(sigImage, {
       x: 368.94,
       y: p9H - 408.0,
-      width: 95.0,
-      height: 24.0
+      width: d1.width,
+      height: d1.height
     });
   }
 
@@ -361,21 +362,23 @@ function stripPhoneAndEmailFromAddress(addr) {
 
   // Draw Merchant Signature 2 directly under "За Търговеца:" aligned with Slot 1 & 3, strictly without printed name
   if (sigImage) {
+    const d2 = sigImage.scaleToFit(145, 23);
     p9.drawImage(sigImage, {
       x: 368.94,
       y: p9H - 468.0,
-      width: 95.0,
-      height: 23.0
+      width: d2.width,
+      height: d2.height
     });
   }
 
   // Merchant Slot 3: Placed directly under "За Търговеца:", strictly without printed name
   if (sigImage) {
+    const d3 = sigImage.scaleToFit(145, 24);
     p9.drawImage(sigImage, {
       x: 368.94,
       y: p9H - 558.0,
-      width: 95.0,
-      height: 24.0
+      width: d3.width,
+      height: d3.height
     });
   }
 
@@ -426,11 +429,12 @@ function stripPhoneAndEmailFromAddress(addr) {
 
   // Merchant slot: Placed directly under "За Търговеца:", strictly without printed name
   if (sigImage) {
+    const dApp = sigImage.scaleToFit(145, 24);
     p10.drawImage(sigImage, {
       x: 392.65,
       y: p10H - 569.67,
-      width: 95.0,
-      height: 24.0
+      width: dApp.width,
+      height: dApp.height
     });
   }
 
@@ -439,4 +443,5 @@ function stripPhoneAndEmailFromAddress(addr) {
 }
 
 export { generateContractRoPdf } from './pdfGeneratorRo.js';
+export { generateContractPartnerPdf } from './pdfGeneratorPartner.js';
 

@@ -770,6 +770,67 @@
       </div>
     </section>
 
+    <!-- Pending Partner Agreements Tabs -->
+    <style>
+      .pending-partners-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+      .pending-partner-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-left: 4px solid #2563eb;
+        border-radius: 10px;
+        padding: 8px 12px;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+        font-size: 13.5px;
+        color: #0f172a;
+      }
+      .pending-partner-label {
+        font-weight: 600;
+      }
+      .btn-pending-create {
+        background: #2563eb;
+        color: #ffffff;
+        border: none;
+        border-radius: 7px;
+        padding: 6px 12px;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      .btn-pending-create:hover {
+        background: #1d4ed8;
+      }
+      .btn-pending-dismiss {
+        background: #fee2e2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+        border-radius: 6px;
+        width: 24px;
+        height: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1;
+        cursor: pointer;
+        transition: background 0.15s ease, color 0.15s ease;
+      }
+      .btn-pending-dismiss:hover {
+        background: #dc2626;
+        color: #ffffff;
+      }
+    </style>
+    <div id="pendingPartnersContainer" class="pending-partners-bar" style="display:none;"></div>
+
     <!-- Partners Table -->
     <section class="table-container">
       <div class="table-header-title">
@@ -1124,6 +1185,7 @@
           currentAffiliates = data.affiliates || [];
           lastSummaryData = data.summary || null;
           renderSummary(data.summary, month, fromDate, toDate);
+          renderPendingPartners(data.pendingPartners || []);
           renderTable(data.affiliates);
           populateMonthsDropdown(data.summary?.monthsList || []);
         } else {
@@ -1540,6 +1602,64 @@
     }
 
     // Create Modal Logic
+    function renderPendingPartners(list) {
+      const container = document.getElementById('pendingPartnersContainer');
+      if (!container) return;
+      if (!Array.isArray(list) || list.length === 0) {
+        container.style.display = 'none';
+        container.innerHTML = '';
+        return;
+      }
+      container.style.display = 'flex';
+      container.innerHTML = list.map(p => `
+        <div class="pending-partner-tab" data-pending-id="${escapeHtml(p.id)}">
+          <span class="pending-partner-label">Нов партньор - "${escapeHtml(p.companyName)}"</span>
+          <button type="button" class="btn-pending-create" data-company="${escapeHtml(p.companyName)}">Създай Affiliate Link</button>
+          <button type="button" class="btn-pending-dismiss" title="Изтрий следата от договора" data-dismiss-id="${escapeHtml(p.id)}">&times;</button>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('.btn-pending-create').forEach(btn => {
+        btn.addEventListener('click', () => {
+          createAffiliateForm.reset();
+          newPartnerName.value = btn.dataset.company || '';
+          newPartnerSlug.value = '';
+          newPartnerSlug.dataset.userEdited = 'true';
+          updatePreviewUrl();
+          createModal.style.display = 'flex';
+          newPartnerSlug.focus();
+        });
+      });
+
+      container.querySelectorAll('.btn-pending-dismiss').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.dismissId;
+          if (!id) return;
+          btn.disabled = true;
+          try {
+            const resp = await fetch(`/api/affiliates?action=dismissPendingPartner&id=${encodeURIComponent(id)}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            if (resp.ok) {
+              const tab = container.querySelector(`.pending-partner-tab[data-pending-id="${CSS.escape(id)}"]`);
+              if (tab) tab.remove();
+              if (!container.querySelector('.pending-partner-tab')) {
+                container.style.display = 'none';
+              }
+              showToast('Следата от партньорския договор беше премахната.', 'info');
+            } else {
+              btn.disabled = false;
+              showToast('Грешка при изтриване.', 'error');
+            }
+          } catch (e) {
+            btn.disabled = false;
+            showToast('Грешка при свързване със сървъра.', 'error');
+          }
+        });
+      });
+    }
+
     btnOpenCreateModal.addEventListener('click', () => {
       createAffiliateForm.reset();
       delete newPartnerSlug.dataset.userEdited;

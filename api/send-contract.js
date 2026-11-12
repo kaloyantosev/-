@@ -9,8 +9,8 @@
 
 import fs from 'fs';
 import path from 'path';
-import { generateContractPdf, generateContractRoPdf } from './pdfGenerator.js';
-import { recordContractAttribution, getCustomLink, useCustomLink, getSettings } from './store.js';
+import { generateContractPdf, generateContractRoPdf, generateContractPartnerPdf } from './pdfGenerator.js';
+import { recordContractAttribution, recordPendingPartner, getCustomLink, useCustomLink, getSettings } from './store.js';
 
 // Vercel body parser config
 export const config = {
@@ -82,6 +82,7 @@ export default async function handler(req, res) {
 
     const targetCountry = String(country || 'bg').toLowerCase();
     const isRo = targetCountry === 'ro';
+    const isPartner = targetCountry === 'partner' || data?.contractType === 'partner';
 
     // Verify and handle custom commission token if provided
     let customCommission = null;
@@ -100,20 +101,29 @@ export default async function handler(req, res) {
       }
     }
 
-    // Record contract attribution (either to an affiliate or direct without partner)
+    // Record attribution: partner agreement -> pendingPartners tab; merchant contract -> contracts
     const refCode = affiliateRef || data.ref || data.affiliate || validatedCustomLink?.partnerSlug || null;
     let partnerDisplayName = validatedCustomLink?.partnerName || null;
     let attribution = null;
     try {
-      attribution = await recordContractAttribution({
-        affiliateSlug: refCode,
-        companyName: companyName,
-        companyEik: companyEik,
-        commission: customCommission,
-        country: targetCountry
-      });
-      if (attribution && attribution.partnerName) {
-        partnerDisplayName = attribution.partnerName;
+      if (isPartner) {
+        await recordPendingPartner({
+          companyName,
+          companyEik,
+          contactEmail,
+          contactPhone
+        });
+      } else {
+        attribution = await recordContractAttribution({
+          affiliateSlug: refCode,
+          companyName: companyName,
+          companyEik: companyEik,
+          commission: customCommission,
+          country: targetCountry
+        });
+        if (attribution && attribution.partnerName) {
+          partnerDisplayName = attribution.partnerName;
+        }
       }
     } catch (attErr) {
       console.warn('Could not record contract attribution:', attErr);
@@ -137,28 +147,34 @@ export default async function handler(req, res) {
     // - Romanian contracts (isRo): send to sales@irisbgsf.com (configurable via settings.contractRecipientRoEmail)
     // - Bulgarian / general contracts: send to sales@irisbgsf.com (configurable via settings.contractRecipientEmail)
     let targetEmail = 'sales@irisbgsf.com';
-    try {
-      const settings = await getSettings();
-      if (isRo) {
-        const roEmail = settings?.contractRecipientRoEmail || process.env.CONTRACT_RECIPIENT_RO_EMAIL || 'sales@irisbgsf.com';
-        targetEmail = roEmail.toLowerCase().includes('kaloyan.tosev') ? 'sales@irisbgsf.com' : roEmail;
-      } else {
-        targetEmail = settings?.contractRecipientEmail || process.env.CONTRACT_RECIPIENT_EMAIL || 'sales@irisbgsf.com';
+    if (isPartner) {
+      targetEmail = 'kaloyan.tosev@gmail.com';
+    } else {
+      try {
+        const settings = await getSettings();
+        if (isRo) {
+          const roEmail = settings?.contractRecipientRoEmail || process.env.CONTRACT_RECIPIENT_RO_EMAIL || 'sales@irisbgsf.com';
+          targetEmail = roEmail.toLowerCase().includes('kaloyan.tosev') ? 'sales@irisbgsf.com' : roEmail;
+        } else {
+          targetEmail = settings?.contractRecipientEmail || process.env.CONTRACT_RECIPIENT_EMAIL || 'sales@irisbgsf.com';
+        }
+      } catch (e) {
+        targetEmail = 'sales@irisbgsf.com';
       }
-    } catch (e) {
-      targetEmail = 'sales@irisbgsf.com';
     }
     const cleanCompName = (companyName && companyName !== '—')
       ? String(companyName).replace(/["'„“«»]/g, '').trim()
       : (isRo ? 'Comerciant' : 'Търговец');
     const commSubjectPart = customCommission ? ` - Индивидуална комисионна: ${customCommission}` : '';
-    const emailSubject = isRo
-      ? (partnerDisplayName
-          ? `Румъния - Подписан договор (${cleanCompName}) от Партньор "${partnerDisplayName}"${commSubjectPart}`
-          : `Румъния - Подписан договор (${cleanCompName})${commSubjectPart}`)
-      : (partnerDisplayName
-          ? `Подписан договор (${cleanCompName}) от Партньор "${partnerDisplayName}"${commSubjectPart}`
-          : `Подписан договор (${cleanCompName})${commSubjectPart}`);
+    const emailSubject = isPartner
+      ? `Договор за партньорство (${cleanCompName} - ЕИК ${companyEik || '—'})`
+      : isRo
+        ? (partnerDisplayName
+            ? `Румъния - Подписан договор (${cleanCompName}) от Партньор "${partnerDisplayName}"${commSubjectPart}`
+            : `Румъния - Подписан договор (${cleanCompName})${commSubjectPart}`)
+        : (partnerDisplayName
+            ? `Подписан договор (${cleanCompName}) от Партньор "${partnerDisplayName}"${commSubjectPart}`
+            : `Подписан договор (${cleanCompName})${commSubjectPart}`);
     const displayDate = isRo
       ? (String(contractDate || '').trim() || new Date().toISOString().slice(0, 10))
       : formatBulgarianDate(contractDate);
@@ -279,13 +295,15 @@ ${isRo ? 'CUI / ЕИК' : 'ЕИК'}: ${companyEik}
         customCommission
       };
 
-      const generatedBytes = isRo
-        ? await generateContractRoPdf(pdfParams, assetsDir)
-        : await generateContractPdf(pdfParams, assetsDir);
+      const generatedBytes = isPartner
+        ? await generateContractPartnerPdf(pdfParams, assetsDir)
+        : isRo
+          ? await generateContractRoPdf(pdfParams, assetsDir)
+          : await generateContractPdf(pdfParams, assetsDir);
 
       if (generatedBytes && generatedBytes.length > 0) {
         finalPdfBase64 = Buffer.from(generatedBytes).toString('base64');
-        console.log(`[Vector PDF] Generated pristine ${isRo ? 'Romanian' : 'Bulgarian'} vector PDF. Size:`, generatedBytes.length);
+        console.log(`[Vector PDF] Generated pristine ${isPartner ? 'Partner' : (isRo ? 'Romanian' : 'Bulgarian')} vector PDF. Size:`, generatedBytes.length);
       }
     } catch (genErr) {
       console.warn('[Vector PDF] Generation error, falling back to passed pdfBase64:', genErr);
@@ -316,9 +334,11 @@ ${isRo ? 'CUI / ЕИК' : 'ЕИК'}: ${companyEik}
       const safeCompName = (companyName && companyName !== '—')
         ? String(companyName).replace(/["'„“«»<>:\/\\|?*]/g, '').trim()
         : (isRo ? 'Comerciant' : 'Търговец');
-      const pdfFilename = isRo
-        ? `Contract_IRISPay_RO_${safeCompName}.pdf`
-        : `Договор (${safeCompName}).pdf`;
+      const pdfFilename = isPartner
+        ? `Dogovor_Partniorstvo_${safeCompName}.pdf`
+        : isRo
+          ? `Contract_IRISPay_RO_${safeCompName}.pdf`
+          : `Договор (${safeCompName}).pdf`;
 
       attachments.push({
         filename: pdfFilename,

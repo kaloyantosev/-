@@ -253,13 +253,15 @@ export async function generateContractRoPdf(data, assetsDir = 'assets') {
   const p14H = p14.getHeight();
 
   if (sigImage) {
+    const d1 = sigImage.scaleToFit(140, 26);
+    const d2 = sigImage.scaleToFit(140, 24);
     // 1st signature block (under Contract)
-    p14.drawImage(sigImage, { x: colLeftX, y: p14H - 592, width: 90, height: 26 });
-    p14.drawImage(sigImage, { x: colRightX, y: p14H - 578, width: 90, height: 26 });
+    p14.drawImage(sigImage, { x: colLeftX, y: p14H - 592, width: d1.width, height: d1.height });
+    p14.drawImage(sigImage, { x: colRightX, y: p14H - 578, width: d1.width, height: d1.height });
 
     // 2nd signature block (General Terms and Conditions acceptance)
-    p14.drawImage(sigImage, { x: colLeftX, y: p14H - 720, width: 90, height: 24 });
-    p14.drawImage(sigImage, { x: colRightX, y: p14H - 714, width: 90, height: 26 });
+    p14.drawImage(sigImage, { x: colLeftX, y: p14H - 720, width: d2.width, height: d2.height });
+    p14.drawImage(sigImage, { x: colRightX, y: p14H - 714, width: d1.width, height: d1.height });
   }
 
   // ------------------------------------------
@@ -294,10 +296,11 @@ export async function generateContractRoPdf(data, assetsDir = 'assets') {
 
   // Signatures on Annex 1
   if (sigImage) {
+    const dAnn = sigImage.scaleToFit(155, 35);
     // Page 1: under "For the Merchant" (x=382.54, y0=600.62)
-    appP1.drawImage(sigImage, { x: 382.5, y: appP1H - 655, width: 105, height: 35 });
+    appP1.drawImage(sigImage, { x: 382.5, y: appP1H - 655, width: dAnn.width, height: dAnn.height });
     // Page 2: under "Pentru Comerciant:" (x=382.54, y0=590.67)
-    appP2.drawImage(sigImage, { x: 382.5, y: appP2H - 645, width: 105, height: 35 });
+    appP2.drawImage(sigImage, { x: 382.5, y: appP2H - 645, width: dAnn.width, height: dAnn.height });
   }
 
   const pdfBytes = await pdfDoc.save({ useObjectStreams: true });

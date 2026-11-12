@@ -24,6 +24,10 @@
       "dest": "/ro/index.html"
     },
     {
+      "src": "/partner/?$",
+      "dest": "/partner/index.html"
+    },
+    {
       "src": "/login",
       "dest": "/login.html"
     },

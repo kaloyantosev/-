@@ -164,6 +164,7 @@ function ensureStoreArrays(st) {
   if (!Array.isArray(st.affiliates)) st.affiliates = [];
   if (!Array.isArray(st.contracts)) st.contracts = [];
   if (!Array.isArray(st.customLinks)) st.customLinks = [];
+  if (!Array.isArray(st.pendingPartners)) st.pendingPartners = [];
   if (!st.settings || typeof st.settings !== 'object') {
     st.settings = {
       standardCommission: '0.49%',
@@ -816,4 +817,43 @@ export async function getAllContracts(arg = null) {
       partnerName: c.affiliateSlug ? (affMap.get(c.affiliateSlug.toLowerCase()) || c.affiliateSlug) : null
     }))
     .sort((a, b) => new Date(b.date) - new Date(a.date));
+}
+
+/**
+ * Record a newly signed partner agreement (/partner) as a pending partner tab in dashboard
+ */
+export async function recordPendingPartner({ companyName, companyEik = '', contactEmail = '', contactPhone = '' }) {
+  const store = await loadStore();
+  const entry = {
+    id: `pp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    companyName: String(companyName || 'Нов партньор').trim(),
+    companyEik: String(companyEik || '').trim(),
+    contactEmail: String(contactEmail || '').trim(),
+    contactPhone: String(contactPhone || '').trim(),
+    createdAt: new Date().toISOString()
+  };
+  store.pendingPartners.unshift(entry);
+  await saveStore(store);
+  return entry;
+}
+
+/**
+ * Get all pending signed partner agreements
+ */
+export async function getPendingPartners() {
+  const store = await loadStore();
+  return (store.pendingPartners || []).slice();
+}
+
+/**
+ * Delete/dismiss a pending partner agreement tab
+ */
+export async function deletePendingPartner({ id }) {
+  const store = await loadStore();
+  const before = (store.pendingPartners || []).length;
+  store.pendingPartners = (store.pendingPartners || []).filter(p => p.id !== id);
+  if (store.pendingPartners.length !== before) {
+    await saveStore(store);
+  }
+  return { deleted: before - store.pendingPartners.length };
 }

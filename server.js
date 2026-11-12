@@ -136,6 +136,11 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (pathname === '/partner' || pathname === '/partner/' || pathname === '/partner/index.html' || pathname === '/partners' || pathname === '/partners/') {
+    serveFile(path.join(__dirname, 'partner', 'index.html'), res);
+    return;
+  }
+
   if (pathname === '/login' || pathname === '/login/') {
     serveFile(path.join(__dirname, 'login.html'), res);
     return;
