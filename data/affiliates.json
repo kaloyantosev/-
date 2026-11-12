@@ -150,9 +150,54 @@
       "commission": "0.25%",
       "country": "ro",
       "date": "2026-10-22T12:04:35.258Z"
+    },
+    {
+      "id": "cnt_1794475798563_2q6l2",
+      "affiliateSlug": null,
+      "companyName": "DANTE INTERNATIONAL SA (eMAG)",
+      "companyEik": "RO14399840",
+      "commission": "0.25%",
+      "country": "ro",
+      "date": "2026-11-12T09:29:58.563Z"
+    },
+    {
+      "id": "cnt_1794476101037_f3xg6",
+      "affiliateSlug": null,
+      "companyName": "DANTE INTERNATIONAL SA (eMAG)",
+      "companyEik": "14399840",
+      "commission": "0.25%",
+      "country": "ro",
+      "date": "2026-11-12T09:35:01.037Z"
+    },
+    {
+      "id": "cnt_1794476218621_m77m0",
+      "affiliateSlug": null,
+      "companyName": "DANTE INTERNATIONAL SA (eMAG)",
+      "companyEik": "14399840",
+      "commission": "0.25%",
+      "country": "ro",
+      "date": "2026-11-12T09:36:58.621Z"
+    },
+    {
+      "id": "cnt_1794476262505_1oe7v",
+      "affiliateSlug": null,
+      "companyName": "DANTE INTERNATIONAL SA (eMAG)",
+      "companyEik": "14399840",
+      "commission": "0.25%",
+      "country": "ro",
+      "date": "2026-11-12T09:37:42.505Z"
+    },
+    {
+      "id": "cnt_1794477212431_dait2",
+      "affiliateSlug": null,
+      "companyName": "DANTE INTERNATIONAL SA (eMAG)",
+      "companyEik": "14399840",
+      "commission": "0.25%",
+      "country": "ro",
+      "date": "2026-11-12T09:53:32.431Z"
     }
   ],
-  "updatedAt": "2026-10-22T12:04:35.258Z",
+  "updatedAt": "2026-11-12T09:53:32.431Z",
   "customLinks": [
     {
       "id": "cl_1792581080780_p6dln",

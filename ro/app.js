@@ -114,10 +114,8 @@ function initRoPortal() {
           if (r.ok) {
             const d = await r.json();
             if (d && d.valid && d.commission) {
-              const cd = document.getElementById('appCommissionDisplay');
-              const cde = document.getElementById('appCommissionDisplayEn');
-              if (cd) cd.textContent = d.commission;
-              if (cde) cde.textContent = d.commission;
+              window.irisCustomCommission = d.commission;
+              applyCustomCommissionUi(d.commission);
             }
           }
         }).catch(() => {});
@@ -196,6 +194,10 @@ function initRoPortal() {
         el.classList.remove('text-animating');
       }
     });
+
+    if (typeof autoFitPdfMasks === 'function') {
+      autoFitPdfMasks();
+    }
   }
 
   function syncWebsites() {
@@ -835,11 +837,12 @@ function initRoPortal() {
     applySignatureBtn.addEventListener('click', applySignature);
   }
 
-  // Document slots click handler
-  document.querySelectorAll('.sig-slot-box').forEach(slot => {
-    slot.style.cursor = 'pointer';
-    slot.title = 'Faceți clic pentru a semna contractul';
-    slot.addEventListener('click', () => {
+  // Document slots click handler (delegated for dynamically rendered PDF overlays)
+  const docContainerEl = document.getElementById('mainDocContainer');
+  if (docContainerEl) {
+    docContainerEl.addEventListener('click', (e) => {
+      const slot = e.target.closest('.sig-slot-box');
+      if (!slot) return;
       const repVal = (companyRepresentativeInput?.value || '').trim();
       if (hasDrawn || (typedSigInput && typedSigInput.value.trim()) || repVal || uploadedImgDataUrl) {
         applySignature();
@@ -853,7 +856,7 @@ function initRoPortal() {
         }
       }
     });
-  });
+  }
 
   // =========================================================================
   // 5. Toast & Helpers
@@ -1036,11 +1039,38 @@ function initRoPortal() {
         });
 
         const resData = await response.json();
+        await new Promise(res => setTimeout(res, 400));
 
         if (response.ok && resData.success) {
-          showToast('Contractul a fost semnat și trimis cu succes!', 'success');
-          alert('Felicitări! Contractul IRIS Pay a fost semnat electronic cu succes. O copie a fost transmisă către echipa IRIS Pay.');
-          window.location.reload();
+          if (loadingOverlay) loadingOverlay.style.display = 'none';
+
+          const successModalOverlay = document.getElementById('successModalOverlay');
+          const modalCloseBtn = document.getElementById('modalCloseBtn');
+          if (successModalOverlay) {
+            successModalOverlay.style.display = 'flex';
+          }
+
+          showToast('Contractul și Anexa 1 au fost trimise cu succes!', 'success');
+
+          const autoReloadTimer = setTimeout(() => {
+            window.location.reload();
+          }, 5000);
+
+          if (modalCloseBtn) {
+            modalCloseBtn.onclick = () => {
+              clearTimeout(autoReloadTimer);
+              window.location.reload();
+            };
+          }
+
+          if (successModalOverlay) {
+            successModalOverlay.onclick = (e) => {
+              if (e.target === successModalOverlay) {
+                clearTimeout(autoReloadTimer);
+                window.location.reload();
+              }
+            };
+          }
         } else {
           showToast(resData.error || 'A apărut o eroare la trimiterea contractului.', 'error');
         }
@@ -1054,8 +1084,248 @@ function initRoPortal() {
     });
   }
 
-  // Initial Sync
+  // =========================================================================
+  // 7. Exact PDF.js Document Renderer & Interactive Coordinate Overlays
+  // =========================================================================
+  function applyCustomCommissionUi(commissionVal) {
+    if (!commissionVal || !String(commissionVal).trim()) return;
+    const cleanComm = String(commissionVal).trim();
+    const cd = document.getElementById('appCommissionDisplay');
+    const cde = document.getElementById('appCommissionDisplayEn');
+    const wrapRo = document.getElementById('annexFeeOverrideRo');
+    const wrapEn = document.getElementById('annexFeeOverrideEn');
+    if (cd) cd.textContent = cleanComm;
+    if (cde) cde.textContent = cleanComm;
+    if (wrapRo) wrapRo.style.display = 'block';
+    if (wrapEn) wrapEn.style.display = 'block';
+  }
+
+  function autoFitPdfMasks() {
+    document.querySelectorAll('.pdf-mask[data-autofit="true"]').forEach(mask => {
+      const baseSz = parseFloat(mask.dataset.baseSize || '10.0');
+      const baseLh = parseFloat(mask.dataset.baseLh || '12.6');
+      let sz = baseSz;
+      let lh = baseLh;
+      mask.style.fontSize = `calc(${sz} * var(--pt))`;
+      mask.style.lineHeight = `calc(${lh} * var(--pt))`;
+      while (mask.scrollHeight > mask.clientHeight + 1 && sz > 6.6) {
+        sz = Number((sz - 0.35).toFixed(2));
+        lh = Number((sz * 1.24).toFixed(2));
+        mask.style.fontSize = `calc(${sz} * var(--pt))`;
+        mask.style.lineHeight = `calc(${lh} * var(--pt))`;
+      }
+    });
+  }
+
+  function pctBox(x0, y0, w, h, W, H) {
+    return `left:${((x0 / W) * 100).toFixed(4)}%; top:${((y0 / H) * 100).toFixed(4)}%; width:${((w / W) * 100).toFixed(4)}%; height:${((h / H) * 100).toFixed(4)}%;`;
+  }
+
+  function buildPdfOverlayHtml(docType, pageNum, W, H) {
+    if (docType === 'contract' && pageNum === 3) {
+      return `
+        <div class="pdf-mask" style="${pctBox(75.5, 42.5, 220.0, 15.0, W, H)} font-size:calc(10.98 * var(--pt)); line-height:calc(13.5 * var(--pt));">
+          Today <span class="live-field underlined" data-field="date">.........................</span>, in Bucharest, between:
+        </div>
+        <div class="pdf-mask" style="${pctBox(302.0, 42.5, 234.5, 15.0, W, H)} font-size:calc(10.98 * var(--pt)); line-height:calc(13.5 * var(--pt));">
+          Astăzi <span class="live-field underlined" data-field="date">.........................</span>, în București, între:
+        </div>
+        <div class="pdf-mask" data-autofit="true" data-base-size="10.5" data-base-lh="13.8" style="${pctBox(75.5, 234.5, 220.0, 160.0, W, H)} font-size:calc(10.5 * var(--pt)); line-height:calc(13.8 * var(--pt));">
+          <div style="padding-left:calc(15.5 * var(--pt)); text-align:justify;">
+            2. &nbsp;<span class="live-field underlined" data-field="companyName">................................</span>, registered in the CRRNPLE at the Registry Agency, with UIC <span class="live-field underlined" data-field="companyEik">................</span>, with headquarters and address of management: <span class="live-field underlined" data-field="companyAddress">................................................</span>, represented by <span class="live-field underlined" data-field="companyRepresentative">................................</span>, with PIN <span class="live-field underlined" data-field="companyRepresentativePin">................</span>, telephone: <span class="live-field underlined" data-field="contactPhone">........................</span>, hereby referred to as “Merchant”, on the other hand
+          </div>
+          <div style="margin-top:calc(12 * var(--pt)); font-size:calc(10.98 * var(--pt));">Together referred to as Parties,</div>
+        </div>
+        <div class="pdf-mask" data-autofit="true" data-base-size="10.5" data-base-lh="13.8" style="${pctBox(302.0, 232.0, 234.5, 162.0, W, H)} font-size:calc(10.5 * var(--pt)); line-height:calc(13.8 * var(--pt));">
+          <div style="padding-left:calc(15.5 * var(--pt)); text-align:justify;">
+            2. &nbsp;<span class="live-field underlined" data-field="companyName">................................</span>, înregistrat în CRRNPLE la Agenția Registrului, având CUI <span class="live-field underlined" data-field="companyEik">................</span>, cu sediul social și adresa de conducere: <span class="live-field underlined" data-field="companyAddress">................................................</span>, reprezentată de <span class="live-field underlined" data-field="companyRepresentative">................................</span>, cu CNP <span class="live-field underlined" data-field="companyRepresentativePin">................</span>, telefon: <span class="live-field underlined" data-field="contactPhone">........................</span>, denumită în continuare “Comerciantul”, pe de o parte
+          </div>
+          <div style="margin-top:calc(12 * var(--pt)); font-size:calc(10.98 * var(--pt));">Denumite împreună Părțile, Întrucât:</div>
+        </div>
+      `;
+    }
+
+    if (docType === 'contract' && pageNum === 6) {
+      return `
+        <div class="pdf-mask" data-autofit="true" data-base-size="10.3" data-base-lh="14.5" style="${pctBox(111.5, 289.5, 184.0, 42.0, W, H)} font-size:calc(10.3 * var(--pt)); line-height:calc(14.5 * var(--pt));">
+          <div>Bank/Payment institution: <span class="live-field underlined" data-field="bankName">….........................</span></div>
+          <div><strong>IBAN:</strong> <span class="live-field underlined" data-field="bankIban">…........................................</span></div>
+        </div>
+        <div class="pdf-mask" data-autofit="true" data-base-size="10.3" data-base-lh="14.5" style="${pctBox(338.0, 260.5, 198.5, 48.0, W, H)} font-size:calc(10.3 * var(--pt)); line-height:calc(14.5 * var(--pt));">
+          <div>Bancă/Instituție de plată: <span class="live-field underlined" data-field="bankName">….........................</span></div>
+          <div><strong>IBAN:</strong> <span class="live-field underlined" data-field="bankIban">…........................................</span></div>
+        </div>
+        <div class="pdf-mask" data-autofit="true" data-base-size="10.3" data-base-lh="14.2" style="${pctBox(75.5, 421.5, 220.0, 100.0, W, H)} font-size:calc(10.3 * var(--pt)); line-height:calc(14.2 * var(--pt));">
+          <div>Name: <span class="live-field underlined" data-field="companyRepresentative">.........................</span></div>
+          <div>Email: <span class="live-field underlined" data-field="contactEmail">.........................</span></div>
+          <div>CNP: <span class="live-field underlined" data-field="companyRepresentativePin">.........................</span></div>
+          <div>Phone Number: <span class="live-field underlined" data-field="contactPhone">.........................</span></div>
+          <div>Authorized location: <span class="live-field underlined" data-field="merchantWebsite">.........................</span></div>
+        </div>
+        <div class="pdf-mask" data-autofit="true" data-base-size="10.3" data-base-lh="14.2" style="${pctBox(302.0, 407.0, 234.5, 100.0, W, H)} font-size:calc(10.3 * var(--pt)); line-height:calc(14.2 * var(--pt));">
+          <div>Nume: <span class="live-field underlined" data-field="companyRepresentative">.........................</span></div>
+          <div>Email: <span class="live-field underlined" data-field="contactEmail">.........................</span></div>
+          <div>PIN: <span class="live-field underlined" data-field="companyRepresentativePin">.........................</span></div>
+          <div>Număr de telefon: <span class="live-field underlined" data-field="contactPhone">.........................</span></div>
+          <div>Locația autorizată: <span class="live-field underlined" data-field="merchantWebsite">.........................</span></div>
+        </div>
+      `;
+    }
+
+    if (docType === 'contract' && pageNum === 11) {
+      return `
+        <div class="pdf-mask" data-autofit="true" data-base-size="10.3" data-base-lh="14.0" style="${pctBox(75.5, 172.5, 220.0, 72.0, W, H)} font-size:calc(10.3 * var(--pt)); line-height:calc(14.0 * var(--pt));">
+          <div><strong>For the Merchant:</strong></div>
+          <div>Address: <span class="live-field underlined" data-field="contactAddress">........................................</span></div>
+          <div>E-mail: <span class="live-field underlined" data-field="contactEmail">........................................</span></div>
+          <div>Telephone: <span class="live-field underlined" data-field="contactPhone">........................................</span></div>
+        </div>
+        <div class="pdf-mask" data-autofit="true" data-base-size="10.3" data-base-lh="14.0" style="${pctBox(302.0, 172.5, 234.5, 72.0, W, H)} font-size:calc(10.3 * var(--pt)); line-height:calc(14.0 * var(--pt));">
+          <div><strong>Pentru Comerciant:</strong></div>
+          <div>Adresa: <span class="live-field underlined" data-field="contactAddress">........................................</span></div>
+          <div>E-mail: <span class="live-field underlined" data-field="contactEmail">........................................</span></div>
+          <div>Telefon: <span class="live-field underlined" data-field="contactPhone">........................................</span></div>
+        </div>
+      `;
+    }
+
+    if (docType === 'contract' && pageNum === 14) {
+      return `
+        <div class="sig-slot-box" id="contractMerchantSigSlotEn" title="Faceți clic pentru a semna contractul" style="${pctBox(76.5, 566.0, 185.0, 27.0, W, H)}"></div>
+        <div class="sig-slot-box contract-merchant-sig-slot" id="contractMerchantSigSlot" title="Faceți clic pentru a semna contractul" style="${pctBox(303.08, 551.0, 195.0, 28.0, W, H)}"></div>
+        <div class="sig-slot-box" id="contractMerchantTermsSigSlotEn" title="Faceți clic pentru a semna contractul" style="${pctBox(76.5, 696.0, 185.0, 26.0, W, H)}"></div>
+        <div class="sig-slot-box contract-merchant-terms-sig-slot" id="contractMerchantTermsSigSlot" title="Faceți clic pentru a semna contractul" style="${pctBox(303.08, 682.0, 195.0, 36.0, W, H)}"></div>
+      `;
+    }
+
+    if (docType === 'appendix' && pageNum === 1) {
+      return `
+        <div class="pdf-mask calibri-font" id="annexFeeOverrideEn" style="display:block; ${pctBox(93.5, 431.0, 470.0, 33.0, W, H)}">
+          <strong>Payment initiation fee – <span id="appCommissionDisplayEn">0.49%</span> of the transaction value.</strong> The fee is due by the 10th of the month following the month of implementation.
+        </div>
+        <div class="sig-slot-box" id="appendixMerchantSigSlotEn" title="Faceți clic pentru a semna contractul" style="${pctBox(382.5, 615.0, 175.0, 42.0, W, H)}"></div>
+      `;
+    }
+
+    if (docType === 'appendix' && pageNum === 2) {
+      return `
+        <div class="pdf-mask calibri-font" id="annexFeeOverrideRo" style="display:block; ${pctBox(93.5, 421.0, 445.0, 33.0, W, H)}">
+          <strong>Taxă de inițiere a plății – <span id="appCommissionDisplay">0.49%</span> din valoarea tranzacției.</strong> Taxa se plătește până la data de 10 a lunii următoare lunii implementării.
+        </div>
+        <div class="sig-slot-box appendix-merchant-sig-slot" id="appendixMerchantSigSlot" title="Faceți clic pentru a semna contractul" style="${pctBox(382.5, 605.0, 175.0, 42.0, W, H)}"></div>
+      `;
+    }
+
+    return '';
+  }
+
+  async function initPdfDocumentPreview() {
+    const container = document.getElementById('mainDocContainer');
+    if (!container) return;
+
+    try {
+      const pdfjsLib = await import('/assets/pdfjs/pdf.min.mjs');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '/assets/pdfjs/pdf.worker.min.mjs';
+
+      const [contractPdf, appendixPdf] = await Promise.all([
+        pdfjsLib.getDocument('/assets/contract_ro_template.pdf?v=20261112').promise,
+        pdfjsLib.getDocument('/assets/appendix_ro_template.pdf?v=20261112').promise
+      ]);
+
+      container.innerHTML = '';
+
+      const pageQueue = [];
+      for (let i = 1; i <= contractPdf.numPages; i++) {
+        pageQueue.push({ pdf: contractPdf, docType: 'contract', pageNum: i, total: contractPdf.numPages });
+      }
+      for (let i = 1; i <= appendixPdf.numPages; i++) {
+        pageQueue.push({ pdf: appendixPdf, docType: 'appendix', pageNum: i, total: appendixPdf.numPages });
+      }
+
+      const ptTrackedSheets = [];
+      const renderScale = Math.min(Math.max(window.devicePixelRatio || 1.5, 1.5), 2.2) * 1.35;
+
+      for (const item of pageQueue) {
+        const page = await item.pdf.getPage(item.pageNum);
+        const baseVp = page.getViewport({ scale: 1 });
+        const W = baseVp.width;
+        const H = baseVp.height;
+
+        const card = document.createElement('div');
+        card.className = 'doc-page-card';
+        card.id = item.docType === 'contract' ? `pageCard${item.pageNum}` : `pageCard${14 + item.pageNum}`;
+
+        const topTab = document.createElement('div');
+        topTab.className = 'page-top-tab';
+        const label = item.docType === 'contract'
+          ? `PAGINA ${item.pageNum} DIN ${item.total} • CONTRACT`
+          : `ANEXA 1 • PAGINA ${item.pageNum} DIN ${item.total} (${item.pageNum === 1 ? 'EN' : 'RO'})`;
+        topTab.innerHTML = `<span class="page-tab-badge">${label}</span>`;
+
+        const sheet = document.createElement('div');
+        sheet.className = 'a4-sheet pdf-sheet';
+        sheet.style.aspectRatio = `${W} / ${H}`;
+        sheet.dataset.pageWidthPt = String(W);
+
+        const canvas = document.createElement('canvas');
+        canvas.className = 'pdf-page-canvas';
+        const hiVp = page.getViewport({ scale: renderScale });
+        canvas.width = Math.floor(hiVp.width);
+        canvas.height = Math.floor(hiVp.height);
+        sheet.appendChild(canvas);
+
+        const overlayHtml = buildPdfOverlayHtml(item.docType, item.pageNum, W, H);
+        if (overlayHtml) {
+          const overlay = document.createElement('div');
+          overlay.className = 'pdf-overlay-layer';
+          overlay.innerHTML = overlayHtml;
+          sheet.appendChild(overlay);
+          ptTrackedSheets.push(sheet);
+        }
+
+        card.appendChild(topTab);
+        card.appendChild(sheet);
+        container.appendChild(card);
+
+        const renderCtx = canvas.getContext('2d', { alpha: false });
+        await page.render({ canvasContext: renderCtx, viewport: hiVp }).promise;
+      }
+
+      const updatePtVars = () => {
+        ptTrackedSheets.forEach(sheet => {
+          const wPt = parseFloat(sheet.dataset.pageWidthPt || '595.38');
+          const overlay = sheet.querySelector('.pdf-overlay-layer');
+          if (overlay && sheet.clientWidth > 0) {
+            overlay.style.setProperty('--pt', `${sheet.clientWidth / wPt}px`);
+          }
+        });
+        autoFitPdfMasks();
+      };
+
+      updatePtVars();
+      if (typeof ResizeObserver !== 'undefined') {
+        const ro = new ResizeObserver(updatePtVars);
+        ro.observe(container);
+      }
+      window.addEventListener('resize', updatePtVars);
+
+      // Sync all form fields & custom commission into newly created overlays
+      syncAllFields();
+      if (window.irisCustomCommission) {
+        applyCustomCommissionUi(window.irisCustomCommission);
+      }
+      if (isContractSigned || isAppendixSigned) {
+        applySignature();
+      }
+    } catch (err) {
+      console.error('[RO PDF Preview Error]:', err);
+      container.innerHTML = `<div class="pdf-loading-state" style="color:#dc2626;">Eroare la încărcarea documentelor PDF: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  // Initial Sync & Render
   syncAllFields();
+  initPdfDocumentPreview();
 }
 
 if (document.readyState === 'loading') {
