@@ -864,7 +864,7 @@ export async function deletePendingPartner({ id }) {
  */
 export async function createPartnerLink({ months = 12, includeOneTime = true, includePercent = true, tiers = [] }) {
   const store = await loadStore();
-  const token = 'pt_' + crypto.randomBytes(5).toString('hex');
+  const token = 'pt_' + generateCustomToken();
   const cleanTiers = (Array.isArray(tiers) && tiers.length > 0 ? tiers : [
     { label: 'До 10 търговеца', oneTime: '50', percent: '5' },
     { label: 'От 11 до 50 търговеца', oneTime: '75', percent: '7' },
