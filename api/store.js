@@ -165,6 +165,7 @@ function ensureStoreArrays(st) {
   if (!Array.isArray(st.contracts)) st.contracts = [];
   if (!Array.isArray(st.customLinks)) st.customLinks = [];
   if (!Array.isArray(st.pendingPartners)) st.pendingPartners = [];
+  if (!Array.isArray(st.partnerLinks)) st.partnerLinks = [];
   if (!st.settings || typeof st.settings !== 'object') {
     st.settings = {
       standardCommission: '0.49%',
@@ -856,4 +857,43 @@ export async function deletePendingPartner({ id }) {
     await saveStore(store);
   }
   return { deleted: before - store.pendingPartners.length };
+}
+
+/**
+ * Create a custom partner agreement link (/partner?p=token) with custom Annex 1 terms
+ */
+export async function createPartnerLink({ months = 12, includeOneTime = true, includePercent = true, tiers = [] }) {
+  const store = await loadStore();
+  const token = 'pt_' + crypto.randomBytes(5).toString('hex');
+  const cleanTiers = (Array.isArray(tiers) && tiers.length > 0 ? tiers : [
+    { label: 'До 10 търговеца', oneTime: '50', percent: '5' },
+    { label: 'От 11 до 50 търговеца', oneTime: '75', percent: '7' },
+    { label: 'Над 50 търговеца', oneTime: '100', percent: '10' }
+  ]).map(t => ({
+    label: String(t.label || '').trim() || 'Етап',
+    oneTime: String(t.oneTime ?? '0').trim(),
+    percent: String(t.percent ?? '0').trim()
+  }));
+
+  const entry = {
+    token,
+    months: Math.max(1, parseInt(months, 10) || 12),
+    includeOneTime: Boolean(includeOneTime),
+    includePercent: Boolean(includePercent),
+    tiers: cleanTiers,
+    createdAt: new Date().toISOString()
+  };
+
+  store.partnerLinks.unshift(entry);
+  await saveStore(store);
+  return entry;
+}
+
+/**
+ * Get a custom partner agreement link by token
+ */
+export async function getPartnerLink(token) {
+  if (!token) return null;
+  const store = await loadStore();
+  return (store.partnerLinks || []).find(l => l.token === String(token).trim()) || null;
 }

@@ -14,7 +14,9 @@ import {
   createCustomLink, 
   getCustomLink, 
   listCustomLinks, 
-  deleteCustomLink 
+  deleteCustomLink,
+  createPartnerLink,
+  getPartnerLink
 } from './store.js';
 
 export default async function handler(req, res) {
@@ -24,6 +26,19 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // 1a. PUBLIC GET with partnerToken: Fetch custom Annex 1 terms for /partner?p=xyz
+  if (req.method === 'GET' && req.query?.partnerToken) {
+    try {
+      const link = await getPartnerLink(req.query.partnerToken);
+      if (!link) {
+        return res.status(404).json({ valid: false, error: 'Линкът за партньорско споразумение не е намерен.' });
+      }
+      return res.status(200).json({ valid: true, partnerTerms: link });
+    } catch (err) {
+      return res.status(500).json({ valid: false, error: 'Грешка при проверка на партньорския линк.' });
+    }
   }
 
   // 1. PUBLIC GET with token: Validate one-time link for contract viewer
@@ -88,10 +103,25 @@ export default async function handler(req, res) {
     }
   }
 
-  // 3. PROTECTED POST: Create a new custom commission link
+  // 3. PROTECTED POST: Create a new custom commission link OR custom partner agreement link
   if (req.method === 'POST') {
     try {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      if (body?.type === 'partner') {
+        const link = await createPartnerLink({
+          months: body.months,
+          includeOneTime: body.includeOneTime,
+          includePercent: body.includePercent,
+          tiers: body.tiers
+        });
+        return res.status(201).json({
+          success: true,
+          token: link.token,
+          partnerTerms: link,
+          message: 'Успешно генериран персонализиран линк за партньорско споразумение.'
+        });
+      }
+
       const { commission, note = '', partnerSlug = null, country = 'bg' } = body || {};
 
       if (!commission || !String(commission).trim()) {

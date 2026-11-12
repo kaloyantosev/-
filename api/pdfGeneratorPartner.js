@@ -17,7 +17,8 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
     contactEmail = '—',
     contactPhone = '—',
     contractDate = '',
-    signatureImageBase64 = null
+    signatureImageBase64 = null,
+    partnerTerms = null
   } = data || {};
 
   const timesPath = path.join(assetsDir, 'fonts', 'times.ttf');
@@ -423,6 +424,33 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
     cursorY += rowH;
   }
 
+  const terms = partnerTerms || {
+    months: 12,
+    includeOneTime: true,
+    includePercent: true,
+    tiers: [
+      { label: 'До 10 търговеца', oneTime: '50', percent: '5' },
+      { label: 'От 11 до 50 търговеца', oneTime: '75', percent: '7' },
+      { label: 'Над 50 търговеца', oneTime: '100', percent: '10' }
+    ]
+  };
+  const incOneTime = terms.includeOneTime !== false;
+  const incPercent = terms.includePercent !== false;
+  const monthsVal = Math.max(1, parseInt(terms.months, 10) || 12);
+  const activeTiers = (Array.isArray(terms.tiers) && terms.tiers.length > 0)
+    ? terms.tiers
+    : [{ label: 'За всеки търговец', oneTime: '50', percent: '5' }];
+
+  const descParts = [];
+  if (incOneTime) {
+    descParts.push('1. Еднократно, при подписване на договор с търговец. Комисионната е дължима в месеца, следващ направена успешна транзакция от страна на търговеца.');
+  }
+  if (incPercent) {
+    const numPrefix = incOneTime ? '2.' : '1.';
+    descParts.push(`${numPrefix} Процент от прихода на привлечените от него търговци, за първите ${monthsVal} месеца от срока на договора между Компанията и Търговеца. Комисионната се изплаща ежемесечно на база реализирания нетен приход от търговеца за съответния период.`);
+  }
+  const rewardDescText = descParts.join(' ') || 'Съгласно договорените условия по-долу.';
+
   drawTableRow([
     { text: 'No', width: col1W, bold: true },
     { text: 'Услуга', width: col2W, bold: true },
@@ -436,27 +464,35 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
       width: col2W
     },
     {
-      text: '1. Еднократно, при подписване на договор с търговец. Комисионната е дължима в месеца, следващ направена успешна транзакция от страна на търговеца. 2. Процент от прихода на привлечените от него търговци, за първите 12 месеца от срока на договора между Компанията и Търговеца. Комисионната се изплаща ежемесечно на база реализирания нетен приход от търговеца за съответния период.',
+      text: rewardDescText,
       width: col3W
     }
   ]);
 
-  const tierW = CONTENT_W / 3;
-  drawTableRow([
-    { text: 'До 10 търговеца', width: tierW, bold: true },
-    { text: 'От 11 до 50 търговеца', width: tierW, bold: true },
-    { text: 'Над 50 търговеца', width: tierW, bold: true }
-  ], { bg: rgb(0.94, 0.96, 0.98) });
+  const tierW = CONTENT_W / activeTiers.length;
+  drawTableRow(
+    activeTiers.map(t => ({ text: String(t.label || 'Етап'), width: tierW, bold: true })),
+    { bg: rgb(0.94, 0.96, 0.98) }
+  );
 
-  drawTableRow([
-    { text: '50 EUR еднократно + 5% от прихода', width: tierW, bold: true },
-    { text: '75 EUR еднократно + 7% от прихода', width: tierW, bold: true },
-    { text: '100 EUR еднократно + 10% от прихода', width: tierW, bold: true }
-  ]);
+  drawTableRow(
+    activeTiers.map(t => {
+      const parts = [];
+      if (incOneTime) parts.push(`${t.oneTime} EUR еднократно`);
+      if (incPercent) parts.push(`${t.percent}% от прихода`);
+      return { text: parts.join(' + ') || '—', width: tierW, bold: true };
+    })
+  );
 
   cursorY += 14;
   drawParagraph('Посочените възнаграждения са крайни.', { spaceAfter: 4 });
-  drawParagraph('Еднократното възнаграждение и процентът се отнасят само за привлечения клиент в съответната графа, в която попада.', { spaceAfter: 16 });
+  if (incOneTime && incPercent) {
+    drawParagraph('Еднократното възнаграждение и процентът се отнасят само за привлечения клиент в съответната графа, в която попада.', { spaceAfter: 16 });
+  } else if (incOneTime) {
+    drawParagraph('Еднократното възнаграждение се отнася само за привлечения клиент в съответната графа, в която попада.', { spaceAfter: 16 });
+  } else if (incPercent) {
+    drawParagraph('Процентът се отнася само за привлечения клиент в съответната графа, в която попада.', { spaceAfter: 16 });
+  }
 
   drawSignatureRow('За Компанията:', 'За Изпълнителя:');
 

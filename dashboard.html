@@ -767,6 +767,9 @@
         <button id="btnOpenCustomFeeModal" class="btn-create-link" style="background: linear-gradient(135deg, #0D9488 0%, #059669 100%);">
           <span>Създай друга комисионна</span>
         </button>
+        <button id="btnOpenPartnerContractModal" class="btn-create-link" style="background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);">
+          <span>Създай партньорски договор</span>
+        </button>
       </div>
     </section>
 
@@ -1007,6 +1010,68 @@
         </button>
         <button type="button" class="btn-cancel" id="btnCloseDetailsBtn">Затвори</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal: Create Custom Partner Agreement (/partner?p=...) -->
+  <div id="partnerContractModal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 660px;">
+      <div class="modal-header">
+        <h3>Създаване на партньорски договор (Приложение 1)</h3>
+        <button class="btn-close-modal" id="btnClosePartnerModal">&times;</button>
+      </div>
+
+      <form id="partnerContractLinkForm">
+        <div class="modal-body">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+            <div>
+              <label style="display:block; font-size:13px; font-weight:600; color:var(--primary); margin-bottom:6px;">
+                Брой месеци за % от прихода:
+              </label>
+              <input type="number" id="partnerMonthsInput" class="filter-input" value="12" min="1" max="120" style="width:100%; height:40px;">
+            </div>
+            <div style="display:flex; flex-direction:column; justify-content:center; gap:8px; padding-top:14px;">
+              <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--primary); cursor:pointer;">
+                <input type="checkbox" id="partnerIncludeOneTime" checked>
+                <span>Включи еднократно възнаграждение</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--primary); cursor:pointer;">
+                <input type="checkbox" id="partnerIncludePercent" checked>
+                <span>Включи % от приходите</span>
+              </label>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
+            <label style="font-size:13px; font-weight:600; color:var(--primary);">Етапи на възнаграждение (Приложение 1):</label>
+            <button type="button" id="btnAddPartnerTier" style="background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; border-radius:6px; padding:4px 10px; font-size:12px; font-weight:600; cursor:pointer;">+ Добави етап</button>
+          </div>
+
+          <table style="width:100%; border-collapse:collapse; margin-bottom:16px; font-size:13px;">
+            <thead>
+              <tr style="background:#f8fafc; border-bottom:1px solid #e2e8f0; text-align:left;">
+                <th style="padding:8px; width:40%;">Етап (брой търговци)</th>
+                <th style="padding:8px; width:24%;">Еднократно (EUR)</th>
+                <th style="padding:8px; width:24%;">% от прихода</th>
+                <th style="padding:8px; width:12%; text-align:center;">Премахни</th>
+              </tr>
+            </thead>
+            <tbody id="partnerTiersTableBody"></tbody>
+          </table>
+
+          <div class="preview-link-box">
+            <div class="preview-link-label">Линк за споразумението:</div>
+            <div class="preview-link-url" id="partnerPreviewUrlText">https://.../partner?p=...</div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" id="btnCancelPartnerModal">Отказ</button>
+          <button type="submit" class="btn-create-link" id="btnSubmitPartnerLink" style="background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);">
+            Създай и копирай линка
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -1601,6 +1666,135 @@
       });
     }
 
+    // =========================================================================
+    // Partner Contract Modal Logic (/partner?p=...)
+    // =========================================================================
+    const partnerContractModal = document.getElementById('partnerContractModal');
+    const btnOpenPartnerContractModal = document.getElementById('btnOpenPartnerContractModal');
+    const btnClosePartnerModal = document.getElementById('btnClosePartnerModal');
+    const btnCancelPartnerModal = document.getElementById('btnCancelPartnerModal');
+    const partnerContractLinkForm = document.getElementById('partnerContractLinkForm');
+    const partnerMonthsInput = document.getElementById('partnerMonthsInput');
+    const partnerIncludeOneTime = document.getElementById('partnerIncludeOneTime');
+    const partnerIncludePercent = document.getElementById('partnerIncludePercent');
+    const partnerTiersTableBody = document.getElementById('partnerTiersTableBody');
+    const btnAddPartnerTier = document.getElementById('btnAddPartnerTier');
+    const partnerPreviewUrlText = document.getElementById('partnerPreviewUrlText');
+
+    let partnerTiersState = [];
+
+    function resetPartnerModalState() {
+      partnerMonthsInput.value = '12';
+      partnerIncludeOneTime.checked = true;
+      partnerIncludePercent.checked = true;
+      partnerTiersState = [
+        { label: 'До 10 търговеца', oneTime: '50', percent: '5' },
+        { label: 'От 11 до 50 търговеца', oneTime: '75', percent: '7' },
+        { label: 'Над 50 търговеца', oneTime: '100', percent: '10' }
+      ];
+      renderPartnerTiersTable();
+    }
+
+    function renderPartnerTiersTable() {
+      const incOT = partnerIncludeOneTime.checked;
+      const incPct = partnerIncludePercent.checked;
+      partnerMonthsInput.disabled = !incPct;
+      partnerMonthsInput.style.opacity = incPct ? '1' : '0.45';
+
+      partnerTiersTableBody.innerHTML = partnerTiersState.map((t, idx) => `
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:6px 8px;">
+            <input type="text" class="filter-input pt-label" data-idx="${idx}" value="${escapeHtml(t.label)}" style="width:100%; height:36px;">
+          </td>
+          <td style="padding:6px 8px;">
+            <input type="number" step="any" class="filter-input pt-onetime" data-idx="${idx}" value="${escapeHtml(t.oneTime)}" ${incOT ? '' : 'disabled'} style="width:100%; height:36px; opacity:${incOT ? '1' : '0.4'};">
+          </td>
+          <td style="padding:6px 8px;">
+            <input type="number" step="any" class="filter-input pt-percent" data-idx="${idx}" value="${escapeHtml(t.percent)}" ${incPct ? '' : 'disabled'} style="width:100%; height:36px; opacity:${incPct ? '1' : '0.4'};">
+          </td>
+          <td style="padding:6px 8px; text-align:center;">
+            <button type="button" class="btn-pending-dismiss pt-remove" data-idx="${idx}" ${partnerTiersState.length <= 1 ? 'disabled style="opacity:0.35; cursor:not-allowed;"' : ''} title="Премахни етап">&times;</button>
+          </td>
+        </tr>
+      `).join('');
+
+      partnerTiersTableBody.querySelectorAll('.pt-label').forEach(inp => {
+        inp.addEventListener('input', () => { partnerTiersState[inp.dataset.idx].label = inp.value; });
+      });
+      partnerTiersTableBody.querySelectorAll('.pt-onetime').forEach(inp => {
+        inp.addEventListener('input', () => { partnerTiersState[inp.dataset.idx].oneTime = inp.value; });
+      });
+      partnerTiersTableBody.querySelectorAll('.pt-percent').forEach(inp => {
+        inp.addEventListener('input', () => { partnerTiersState[inp.dataset.idx].percent = inp.value; });
+      });
+      partnerTiersTableBody.querySelectorAll('.pt-remove').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (partnerTiersState.length <= 1) return;
+          partnerTiersState.splice(Number(btn.dataset.idx), 1);
+          renderPartnerTiersTable();
+        });
+      });
+    }
+
+    if (btnOpenPartnerContractModal) {
+      btnOpenPartnerContractModal.addEventListener('click', () => {
+        resetPartnerModalState();
+        partnerPreviewUrlText.textContent = `${window.location.origin}/partner?p=...`;
+        partnerContractModal.style.display = 'flex';
+      });
+    }
+    if (btnClosePartnerModal) btnClosePartnerModal.addEventListener('click', () => { partnerContractModal.style.display = 'none'; });
+    if (btnCancelPartnerModal) btnCancelPartnerModal.addEventListener('click', () => { partnerContractModal.style.display = 'none'; });
+    if (partnerIncludeOneTime) partnerIncludeOneTime.addEventListener('change', renderPartnerTiersTable);
+    if (partnerIncludePercent) partnerIncludePercent.addEventListener('change', renderPartnerTiersTable);
+    if (btnAddPartnerTier) {
+      btnAddPartnerTier.addEventListener('click', () => {
+        partnerTiersState.push({ label: 'Нов етап', oneTime: '50', percent: '5' });
+        renderPartnerTiersTable();
+      });
+    }
+
+    if (partnerContractLinkForm) {
+      partnerContractLinkForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!partnerIncludeOneTime.checked && !partnerIncludePercent.checked) {
+          showToast('Изберете поне едно от двете: еднократно възнаграждение или % от приходите.', 'error');
+          return;
+        }
+        const submitBtn = document.getElementById('btnSubmitPartnerLink');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Генериране...';
+        try {
+          const res = await fetch('/api/custom-link', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              type: 'partner',
+              months: partnerMonthsInput.value,
+              includeOneTime: partnerIncludeOneTime.checked,
+              includePercent: partnerIncludePercent.checked,
+              tiers: partnerTiersState
+            })
+          });
+          const data = await res.json();
+          if (res.ok && data.success && data.token) {
+            const fullUrl = `${window.location.origin}/partner?p=${data.token}`;
+            partnerPreviewUrlText.textContent = fullUrl;
+            try { await navigator.clipboard.writeText(fullUrl); } catch (ce) {}
+            showToast('Линкът за партньорско споразумение е създаден и копиран!', 'success');
+            setTimeout(() => { partnerContractModal.style.display = 'none'; }, 700);
+          } else {
+            showToast(data.error || 'Грешка при създаване на линка.', 'error');
+          }
+        } catch (err) {
+          showToast('Грешка при свързване със сървъра.', 'error');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Създай и копирай линка';
+        }
+      });
+    }
+
     // Create Modal Logic
     function renderPendingPartners(list) {
       const container = document.getElementById('pendingPartnersContainer');
@@ -1639,7 +1833,7 @@
           try {
             const resp = await fetch(`/api/affiliates?action=dismissPendingPartner&id=${encodeURIComponent(id)}`, {
               method: 'DELETE',
-              headers: { 'Authorization': `Bearer ${authToken}` }
+              headers: getAuthHeaders()
             });
             if (resp.ok) {
               const tab = container.querySelector(`.pending-partner-tab[data-pending-id="${CSS.escape(id)}"]`);

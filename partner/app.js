@@ -34,6 +34,77 @@ function initPartnerPortal() {
   if (contractDateInput) contractDateInput.value = todayDmy;
   if (hiddenNativeDatePicker) hiddenNativeDatePicker.value = todayYmd;
 
+  // Load custom Annex 1 terms if ?p=token is present
+  let activePartnerToken = null;
+  let activePartnerTerms = null;
+  function applyPartnerTermsToAnnex(terms) {
+    if (!terms) return;
+    activePartnerTerms = terms;
+    const incOneTime = terms.includeOneTime !== false;
+    const incPercent = terms.includePercent !== false;
+    const monthsVal = Math.max(1, parseInt(terms.months, 10) || 12);
+    const tiers = (Array.isArray(terms.tiers) && terms.tiers.length > 0)
+      ? terms.tiers
+      : [{ label: 'За всеки търговец', oneTime: '50', percent: '5' }];
+
+    const descCell = document.getElementById('partnerAnnexDescCell');
+    if (descCell) {
+      const parts = [];
+      if (incOneTime) {
+        parts.push('1. Еднократно, при подписване на договор с търговец. Комисионната е дължима в месеца, следващ направена успешна транзакция от страна на търговеца.');
+      }
+      if (incPercent) {
+        const num = incOneTime ? '2.' : '1.';
+        parts.push(`${num} Процент от прихода на привлечените от него търговци, за първите ${monthsVal} месеца от срока на договора между Компанията и Търговеца. Комисионната се изплаща ежемесечно на база реализирания нетен приход от търговеца за съответния период.`);
+      }
+      descCell.innerHTML = parts.join('<br><br>') || 'Съгласно договорените условия по-долу.';
+    }
+
+    const thead = document.getElementById('partnerTierTableHead');
+    const tbody = document.getElementById('partnerTierTableBody');
+    const colW = (100 / tiers.length).toFixed(2);
+    if (thead) {
+      thead.innerHTML = `<tr>${tiers.map(t => `<th style="width:${colW}%;">${escapeHtml(t.label)}</th>`).join('')}</tr>`;
+    }
+    if (tbody) {
+      tbody.innerHTML = `<tr>${tiers.map(t => {
+        const p = [];
+        if (incOneTime) p.push(`${escapeHtml(String(t.oneTime))} EUR еднократно`);
+        if (incPercent) p.push(`${escapeHtml(String(t.percent))}% от прихода`);
+        return `<td><strong>${p.join(' + ') || '—'}</strong></td>`;
+      }).join('')}</tr>`;
+    }
+
+    const footnote = document.getElementById('partnerAnnexFootnote');
+    if (footnote) {
+      if (incOneTime && incPercent) {
+        footnote.textContent = 'Еднократното възнаграждение и процентът се отнасят само за привлечения клиент в съответната графа, в която попада.';
+      } else if (incOneTime) {
+        footnote.textContent = 'Еднократното възнаграждение се отнася само за привлечения клиент в съответната графа, в която попада.';
+      } else if (incPercent) {
+        footnote.textContent = 'Процентът се отнася само за привлечения клиент в съответната графа, в която попада.';
+      } else {
+        footnote.textContent = '';
+      }
+    }
+  }
+
+  try {
+    const pToken = new URLSearchParams(window.location.search).get('p');
+    if (pToken) {
+      activePartnerToken = pToken.trim();
+      fetch(`/api/custom-link?partnerToken=${encodeURIComponent(activePartnerToken)}`)
+        .then(async r => {
+          if (r.ok) {
+            const d = await r.json();
+            if (d && d.valid && d.partnerTerms) {
+              applyPartnerTermsToAnnex(d.partnerTerms);
+            }
+          }
+        }).catch(() => {});
+    }
+  } catch (e) {}
+
   // =========================================================================
   // 1. Live Field Synchronization
   // =========================================================================
@@ -603,7 +674,9 @@ function initPartnerPortal() {
         contactEmail: emailVal,
         contactPhone: phoneVal,
         contractDate: cDate,
-        signatureImageBase64: sigBase64
+        signatureImageBase64: sigBase64,
+        partnerToken: activePartnerToken,
+        partnerTerms: activePartnerTerms
       };
 
       if (loadingOverlay) loadingOverlay.style.display = 'flex';

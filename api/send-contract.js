@@ -10,7 +10,7 @@
 import fs from 'fs';
 import path from 'path';
 import { generateContractPdf, generateContractRoPdf, generateContractPartnerPdf } from './pdfGenerator.js';
-import { recordContractAttribution, recordPendingPartner, getCustomLink, useCustomLink, getSettings } from './store.js';
+import { recordContractAttribution, recordPendingPartner, getCustomLink, useCustomLink, getPartnerLink, getSettings } from './store.js';
 
 // Vercel body parser config
 export const config = {
@@ -278,6 +278,14 @@ ${isRo ? 'CUI / ЕИК' : 'ЕИК'}: ${companyEik}
       let assetsDir = candidates.find(d => fs.existsSync(path.join(d, 'contract_template.pdf')));
       if (!assetsDir) assetsDir = path.join(process.cwd(), 'assets');
 
+      let resolvedPartnerTerms = data?.partnerTerms || null;
+      if (isPartner && data?.partnerToken) {
+        try {
+          const foundLink = await getPartnerLink(data.partnerToken);
+          if (foundLink) resolvedPartnerTerms = foundLink;
+        } catch (ptErr) {}
+      }
+
       const pdfParams = {
         companyName: (companyName && companyName !== '—') ? companyName : '',
         companyEik: (companyEik && companyEik !== '—') ? companyEik : '',
@@ -292,7 +300,8 @@ ${isRo ? 'CUI / ЕИК' : 'ЕИК'}: ${companyEik}
         contactPhone: (contactPhone && contactPhone !== '—') ? contactPhone : '',
         contractDate: displayDate,
         signatureImageBase64,
-        customCommission
+        customCommission,
+        partnerTerms: resolvedPartnerTerms
       };
 
       const generatedBytes = isPartner
