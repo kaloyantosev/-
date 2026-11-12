@@ -889,6 +889,36 @@
         </tbody>
       </table>
     </section>
+
+    <!-- Sent Preferential Partner Agreements Table -->
+    <section class="table-container" style="margin-top: 32px;">
+      <div class="table-header-title">
+        <div>
+          <h2>Изпратени Партньорски договори в преференциални условия</h2>
+          <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;">
+            След като партньорът подпише и му бъде генериран Affiliate линк, записът автоматично изчезва оттук.
+          </p>
+        </div>
+        <button id="btnRefreshPartnerLinks" class="btn-reset-filters" style="height: 34px;">Обнови</button>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 30%;">Условия (Приложение 1)</th>
+            <th style="width: 32%;">Линк за подпис</th>
+            <th style="width: 14%;">Създаден на</th>
+            <th style="width: 16%;">Статус</th>
+            <th style="width: 8%; text-align: right;">Действия</th>
+          </tr>
+        </thead>
+        <tbody id="partnerLinksTableBody">
+          <tr class="empty-row">
+            <td colspan="5">Зареждане на линкове...</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
   </main>
 
   <!-- Modal: Generate Affiliate Link -->
@@ -1782,6 +1812,7 @@
             partnerPreviewUrlText.textContent = fullUrl;
             try { await navigator.clipboard.writeText(fullUrl); } catch (ce) {}
             showToast('Линкът за партньорско споразумение е създаден и копиран!', 'success');
+            loadPartnerLinks();
             setTimeout(() => { partnerContractModal.style.display = 'none'; }, 700);
           } else {
             showToast(data.error || 'Грешка при създаване на линка.', 'error');
@@ -1794,6 +1825,99 @@
         }
       });
     }
+
+    // =========================================================================
+    // Sent Preferential Partner Links Table Logic
+    // =========================================================================
+    const partnerLinksTableBody = document.getElementById('partnerLinksTableBody');
+    const btnRefreshPartnerLinks = document.getElementById('btnRefreshPartnerLinks');
+
+    async function loadPartnerLinks() {
+      if (!partnerLinksTableBody) return;
+      try {
+        const res = await fetch('/api/custom-link?list=partner', { headers: getAuthHeaders() });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          partnerLinksTableBody.innerHTML = `<tr class="empty-row"><td colspan="5" style="color:#ef4444;">Грешка при зареждане.</td></tr>`;
+          return;
+        }
+        const list = data.partnerLinks || [];
+        if (list.length === 0) {
+          partnerLinksTableBody.innerHTML = `<tr class="empty-row"><td colspan="5">Няма изпратени партньорски договори с преференциални условия.</td></tr>`;
+          return;
+        }
+        partnerLinksTableBody.innerHTML = list.map(item => {
+          const tiersDesc = (item.tiers || []).map(t => {
+            const pts = [];
+            if (item.includeOneTime !== false) pts.push(`${t.oneTime}€`);
+            if (item.includePercent !== false) pts.push(`${t.percent}%`);
+            return `${t.label}: ${pts.join(' + ')}`;
+          }).join(' | ');
+          const monthsBadge = item.includePercent !== false ? `${item.months || 12} мес.` : 'Без %';
+          const fullUrl = `${window.location.origin}/partner?p=${item.token}`;
+          const createdStr = item.createdAt ? new Date(item.createdAt).toLocaleString('bg-BG', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+          const statusHtml = item.used
+            ? `<span style="display:inline-block; padding:3px 9px; border-radius:999px; font-size:12px; font-weight:600; background:#dcfce7; color:#166534;">Подписан (${escapeHtml(item.usedByCompanyName || 'Партньор')})</span>`
+            : `<span style="display:inline-block; padding:3px 9px; border-radius:999px; font-size:12px; font-weight:600; background:#fef3c7; color:#92400e;">Чака подпис</span>`;
+
+          return `
+            <tr>
+              <td>
+                <div style="font-weight:600; color:#0f172a; font-size:13px;">${escapeHtml(monthsBadge)}</div>
+                <div style="font-size:12px; color:#475569; margin-top:2px;">${escapeHtml(tiersDesc)}</div>
+              </td>
+              <td>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <a href="${fullUrl}" target="_blank" style="font-family:monospace; font-size:12.5px; color:#2563eb; text-decoration:underline;">/partner?p=${escapeHtml(item.token)}</a>
+                  <button type="button" class="btn-copy-url btn-copy-partner-link" data-url="${escapeHtml(fullUrl)}" style="padding:3px 8px; font-size:11.5px;">Копирай</button>
+                </div>
+              </td>
+              <td style="font-size:12.5px; color:#475569;">${escapeHtml(createdStr)}</td>
+              <td>${statusHtml}</td>
+              <td style="text-align:right;">
+                <button type="button" class="btn-pending-dismiss btn-del-partner-link" data-ptoken="${escapeHtml(item.token)}" title="Изтрий">&times;</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        partnerLinksTableBody.querySelectorAll('.btn-copy-partner-link').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            try { await navigator.clipboard.writeText(btn.dataset.url); } catch (e) {}
+            showToast('Линкът е копиран!', 'success');
+          });
+        });
+
+        partnerLinksTableBody.querySelectorAll('.btn-del-partner-link').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const pt = btn.dataset.ptoken;
+            if (!pt) return;
+            btn.disabled = true;
+            try {
+              const r = await fetch(`/api/custom-link?partnerToken=${encodeURIComponent(pt)}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+              });
+              if (r.ok) {
+                showToast('Линкът беше изтрит.', 'info');
+                loadPartnerLinks();
+              } else {
+                btn.disabled = false;
+                showToast('Грешка при изтриване.', 'error');
+              }
+            } catch (e) {
+              btn.disabled = false;
+              showToast('Грешка при свързване със сървъра.', 'error');
+            }
+          });
+        });
+      } catch (e) {
+        partnerLinksTableBody.innerHTML = `<tr class="empty-row"><td colspan="5" style="color:#ef4444;">Мрежова грешка.</td></tr>`;
+      }
+    }
+
+    if (btnRefreshPartnerLinks) btnRefreshPartnerLinks.addEventListener('click', loadPartnerLinks);
+    loadPartnerLinks();
 
     // Create Modal Logic
     function renderPendingPartners(list) {
@@ -1895,6 +2019,7 @@
 
           closeCreateModal();
           await loadAffiliatesData();
+          await loadPartnerLinks();
         } else {
           alert(data.error || 'Възникна грешка при създаване на партньор.');
         }

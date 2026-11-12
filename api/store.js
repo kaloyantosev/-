@@ -364,6 +364,20 @@ export async function createAffiliate({ name, slug, country = 'bg' }) {
   };
 
   store.affiliates.push(newAff);
+
+  // If a preferential partner link was signed by this company, remove it from Sent Preferential Partner Links
+  const nameLower = cleanName.toLowerCase();
+  const matchingTokens = new Set(
+    (store.pendingPartners || [])
+      .filter(p => p.partnerToken && String(p.companyName || '').trim().toLowerCase() === nameLower)
+      .map(p => p.partnerToken)
+  );
+  store.partnerLinks = (store.partnerLinks || []).filter(pl => {
+    if (matchingTokens.has(pl.token)) return false;
+    if (pl.usedByCompanyName && String(pl.usedByCompanyName).trim().toLowerCase() === nameLower) return false;
+    return true;
+  });
+
   await saveStore(store);
   return newAff;
 }
@@ -823,17 +837,30 @@ export async function getAllContracts(arg = null) {
 /**
  * Record a newly signed partner agreement (/partner) as a pending partner tab in dashboard
  */
-export async function recordPendingPartner({ companyName, companyEik = '', contactEmail = '', contactPhone = '' }) {
+export async function recordPendingPartner({ companyName, companyEik = '', contactEmail = '', contactPhone = '', partnerToken = null }) {
   const store = await loadStore();
+  const cleanCompany = String(companyName || 'Нов партньор').trim();
+  const cleanToken = partnerToken ? String(partnerToken).trim() : null;
   const entry = {
     id: `pp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-    companyName: String(companyName || 'Нов партньор').trim(),
+    companyName: cleanCompany,
     companyEik: String(companyEik || '').trim(),
     contactEmail: String(contactEmail || '').trim(),
     contactPhone: String(contactPhone || '').trim(),
+    partnerToken: cleanToken,
     createdAt: new Date().toISOString()
   };
   store.pendingPartners.unshift(entry);
+
+  if (cleanToken) {
+    const pl = (store.partnerLinks || []).find(l => l.token === cleanToken);
+    if (pl) {
+      pl.used = true;
+      pl.usedByCompanyName = cleanCompany;
+      pl.usedAt = new Date().toISOString();
+    }
+  }
+
   await saveStore(store);
   return entry;
 }
@@ -896,4 +923,25 @@ export async function getPartnerLink(token) {
   if (!token) return null;
   const store = await loadStore();
   return (store.partnerLinks || []).find(l => l.token === String(token).trim()) || null;
+}
+
+/**
+ * List all sent preferential partner links
+ */
+export async function listPartnerLinks() {
+  const store = await loadStore();
+  return (store.partnerLinks || []).slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+/**
+ * Delete a sent preferential partner link by token
+ */
+export async function deletePartnerLink({ token }) {
+  const store = await loadStore();
+  const before = (store.partnerLinks || []).length;
+  store.partnerLinks = (store.partnerLinks || []).filter(l => l.token !== String(token || '').trim());
+  if (store.partnerLinks.length !== before) {
+    await saveStore(store);
+  }
+  return { deleted: before - store.partnerLinks.length };
 }

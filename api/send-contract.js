@@ -111,7 +111,8 @@ export default async function handler(req, res) {
           companyName,
           companyEik,
           contactEmail,
-          contactPhone
+          contactPhone,
+          partnerToken: data?.partnerToken || null
         });
       } else {
         attribution = await recordContractAttribution({

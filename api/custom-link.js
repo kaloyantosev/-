@@ -16,7 +16,9 @@ import {
   listCustomLinks, 
   deleteCustomLink,
   createPartnerLink,
-  getPartnerLink
+  getPartnerLink,
+  listPartnerLinks,
+  deletePartnerLink
 } from './store.js';
 
 export default async function handler(req, res) {
@@ -88,9 +90,16 @@ export default async function handler(req, res) {
     });
   }
 
-  // 2. PROTECTED GET: List all custom links
+  // 2. PROTECTED GET: List all custom links OR preferential partner links
   if (req.method === 'GET') {
     try {
+      if (req.query?.list === 'partner') {
+        const partnerLinks = await listPartnerLinks();
+        return res.status(200).json({
+          success: true,
+          partnerLinks
+        });
+      }
       const country = req.query?.country || null;
       const links = await listCustomLinks(country);
       return res.status(200).json({
@@ -145,8 +154,19 @@ export default async function handler(req, res) {
     }
   }
 
-  // 4. PROTECTED DELETE: Cancel/delete an unused custom link
+  // 4. PROTECTED DELETE: Cancel/delete an unused custom link or preferential partner link
   if (req.method === 'DELETE') {
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+    const partnerToken = req.query?.partnerToken || body?.partnerToken;
+    if (partnerToken) {
+      try {
+        await deletePartnerLink({ token: partnerToken });
+        return res.status(200).json({ success: true, message: 'Партньорският линк беше изтрит.' });
+      } catch (err) {
+        return res.status(400).json({ error: err.message || 'Грешка при изтриване.' });
+      }
+    }
+
     // Only users with role === 'admin' are allowed to delete custom links
     if (session.role !== 'admin' && session.user !== 'admin') {
       return res.status(403).json({
@@ -156,7 +176,6 @@ export default async function handler(req, res) {
     }
 
     try {
-      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
       const token = req.query?.token || body?.token;
       const id = req.query?.id || body?.id;
 
