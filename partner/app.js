@@ -526,6 +526,11 @@ function initPartnerPortal() {
 
       if (!compEik || !compName || !compAddress || !compRep || !contactAddrVal || !emailVal || !phoneVal) {
         showToast('Моля, попълнете всички задължителни полета (*).', 'error');
+        const firstEmpty = [companyEikInput, companyNameInput, companyAddressInput, companyRepresentativeInput, contactAddressInput, contactEmailInput, contactPhoneInput].find(el => el && !el.value.trim());
+        if (firstEmpty) {
+          firstEmpty.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          firstEmpty.focus();
+        }
         return;
       }
 
@@ -541,6 +546,8 @@ function initPartnerPortal() {
         applySignature();
         if (!isSigned) {
           showToast('Моля, положете подпис върху споразумението и Приложение 1.', 'error');
+          const sigCard = document.getElementById('signatureSectionCard');
+          if (sigCard) sigCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
           return;
         }
       }
@@ -548,7 +555,10 @@ function initPartnerPortal() {
       const confirmData = document.getElementById('confirmDataCheckbox');
       if (!confirmData || !confirmData.checked) {
         showToast('Моля, потвърдете верността на данните и представителната си власт.', 'error');
-        if (confirmData) confirmData.focus();
+        if (confirmData) {
+          confirmData.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          confirmData.focus();
+        }
         return;
       }
 
