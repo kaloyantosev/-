@@ -1009,7 +1009,7 @@ function initRoPortal() {
 
       const payload = {
         country: 'ro',
-        targetEmail: 'kaloyan.tosev@gmail.com',
+        targetEmail: 'sales@irisbgsf.com',
         companyName: compName,
         companyEik: compEik,
         companyAddress: compAddress,

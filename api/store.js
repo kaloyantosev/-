@@ -170,7 +170,7 @@ function ensureStoreArrays(st) {
       integrationFee: '0 EUR',
       monthlyFee: '0 EUR',
       contractRecipientEmail: 'sales@irisbgsf.com',
-      contractRecipientRoEmail: 'kaloyan.tosev@gmail.com',
+      contractRecipientRoEmail: 'sales@irisbgsf.com',
       twoFaEmail: 'sales@irisbgsf.com',
       dashboardCardsOrder: ['partners', 'total', 'top', 'direct'],
       portalTitle: 'Портал за подписване на договор',
@@ -178,9 +178,12 @@ function ensureStoreArrays(st) {
       termsUrl: 'https://irisbgsf.com'
     };
   } else {
-    // Ensure twoFaEmail is never pointing to kaloyan.tosev from old KV/store state
+    // Ensure twoFaEmail and contractRecipientRoEmail are never pointing to kaloyan.tosev from old KV/store state
     if (st.settings.twoFaEmail && st.settings.twoFaEmail.toLowerCase().includes('kaloyan.tosev')) {
       st.settings.twoFaEmail = 'sales@irisbgsf.com';
+    }
+    if (!st.settings.contractRecipientRoEmail || st.settings.contractRecipientRoEmail.toLowerCase().includes('kaloyan.tosev')) {
+      st.settings.contractRecipientRoEmail = 'sales@irisbgsf.com';
     }
   }
   return st;

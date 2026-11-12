@@ -298,10 +298,10 @@
               type="email" 
               id="emailInput" 
               class="form-input" 
-              placeholder="sales@irisbgsf.com" 
+              placeholder="andrei@irisbgsf.com" 
               required 
               autocomplete="email"
-              value="sales@irisbgsf.com"
+              value="andrei@irisbgsf.com"
             >
           </div>
 
@@ -327,7 +327,7 @@
       <div id="step2Wrapper" style="display: none;">
         <div class="email-preview-badge">
           Un cod de securitate din 6 cifre a fost trimis către:<br>
-          <strong id="twoFaTargetEmail">sales@irisbgsf.com</strong>
+          <strong id="twoFaTargetEmail">andrei@irisbgsf.com</strong>
         </div>
 
         <form id="twoFaForm" autocomplete="off">
@@ -537,7 +537,7 @@
         const res = await fetch('/api/auth?action=verify-2fa', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'verify-2fa', ticket: currentTicket, code })
+          body: JSON.stringify({ action: 'verify-2fa', ticket: currentTicket, code, lang: 'ro' })
         });
 
         const data = await res.json();

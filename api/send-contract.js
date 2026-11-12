@@ -134,18 +134,19 @@ export default async function handler(req, res) {
     }
 
     // Routing email address:
-    // - Romanian contracts (isRo): send to kaloyan.tosev@gmail.com (configurable via settings.contractRecipientRoEmail)
+    // - Romanian contracts (isRo): send to sales@irisbgsf.com (configurable via settings.contractRecipientRoEmail)
     // - Bulgarian / general contracts: send to sales@irisbgsf.com (configurable via settings.contractRecipientEmail)
     let targetEmail = 'sales@irisbgsf.com';
     try {
       const settings = await getSettings();
       if (isRo) {
-        targetEmail = settings?.contractRecipientRoEmail || process.env.CONTRACT_RECIPIENT_RO_EMAIL || 'kaloyan.tosev@gmail.com';
+        const roEmail = settings?.contractRecipientRoEmail || process.env.CONTRACT_RECIPIENT_RO_EMAIL || 'sales@irisbgsf.com';
+        targetEmail = roEmail.toLowerCase().includes('kaloyan.tosev') ? 'sales@irisbgsf.com' : roEmail;
       } else {
         targetEmail = settings?.contractRecipientEmail || process.env.CONTRACT_RECIPIENT_EMAIL || 'sales@irisbgsf.com';
       }
     } catch (e) {
-      targetEmail = isRo ? 'kaloyan.tosev@gmail.com' : 'sales@irisbgsf.com';
+      targetEmail = 'sales@irisbgsf.com';
     }
     const cleanCompName = (companyName && companyName !== '—')
       ? String(companyName).replace(/["'„“«»]/g, '').trim()

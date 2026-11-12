@@ -22,6 +22,9 @@ const SERVER_SALT = process.env.AUTH_SECRET || 'iris_pay_secure_salt_8f4b29a10c7
 const VALID_SALES_EMAIL = 'sales@irisbgsf.com';
 const EXPECTED_SALES_HASH = crypto.createHmac('sha256', SERVER_SALT).update('1!2@3№4$').digest('hex');
 
+const VALID_RO_SALES_EMAIL = 'andrei@irisbgsf.com';
+const EXPECTED_RO_SALES_HASH = crypto.createHmac('sha256', SERVER_SALT).update('4!3@2№1$').digest('hex');
+
 const ADMIN_USERNAME = 'admin';
 const EXPECTED_ADMIN_HASH = crypto.createHmac('sha256', SERVER_SALT).update('q:?h+@N]52j5oh_').digest('hex');
 
@@ -451,6 +454,13 @@ export default async function handler(req, res) {
       `iris_2fa_trust=${trustToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${TRUST_2FA_TTL_MS / 1000}`
     ]);
 
+    const isRoRedirect = Boolean(
+      user === VALID_RO_SALES_EMAIL ||
+      body?.lang === 'ro' ||
+      req.query?.lang === 'ro' ||
+      req.headers?.referer?.includes('/ro')
+    );
+
     return res.status(200).json({
       success: true,
       token,
@@ -458,7 +468,7 @@ export default async function handler(req, res) {
       user,
       role,
       expiresAt,
-      redirect: role === 'admin' ? '/admin' : '/dashboard',
+      redirect: role === 'admin' ? '/admin' : (isRoRedirect ? '/ro/dashboard' : '/dashboard'),
       message: role === 'admin' ? 'Успешен администраторски вход.' : 'Успешен вход в системата.'
     });
   }
@@ -488,11 +498,15 @@ export default async function handler(req, res) {
 
     const newCode = String(Math.floor(100000 + Math.random() * 900000));
     let targetEmail = 'sales@irisbgsf.com';
-    try {
-      const settings = await getSettings();
-      targetEmail = getResolved2FaEmail(settings);
-    } catch (e) {
-      targetEmail = getResolved2FaEmail(null);
+    if (email === VALID_RO_SALES_EMAIL) {
+      targetEmail = VALID_RO_SALES_EMAIL;
+    } else {
+      try {
+        const settings = await getSettings();
+        targetEmail = getResolved2FaEmail(settings);
+      } catch (e) {
+        targetEmail = getResolved2FaEmail(null);
+      }
     }
     await send2FaEmail({ to: targetEmail, code: newCode, role });
 
@@ -686,6 +700,63 @@ export default async function handler(req, res) {
         ticket,
         targetEmail: VALID_SALES_EMAIL,
         message: 'Паролата е потвърдена. Изпратен е 6-цифрен код за сигурност.'
+      });
+    }
+
+    // B2. Check ROMANIAN-ONLY SALES credentials (andrei@irisbgsf.com / 4!3@2№1$)
+    const isRoContext = Boolean(
+      body?.lang === 'ro' ||
+      req.query?.lang === 'ro' ||
+      req.headers?.referer?.includes('/ro')
+    );
+    const isRoSalesUser = (inputUser === VALID_RO_SALES_EMAIL) && isRoContext;
+    const givenRoHash = crypto.createHmac('sha256', SERVER_SALT).update(inputPass).digest('hex');
+    const isRoPassValid = crypto.timingSafeEqual(
+      Buffer.from(givenRoHash, 'utf-8'),
+      Buffer.from(EXPECTED_RO_SALES_HASH, 'utf-8')
+    );
+
+    if (isRoSalesUser && isRoPassValid) {
+      resetRateLimit(ip);
+
+      const isRo2FaTrusted = Boolean(
+        (validTrust && validTrust.user === VALID_RO_SALES_EMAIL) ||
+        (activeSession && activeSession.user === VALID_RO_SALES_EMAIL)
+      );
+
+      if (isRo2FaTrusted) {
+        console.log(`[Security] RO Sales 2FA bypassed for ${inputUser} (8-hour trusted device active).`);
+        const token = createSessionToken(VALID_RO_SALES_EMAIL, 'sales');
+        const refreshedTrust = create2FaTrustToken(VALID_RO_SALES_EMAIL, 'sales');
+        res.setHeader('Set-Cookie', [
+          `iris_auth_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_MS / 1000}`,
+          `iris_2fa_trust=${refreshedTrust}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${TRUST_2FA_TTL_MS / 1000}`
+        ]);
+        return res.status(200).json({
+          success: true,
+          require2fa: false,
+          authenticated: true,
+          role: 'sales',
+          user: VALID_RO_SALES_EMAIL,
+          token,
+          trustToken: refreshedTrust,
+          redirect: '/ro/dashboard',
+          message: 'Autentificare reușită (sesiune activă 8 ore).'
+        });
+      }
+
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      console.log(`[Security] RO Sales login step 1 passed for ${inputUser}. Sending 2FA code to ${VALID_RO_SALES_EMAIL}`);
+      await send2FaEmail({ to: VALID_RO_SALES_EMAIL, code });
+
+      const ticket = create2FaTicket(VALID_RO_SALES_EMAIL, code);
+
+      return res.status(200).json({
+        success: true,
+        require2fa: true,
+        ticket,
+        targetEmail: VALID_RO_SALES_EMAIL,
+        message: 'Parola a fost confirmată. Un cod de securitate din 6 cifre a fost trimis pe e-mail.'
       });
     }
 
