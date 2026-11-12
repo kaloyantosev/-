@@ -206,7 +206,7 @@
       "date": "2026-11-12T11:22:50.547Z"
     }
   ],
-  "updatedAt": "2026-11-12T11:22:50.547Z",
+  "updatedAt": "2026-11-12T14:03:04.793Z",
   "customLinks": [
     {
       "id": "cl_1792581080780_p6dln",
@@ -270,5 +270,44 @@
     "bnbBadgeText": "Лицензирана институция от БНБ",
     "termsUrl": "https://irisbgsf.com",
     "contractRecipientRoEmail": "sales@irisbgsf.com"
-  }
+  },
+  "pendingPartners": [
+    {
+      "id": "pp_1794492184793_4uwx",
+      "companyName": "„Айрис солюшънс\" АД“",
+      "companyEik": "020405050",
+      "contactEmail": "a@abv.bg",
+      "contactPhone": "а",
+      "partnerToken": null,
+      "createdAt": "2026-11-12T14:03:04.793Z"
+    },
+    {
+      "id": "pp_1794491105952_k7hc",
+      "companyName": "„УЕБ ФЕЙС\" ЕООД“",
+      "companyEik": "200378190",
+      "contactEmail": "a@abv.bg",
+      "contactPhone": "1",
+      "partnerToken": null,
+      "createdAt": "2026-11-12T13:45:05.952Z"
+    },
+    {
+      "id": "pp_1794489440955_nuj6",
+      "companyName": "„УЕБ ФЕЙС\" ЕООД“",
+      "companyEik": "200378190",
+      "contactEmail": "a@abv.bg",
+      "contactPhone": "1",
+      "partnerToken": null,
+      "createdAt": "2026-11-12T13:17:20.955Z"
+    },
+    {
+      "id": "pp_1794489098464_g5xy",
+      "companyName": "„УЕБ ФЕЙС\" ЕООД“",
+      "companyEik": "200378190",
+      "contactEmail": "a@abv.bg",
+      "contactPhone": "1",
+      "partnerToken": null,
+      "createdAt": "2026-11-12T13:11:38.464Z"
+    }
+  ],
+  "partnerLinks": []
 }

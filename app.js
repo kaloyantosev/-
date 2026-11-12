@@ -82,12 +82,59 @@ document.addEventListener('DOMContentLoaded', () => {
     console.warn('Error parsing URL parameters:', tErr);
   }
 
+  function showNotFoundPage() {
+    document.title = 'Страницата не съществува | IRIS Pay';
+    document.body.style.margin = '0';
+    document.body.style.background = '#F8FAFC';
+    document.body.style.fontFamily = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    document.body.innerHTML = `
+      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;">
+        <div style="max-width:520px;width:100%;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;padding:40px 32px;text-align:center;box-shadow:0 10px 30px rgba(15,23,42,0.06);">
+          <div style="width:56px;height:56px;margin:0 auto 20px;border-radius:50%;background:#FEF2F2;color:#DC2626;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;">404</div>
+          <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#0F172A;">Тази страница не съществува</h1>
+          <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#475569;">
+            Линкът, който сте отворили, не е валиден или не съществува.<br>
+            Може би сте имали предвид:<br>
+            <a href="https://dogovor-irispay.vercel.app/" style="color:#1E40AF;font-weight:600;text-decoration:underline;word-break:break-all;">https://dogovor-irispay.vercel.app/</a>
+          </p>
+          <a href="https://dogovor-irispay.vercel.app/" style="display:inline-block;padding:12px 24px;background:linear-gradient(135deg,#1E3A8A,#2563EB);color:#FFFFFF;text-decoration:none;border-radius:10px;font-size:14px;font-weight:600;">
+            Към https://dogovor-irispay.vercel.app/
+          </a>
+        </div>
+      </div>
+    `;
+  }
+
   // Persist partner referral
+  let hasTooManySegments = false;
+  try {
+    const rawCheck = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    const checkSegs = rawCheck.split('/').filter(Boolean);
+    if (checkSegs.length > 2) hasTooManySegments = true;
+  } catch (_) {}
+
+  if (hasTooManySegments) {
+    showNotFoundPage();
+    return;
+  }
+
   if (detectedPartnerSlug) {
     const cleanSlug = detectedPartnerSlug.toLowerCase().trim();
     sessionStorage.setItem('iris_affiliate_ref', cleanSlug);
     window.irisCurrentAffiliate = cleanSlug;
     console.log('[IRIS Pay] Affiliate partner detected:', cleanSlug);
+
+    fetch(`/api/custom-link?checkSlug=${encodeURIComponent(cleanSlug)}&country=bg`)
+      .then(async (res) => {
+        if (!res.ok) {
+          sessionStorage.removeItem('iris_affiliate_ref');
+          window.irisCurrentAffiliate = null;
+          showNotFoundPage();
+        }
+      })
+      .catch((err) => {
+        console.warn('[IRIS Pay] Error verifying affiliate slug:', err);
+      });
   } else {
     // If not a partner visit, clear cached affiliate
     localStorage.removeItem('iris_affiliate_ref');
@@ -163,6 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         } else {
           console.warn('[IRIS Pay] Custom token not valid or not found');
+          showNotFoundPage();
         }
       })
       .catch((err) => {

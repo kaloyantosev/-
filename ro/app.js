@@ -101,12 +101,71 @@ function initRoPortal() {
     }
   };
 
+  function showNotFoundPage() {
+    document.title = 'Страницата не съществува | IRIS Pay';
+    document.body.style.margin = '0';
+    document.body.style.background = '#F8FAFC';
+    document.body.style.fontFamily = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    document.body.innerHTML = `
+      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;">
+        <div style="max-width:520px;width:100%;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;padding:40px 32px;text-align:center;box-shadow:0 10px 30px rgba(15,23,42,0.06);">
+          <div style="width:56px;height:56px;margin:0 auto 20px;border-radius:50%;background:#FEF2F2;color:#DC2626;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;">404</div>
+          <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#0F172A;">Тази страница не съществува</h1>
+          <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#475569;">
+            Линкът, който сте отворили, не е валиден или не съществува.<br>
+            Може би сте имали предвид:<br>
+            <a href="https://dogovor-irispay.vercel.app/" style="color:#1E40AF;font-weight:600;text-decoration:underline;word-break:break-all;">https://dogovor-irispay.vercel.app/</a>
+          </p>
+          <a href="https://dogovor-irispay.vercel.app/" style="display:inline-block;padding:12px 24px;background:linear-gradient(135deg,#1E3A8A,#2563EB);color:#FFFFFF;text-decoration:none;border-radius:10px;font-size:14px;font-weight:600;">
+            Към https://dogovor-irispay.vercel.app/
+          </a>
+        </div>
+      </div>
+    `;
+  }
+
   // Detect custom commission one-time link token and partner referral
   try {
     const urlParams = new URLSearchParams(window.location.search);
-    const cToken = urlParams.get('c') || urlParams.get('custom');
-    const pSlug = urlParams.get('ref') || urlParams.get('affiliate');
-    if (pSlug) window.irisCurrentAffiliate = pSlug.toLowerCase().trim();
+    let cToken = urlParams.get('c') || urlParams.get('custom');
+    let pSlug = urlParams.get('ref') || urlParams.get('affiliate');
+
+    const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    const segments = rawPath.split('/').filter(Boolean);
+    // segments[0] is 'ro'
+    const roIgnored = ['index.html', 'api', 'assets'];
+    if (segments.length > 3) {
+      showNotFoundPage();
+      return;
+    } else if (segments.length === 3 && segments[0].toLowerCase() === 'ro') {
+      if (segments[1].toLowerCase() === 'c') {
+        cToken = cToken || segments[2].trim();
+      } else if (!roIgnored.includes(segments[1].toLowerCase())) {
+        pSlug = pSlug || segments[1].toLowerCase().trim();
+        cToken = cToken || segments[2].trim();
+      }
+    } else if (segments.length === 2 && segments[0].toLowerCase() === 'ro') {
+      const seg = segments[1].trim();
+      if (!roIgnored.includes(seg.toLowerCase())) {
+        if (seg.toLowerCase().startsWith('c-')) {
+          cToken = cToken || seg.substring(2).trim();
+        } else {
+          pSlug = pSlug || seg.toLowerCase();
+        }
+      }
+    }
+
+    if (pSlug) {
+      const cleanSlug = pSlug.toLowerCase().trim();
+      window.irisCurrentAffiliate = cleanSlug;
+      fetch(`/api/custom-link?checkSlug=${encodeURIComponent(cleanSlug)}&country=ro`)
+        .then(r => {
+          if (!r.ok) {
+            window.irisCurrentAffiliate = null;
+            showNotFoundPage();
+          }
+        }).catch(() => {});
+    }
     if (cToken) {
       window.irisCustomToken = cToken.trim();
       fetch(`/api/custom-link?token=${encodeURIComponent(window.irisCustomToken)}`)
@@ -117,6 +176,8 @@ function initRoPortal() {
               window.irisCustomCommission = d.commission;
               applyCustomCommissionUi(d.commission);
             }
+          } else {
+            showNotFoundPage();
           }
         }).catch(() => {});
     }

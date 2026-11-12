@@ -18,7 +18,8 @@ import {
   createPartnerLink,
   getPartnerLink,
   listPartnerLinks,
-  deletePartnerLink
+  deletePartnerLink,
+  findAffiliateBySlug
 } from './store.js';
 
 export default async function handler(req, res) {
@@ -28,6 +29,21 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // 1a-0. PUBLIC GET with checkSlug: Verify if an affiliate partner slug exists
+  if (req.method === 'GET' && req.query?.checkSlug) {
+    try {
+      const country = String(req.query.country || 'bg').toLowerCase() === 'ro' ? 'ro' : 'bg';
+      const affiliate = await findAffiliateBySlug({ slug: req.query.checkSlug, country });
+      if (!affiliate) {
+        return res.status(404).json({ valid: false, error: 'Not found' });
+      }
+      return res.status(200).json({ valid: true, affiliate });
+    } catch (err) {
+      console.error('Error checking affiliate slug:', err);
+      return res.status(500).json({ valid: false, error: 'Database error' });
+    }
   }
 
   // 1a. PUBLIC GET with partnerToken: Fetch custom Annex 1 terms for /partner?p=xyz

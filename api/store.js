@@ -945,3 +945,17 @@ export async function deletePartnerLink({ token }) {
   }
   return { deleted: before - store.partnerLinks.length };
 }
+
+export async function findAffiliateBySlug({ slug, country = 'bg' }) {
+  const cleanSlug = String(slug || '').toLowerCase().trim();
+  if (!cleanSlug) return null;
+  const targetCountry = country === 'ro' ? 'ro' : 'bg';
+  const store = await loadStore();
+  const aff = (store.affiliates || []).find(a => {
+    const aCountry = a.country === 'ro' ? 'ro' : 'bg';
+    return aCountry === targetCountry &&
+      String(a.slug || '').toLowerCase().trim() === cleanSlug &&
+      a.active !== false;
+  });
+  return aff ? { slug: aff.slug, name: aff.name, country: aff.country || 'bg' } : null;
+}

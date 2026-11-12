@@ -89,7 +89,36 @@ function initPartnerPortal() {
     }
   }
 
+  function showNotFoundPage() {
+    document.title = 'Страницата не съществува | IRIS Pay';
+    document.body.style.margin = '0';
+    document.body.style.background = '#F8FAFC';
+    document.body.style.fontFamily = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    document.body.innerHTML = `
+      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;">
+        <div style="max-width:520px;width:100%;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;padding:40px 32px;text-align:center;box-shadow:0 10px 30px rgba(15,23,42,0.06);">
+          <div style="width:56px;height:56px;margin:0 auto 20px;border-radius:50%;background:#FEF2F2;color:#DC2626;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;">404</div>
+          <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#0F172A;">Тази страница не съществува</h1>
+          <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#475569;">
+            Линкът, който сте отворили, не е валиден или не съществува.<br>
+            Може би сте имали предвид:<br>
+            <a href="https://dogovor-irispay.vercel.app/" style="color:#1E40AF;font-weight:600;text-decoration:underline;word-break:break-all;">https://dogovor-irispay.vercel.app/</a>
+          </p>
+          <a href="https://dogovor-irispay.vercel.app/" style="display:inline-block;padding:12px 24px;background:linear-gradient(135deg,#1E3A8A,#2563EB);color:#FFFFFF;text-decoration:none;border-radius:10px;font-size:14px;font-weight:600;">
+            Към https://dogovor-irispay.vercel.app/
+          </a>
+        </div>
+      </div>
+    `;
+  }
+
   try {
+    const cleanPath = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+    if (cleanPath !== 'partner' && cleanPath !== 'partner/index.html') {
+      showNotFoundPage();
+      return;
+    }
+
     const pToken = new URLSearchParams(window.location.search).get('p');
     if (pToken) {
       activePartnerToken = pToken.trim();
@@ -100,6 +129,8 @@ function initPartnerPortal() {
             if (d && d.valid && d.partnerTerms) {
               applyPartnerTermsToAnnex(d.partnerTerms);
             }
+          } else {
+            showNotFoundPage();
           }
         }).catch(() => {});
     }
@@ -137,6 +168,23 @@ function initPartnerPortal() {
         el.classList.remove('filled');
         el.classList.add('underlined');
         el.classList.remove('text-animating');
+      }
+    });
+    if (typeof autoFitPartnerMasks === 'function') {
+      autoFitPartnerMasks();
+    }
+  }
+
+  function autoFitPartnerMasks() {
+    document.querySelectorAll('.pdf-flow-mask').forEach(mask => {
+      const sizes = [10.8, 10.1, 9.4, 8.7, 8.0, 7.4, 6.8, 6.2];
+      for (let i = 0; i < sizes.length; i++) {
+        const sz = sizes[i];
+        mask.style.fontSize = `calc(${sz} * var(--pt))`;
+        mask.style.lineHeight = `calc(${(sz * 1.24).toFixed(2)} * var(--pt))`;
+        if (mask.scrollHeight <= mask.clientHeight + 2 || i === sizes.length - 1) {
+          break;
+        }
       }
     });
   }
@@ -719,7 +767,128 @@ function initPartnerPortal() {
     });
   }
 
+  function buildPartnerPdfOverlayHtml(pageNum) {
+    if (pageNum === 1) {
+      return `
+        <div class="pdf-mask" style="left:calc(96.5 * var(--pt));top:calc(99.8 * var(--pt));width:calc(64 * var(--pt));height:calc(13 * var(--pt));text-align:center;">
+          <span class="live-field underlined" data-field="date">..............2026</span>
+        </div>
+        <div class="pdf-mask pdf-flow-mask" style="left:calc(70.5 * var(--pt));top:calc(230 * var(--pt));width:calc(457 * var(--pt));height:calc(126 * var(--pt));line-height:calc(13.4 * var(--pt));text-align:justify;">
+          <div>2. <span class="live-field underlined" data-field="companyName">........................................................................</span>, регистрирано в ТРРЮЛНЦ към Агенцията по вписвания с ЕИК <span class="live-field underlined" data-field="companyEik">........................</span>, представлявано от <span class="live-field underlined" data-field="companyRepresentative">..................................................</span>, с търговски адрес <span class="live-field underlined" data-field="companyAddress">........................................................................</span>, наричан по-долу за краткост ИЗПЪЛНИТЕЛ.</div>
+        </div>
+      `;
+    }
+    if (pageNum === 7) {
+      return `
+        <div class="pdf-mask pdf-flow-mask" style="left:calc(70.5 * var(--pt));top:calc(218 * var(--pt));width:calc(457 * var(--pt));height:calc(74 * var(--pt));line-height:calc(13.4 * var(--pt));">
+          <div style="margin-bottom:calc(2 * var(--pt));">Адрес: <span class="live-field underlined" data-field="contactAddress">........................................................................</span></div>
+          <div style="margin-bottom:calc(2 * var(--pt));">E-mail: <span class="live-field underlined" data-field="contactEmail">......................................................................</span></div>
+          <div>Телефон: <span class="live-field underlined" data-field="contactPhone">........................................................</span></div>
+        </div>
+        <div class="sig-slot-box" id="partnerContractSigSlot" style="left:calc(352 * var(--pt));top:calc(674 * var(--pt));width:calc(185 * var(--pt));height:calc(50 * var(--pt));"></div>
+      `;
+    }
+    return '';
+  }
+
+  async function initPartnerPdfPreview() {
+    const host = document.getElementById('partnerPdfPagesHost');
+    if (!host) return;
+
+    try {
+      const pdfjsLib = await import('/assets/pdfjs/pdf.min.mjs');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '/assets/pdfjs/pdf.worker.min.mjs';
+
+      const pdfDoc = await pdfjsLib.getDocument('/assets/partner_contract_template.pdf?v=20261112_2').promise;
+      const contractPageCount = Math.min(7, pdfDoc.numPages);
+      const totalPages = contractPageCount + 1; // +1 for Page 8 (Приложение 1)
+
+      host.innerHTML = '';
+      const ptTrackedSheets = [];
+      const renderScale = Math.min(Math.max(window.devicePixelRatio || 1.5, 1.5), 2.2) * 1.35;
+
+      for (let pageNum = 1; pageNum <= contractPageCount; pageNum++) {
+        const page = await pdfDoc.getPage(pageNum);
+        const baseVp = page.getViewport({ scale: 1 });
+        const W = baseVp.width;
+        const H = baseVp.height;
+
+        const card = document.createElement('div');
+        card.className = 'doc-page-card';
+        card.id = `pageCard${pageNum}`;
+
+        const topTab = document.createElement('div');
+        topTab.className = 'page-top-tab';
+        const suffix = pageNum === contractPageCount ? 'КОРЕСПОНДЕНЦИЯ И ПОДПИСИ' : 'СПОРАЗУМЕНИЕ';
+        topTab.innerHTML = `<span class="page-tab-badge">СТРАНИЦА ${pageNum} ОТ ${totalPages} • ${suffix}</span>`;
+
+        const sheet = document.createElement('div');
+        sheet.className = 'a4-sheet pdf-sheet';
+        sheet.style.aspectRatio = `${W} / ${H}`;
+        sheet.dataset.pageWidthPt = String(W);
+
+        const canvas = document.createElement('canvas');
+        canvas.className = 'pdf-page-canvas';
+        const hiVp = page.getViewport({ scale: renderScale });
+        canvas.width = Math.floor(hiVp.width);
+        canvas.height = Math.floor(hiVp.height);
+        sheet.appendChild(canvas);
+
+        const overlayHtml = buildPartnerPdfOverlayHtml(pageNum);
+        if (overlayHtml) {
+          const overlay = document.createElement('div');
+          overlay.className = 'pdf-overlay-layer';
+          overlay.innerHTML = overlayHtml;
+          sheet.appendChild(overlay);
+          ptTrackedSheets.push(sheet);
+        }
+
+        card.appendChild(topTab);
+        card.appendChild(sheet);
+        host.appendChild(card);
+
+        const renderCtx = canvas.getContext('2d', { alpha: false });
+        await page.render({ canvasContext: renderCtx, viewport: hiVp }).promise;
+      }
+
+      const updatePtVars = () => {
+        ptTrackedSheets.forEach(sheet => {
+          const wPt = parseFloat(sheet.dataset.pageWidthPt || '595.32');
+          const overlay = sheet.querySelector('.pdf-overlay-layer');
+          if (overlay && sheet.clientWidth > 0) {
+            overlay.style.setProperty('--pt', `${sheet.clientWidth / wPt}px`);
+          }
+        });
+        autoFitPartnerMasks();
+      };
+
+      updatePtVars();
+      if (typeof ResizeObserver !== 'undefined') {
+        const ro = new ResizeObserver(updatePtVars);
+        ro.observe(host);
+      }
+      window.addEventListener('resize', updatePtVars);
+
+      const contractSlot = document.getElementById('partnerContractSigSlot');
+      if (contractSlot) {
+        contractSlot.addEventListener('click', () => {
+          const sigCard = document.getElementById('signatureSectionCard');
+          if (sigCard) sigCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+      }
+
+      syncAllFields();
+      if (isSigned) {
+        applySignature();
+      }
+    } catch (err) {
+      console.error('[Partner PDF Preview Error]:', err);
+      host.innerHTML = `<div class="pdf-loading-state" style="color:#dc2626;">Грешка при зареждане на документа: ${err.message}</div>`;
+    }
+  }
+
   syncAllFields();
+  initPartnerPdfPreview();
 }
 
 if (document.readyState === 'loading') {
