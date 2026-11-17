@@ -368,20 +368,14 @@
   </div>
 
   <script>
-    // 1. Check if already authenticated within 8 hours
-    const existingToken = localStorage.getItem('iris_auth_token') || sessionStorage.getItem('iris_auth_token');
-    if (existingToken) {
-      fetch('/api/auth?action=check', {
-        headers: { 'Authorization': 'Bearer ' + existingToken }
-      })
-      .then(r => r.json())
-      .then(data => {
-        if (data && data.authenticated) {
-          window.location.replace(data.role === 'admin' ? '/admin' : '/ro/dashboard');
-        }
-      })
-      .catch(() => {});
-    }
+    // 1. Always show the login form when visiting /ro/login; clear any previous session tokens
+    try {
+      localStorage.removeItem('iris_auth_token');
+      localStorage.removeItem('iris_admin_token');
+      sessionStorage.removeItem('iris_auth_token');
+      sessionStorage.removeItem('iris_admin_token');
+      fetch('/api/auth?action=logout', { method: 'POST' }).catch(() => {});
+    } catch (_) {}
 
     // Elements
     const loginForm = document.getElementById('loginForm');
@@ -491,14 +485,15 @@
             twoFaCode.focus();
           } else if (data.token || data.authenticated) {
             if (data.token) {
-              localStorage.setItem('iris_auth_token', data.token);
+              localStorage.removeItem('iris_auth_token');
+              localStorage.removeItem('iris_admin_token');
               sessionStorage.setItem('iris_auth_token', data.token);
               if (data.role === 'admin') {
-                localStorage.setItem('iris_admin_token', data.token);
+                sessionStorage.setItem('iris_admin_token', data.token);
               }
             }
             showAlert('Autentificare reușită! Se redirecționează...', true);
-            const destination = (data.role === 'admin') ? '/admin' : (data.redirect || '/ro/dashboard');
+            const destination = data.redirect || ((data.role === 'admin') ? '/admin' : '/ro/dashboard');
             window.location.replace(destination);
           }
         } else {
@@ -544,18 +539,18 @@
 
         if (res.ok && data.success) {
           if (data.token) {
-            localStorage.setItem('iris_auth_token', data.token);
+            localStorage.removeItem('iris_auth_token');
+            localStorage.removeItem('iris_admin_token');
             sessionStorage.setItem('iris_auth_token', data.token);
             if (data.role === 'admin') {
-              localStorage.setItem('iris_admin_token', data.token);
+              sessionStorage.setItem('iris_admin_token', data.token);
             }
           }
           if (data.trustToken) {
             localStorage.setItem('iris_2fa_trust', data.trustToken);
           }
           showAlert('Autentificare cu succes! Se redirecționează...', true);
-          // If admin, go to /admin, otherwise go to /ro/dashboard
-          const destination = (data.role === 'admin') ? '/admin' : '/ro/dashboard';
+          const destination = data.redirect || ((data.role === 'admin') ? '/admin' : '/ro/dashboard');
           window.location.replace(destination);
         } else {
           showAlert(data.error || 'Cod de securitate incorect. Vă rugăm să reîncercați.');

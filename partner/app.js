@@ -780,7 +780,7 @@ function initPartnerPortal() {
     }
     if (pageNum === 7) {
       return `
-        <div class="pdf-mask pdf-flow-mask" style="left:calc(70.5 * var(--pt));top:calc(218 * var(--pt));width:calc(457 * var(--pt));height:calc(74 * var(--pt));line-height:calc(13.4 * var(--pt));">
+        <div class="pdf-mask pdf-flow-mask" style="left:calc(70.5 * var(--pt));top:calc(217 * var(--pt));width:calc(457 * var(--pt));height:calc(64 * var(--pt));line-height:calc(13.4 * var(--pt));">
           <div style="margin-bottom:calc(2 * var(--pt));">Адрес: <span class="live-field underlined" data-field="contactAddress">........................................................................</span></div>
           <div style="margin-bottom:calc(2 * var(--pt));">E-mail: <span class="live-field underlined" data-field="contactEmail">......................................................................</span></div>
           <div>Телефон: <span class="live-field underlined" data-field="contactPhone">........................................................</span></div>

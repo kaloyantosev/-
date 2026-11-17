@@ -174,13 +174,13 @@ export async function generateContractRoPdf(data, assetsDir = 'assets') {
 
   // Cover both Merchant item 2 AND "Together referred to as..." down to y=396 (safely above table border at y=403.7)
   p3.drawRectangle({ x: 75.5, y: p3H - 396, width: 221, height: 164, color: rgb(1, 1, 1) });
-  const enMerchantText = `2.  ${companyName}, registered in the CRRNPLE at the Registry Agency, with UIC ${companyEik}, with headquarters and address of management: ${companyAddress}, represented by ${companyRepresentative}, with PIN ${companyRepresentativePin || '—'}, telephone: ${contactPhone}, hereby referred to as “Merchant”, on the other hand`;
+  const enMerchantText = `2.  ${companyName}, registered in the CRRNPLE at the Registry Agency, with UIC ${companyEik}, with headquarters and address of management: ${companyAddress}, represented by ${companyRepresentative}, telephone: ${contactPhone}, hereby referred to as “Merchant”, on the other hand`;
   const enRes = drawAutoFitWrapped(p3, enMerchantText, { x: 92.28, yTop: 235, width: 202.5, maxHeight: 132, f: times, startSize: 10.6, startLineHeight: 14.0 });
   p3.drawText('Together referred to as Parties,', { x: colLeftX, y: p3H - (enRes.bottomYTop + 20), size: 10.98, font: times });
 
   // RO: Cover both Merchant item 2 AND "Denumite împreună Părțile..." down to y=396
   p3.drawRectangle({ x: 302.0, y: p3H - 396, width: 235, height: 166, color: rgb(1, 1, 1) });
-  const roMerchantText = `2.  ${companyName}, înregistrat în CRRNPLE la Agenția Registrului, având CUI ${companyEik}, cu sediul social și adresa de conducere: ${companyAddress}, reprezentată de ${companyRepresentative}, cu CNP ${companyRepresentativePin || '—'}, telefon: ${contactPhone}, denumită în continuare “Comerciantul”, pe de o parte`;
+  const roMerchantText = `2.  ${companyName}, înregistrat în CRRNPLE la Agenția Registrului, având CUI ${companyEik}, cu sediul social și adresa de conducere: ${companyAddress}, reprezentată de ${companyRepresentative}, telefon: ${contactPhone}, denumită în continuare “Comerciantul”, pe de o parte`;
   const roRes = drawAutoFitWrapped(p3, roMerchantText, { x: 318.86, yTop: 233, width: 217.2, maxHeight: 134, f: times, startSize: 10.6, startLineHeight: 14.0 });
   p3.drawText('Denumite împreună Părțile, Întrucât:', { x: colRightX, y: p3H - (roRes.bottomYTop + 20), size: 10.98, font: times });
 
@@ -209,7 +209,6 @@ export async function generateContractRoPdf(data, assetsDir = 'assets') {
   drawSequentialLines(p6, [
     { text: `Name: ${companyRepresentative}` },
     { text: `Email: ${contactEmail}` },
-    { text: `CNP: ${companyRepresentativePin || '—'}` },
     { text: `Phone Number: ${contactPhone}` },
     { text: `Authorized location: ${website || companyAddress}` }
   ], { x: colLeftX, yBaseStart: 432.64, width: colLeftWidth, maxHeight: 96, f: times, size: 10.5, lineHeight: 14.5 });
@@ -219,7 +218,6 @@ export async function generateContractRoPdf(data, assetsDir = 'assets') {
   drawSequentialLines(p6, [
     { text: `Nume: ${companyRepresentative}` },
     { text: `Email: ${contactEmail}` },
-    { text: `PIN: ${companyRepresentativePin || '—'}` },
     { text: `Număr de telefon: ${contactPhone}` },
     { text: `Locația autorizată: ${website || companyAddress}` }
   ], { x: colRightX, yBaseStart: 418.06, width: colRightWidth, maxHeight: 96, f: times, size: 10.5, lineHeight: 14.5 });

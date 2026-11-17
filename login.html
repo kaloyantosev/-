@@ -354,20 +354,14 @@
   </div>
 
   <script>
-    // 1. Check if already authenticated within 8 hours
-    const existingToken = localStorage.getItem('iris_auth_token') || sessionStorage.getItem('iris_auth_token');
-    if (existingToken) {
-      fetch('/api/auth?action=check', {
-        headers: { 'Authorization': 'Bearer ' + existingToken }
-      })
-      .then(r => r.json())
-      .then(data => {
-        if (data && data.authenticated) {
-          window.location.replace(data.role === 'admin' ? '/admin' : '/dashboard');
-        }
-      })
-      .catch(() => {});
-    }
+    // 1. Always show the login form when visiting /login; clear any previous session tokens
+    try {
+      localStorage.removeItem('iris_auth_token');
+      localStorage.removeItem('iris_admin_token');
+      sessionStorage.removeItem('iris_auth_token');
+      sessionStorage.removeItem('iris_admin_token');
+      fetch('/api/auth?action=logout', { method: 'POST' }).catch(() => {});
+    } catch (_) {}
 
     // 2. Elements
     const loginForm = document.getElementById('loginForm');
@@ -514,10 +508,11 @@
 
           // Direct login (2FA bypassed for 8 hours or Admin)
           if (data.token) {
-            localStorage.setItem('iris_auth_token', data.token);
+            localStorage.removeItem('iris_auth_token');
+            localStorage.removeItem('iris_admin_token');
             sessionStorage.setItem('iris_auth_token', data.token);
             if (data.role === 'admin') {
-              localStorage.setItem('iris_admin_token', data.token);
+              sessionStorage.setItem('iris_admin_token', data.token);
             }
           }
           showAlert('Входът е успешен! Пренасочване...', true);
@@ -565,10 +560,11 @@
 
         if (res.ok && data.success) {
           if (data.token) {
-            localStorage.setItem('iris_auth_token', data.token);
+            localStorage.removeItem('iris_auth_token');
+            localStorage.removeItem('iris_admin_token');
             sessionStorage.setItem('iris_auth_token', data.token);
             if (data.role === 'admin') {
-              localStorage.setItem('iris_admin_token', data.token);
+              sessionStorage.setItem('iris_admin_token', data.token);
             }
           }
           if (data.trustToken) {

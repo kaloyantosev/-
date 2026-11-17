@@ -980,7 +980,6 @@ function initRoPortal() {
       const compEik = (companyEikInput?.value || '').trim();
       const compAddress = (companyAddressInput?.value || '').trim();
       const compRep = (companyRepresentativeInput?.value || '').trim();
-      const compRepPin = (companyRepPinInput?.value || '').trim();
       const bankVal = bankNameSelect ? bankNameSelect.value.trim() : '';
       const bankNameText = (bankVal === 'custom') ? ((customBankInput?.value || '').trim()) : bankVal;
       const bankIbanVal = (bankIbanInput?.value || '').trim();
@@ -1078,7 +1077,6 @@ function initRoPortal() {
         companyEik: compEik,
         companyAddress: compAddress,
         companyRepresentative: compRep,
-        companyRepresentativePin: compRepPin,
         bankName: bankNameText,
         bankIban: bankIbanVal,
         website: websiteVal,
@@ -1196,13 +1194,13 @@ function initRoPortal() {
         </div>
         <div class="pdf-mask" data-autofit="true" data-base-size="10.5" data-base-lh="13.8" style="${pctBox(75.5, 234.5, 220.0, 160.0, W, H)} font-size:calc(10.5 * var(--pt)); line-height:calc(13.8 * var(--pt));">
           <div style="padding-left:calc(15.5 * var(--pt)); text-align:justify;">
-            2. &nbsp;<span class="live-field underlined" data-field="companyName">................................</span>, registered in the CRRNPLE at the Registry Agency, with UIC <span class="live-field underlined" data-field="companyEik">................</span>, with headquarters and address of management: <span class="live-field underlined" data-field="companyAddress">................................................</span>, represented by <span class="live-field underlined" data-field="companyRepresentative">................................</span>, with PIN <span class="live-field underlined" data-field="companyRepresentativePin">................</span>, telephone: <span class="live-field underlined" data-field="contactPhone">........................</span>, hereby referred to as “Merchant”, on the other hand
+            2. &nbsp;<span class="live-field underlined" data-field="companyName">................................</span>, registered in the CRRNPLE at the Registry Agency, with UIC <span class="live-field underlined" data-field="companyEik">................</span>, with headquarters and address of management: <span class="live-field underlined" data-field="companyAddress">................................................</span>, represented by <span class="live-field underlined" data-field="companyRepresentative">................................</span>, telephone: <span class="live-field underlined" data-field="contactPhone">........................</span>, hereby referred to as “Merchant”, on the other hand
           </div>
           <div style="margin-top:calc(12 * var(--pt)); font-size:calc(10.98 * var(--pt));">Together referred to as Parties,</div>
         </div>
         <div class="pdf-mask" data-autofit="true" data-base-size="10.5" data-base-lh="13.8" style="${pctBox(302.0, 232.0, 234.5, 162.0, W, H)} font-size:calc(10.5 * var(--pt)); line-height:calc(13.8 * var(--pt));">
           <div style="padding-left:calc(15.5 * var(--pt)); text-align:justify;">
-            2. &nbsp;<span class="live-field underlined" data-field="companyName">................................</span>, înregistrat în CRRNPLE la Agenția Registrului, având CUI <span class="live-field underlined" data-field="companyEik">................</span>, cu sediul social și adresa de conducere: <span class="live-field underlined" data-field="companyAddress">................................................</span>, reprezentată de <span class="live-field underlined" data-field="companyRepresentative">................................</span>, cu CNP <span class="live-field underlined" data-field="companyRepresentativePin">................</span>, telefon: <span class="live-field underlined" data-field="contactPhone">........................</span>, denumită în continuare “Comerciantul”, pe de o parte
+            2. &nbsp;<span class="live-field underlined" data-field="companyName">................................</span>, înregistrat în CRRNPLE la Agenția Registrului, având CUI <span class="live-field underlined" data-field="companyEik">................</span>, cu sediul social și adresa de conducere: <span class="live-field underlined" data-field="companyAddress">................................................</span>, reprezentată de <span class="live-field underlined" data-field="companyRepresentative">................................</span>, telefon: <span class="live-field underlined" data-field="contactPhone">........................</span>, denumită în continuare “Comerciantul”, pe de o parte
           </div>
           <div style="margin-top:calc(12 * var(--pt)); font-size:calc(10.98 * var(--pt));">Denumite împreună Părțile, Întrucât:</div>
         </div>
@@ -1222,14 +1220,12 @@ function initRoPortal() {
         <div class="pdf-mask" data-autofit="true" data-base-size="10.3" data-base-lh="14.2" style="${pctBox(75.5, 421.5, 220.0, 100.0, W, H)} font-size:calc(10.3 * var(--pt)); line-height:calc(14.2 * var(--pt));">
           <div>Name: <span class="live-field underlined" data-field="companyRepresentative">.........................</span></div>
           <div>Email: <span class="live-field underlined" data-field="contactEmail">.........................</span></div>
-          <div>CNP: <span class="live-field underlined" data-field="companyRepresentativePin">.........................</span></div>
           <div>Phone Number: <span class="live-field underlined" data-field="contactPhone">.........................</span></div>
           <div>Authorized location: <span class="live-field underlined" data-field="merchantWebsite">.........................</span></div>
         </div>
         <div class="pdf-mask" data-autofit="true" data-base-size="10.3" data-base-lh="14.2" style="${pctBox(302.0, 407.0, 234.5, 100.0, W, H)} font-size:calc(10.3 * var(--pt)); line-height:calc(14.2 * var(--pt));">
           <div>Nume: <span class="live-field underlined" data-field="companyRepresentative">.........................</span></div>
           <div>Email: <span class="live-field underlined" data-field="contactEmail">.........................</span></div>
-          <div>PIN: <span class="live-field underlined" data-field="companyRepresentativePin">.........................</span></div>
           <div>Număr de telefon: <span class="live-field underlined" data-field="contactPhone">.........................</span></div>
           <div>Locația autorizată: <span class="live-field underlined" data-field="merchantWebsite">.........................</span></div>
         </div>

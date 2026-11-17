@@ -1202,7 +1202,7 @@
       detailsModalTitle.textContent = `Contracte pentru: ${name} (/ro/${slug})`;
       detailsContractsList.innerHTML = '';
 
-      const contracts = aff?.contracts || [];
+      const contracts = [...(aff?.contracts || [])].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
       if (contracts.length === 0) {
         detailsContractsList.innerHTML = `
           <div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 13.5px;">
@@ -1234,7 +1234,7 @@
 
     // Direct Contracts Modal
     function openDirectContractsModal() {
-      const directContracts = lastSummaryData?.directContracts || [];
+      const directContracts = [...(lastSummaryData?.directContracts || [])].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
       detailsModalTitle.textContent = `Contracte Directe (România - Fără partener)`;
       detailsContractsList.innerHTML = '';
 

@@ -1531,7 +1531,7 @@
         }
       }
 
-      const contracts = aff?.contracts || [];
+      const contracts = [...(aff?.contracts || [])].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
       if (contracts.length === 0) {
         detailsContractsList.innerHTML = `
           <div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 13.5px;">
@@ -1616,7 +1616,7 @@
       detailsModalTitle.textContent = 'Договори без партньор (директно през сайта)';
       detailsContractsList.innerHTML = '';
 
-      const contracts = lastSummaryData?.directContractsList || [];
+      const contracts = [...(lastSummaryData?.directContractsList || [])].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
       if (contracts.length === 0) {
         detailsContractsList.innerHTML = `
           <div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 13.5px;">

@@ -223,7 +223,7 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
     if (tplPages[6]) {
       const p7 = tplPages[6];
       const p7H = p7.getHeight();
-      drawDynamicFlowBlock(p7, 70.9, 218, 456, 74, [
+      drawDynamicFlowBlock(p7, 70.9, 217, 456, 60, [
         { segments: [{ text: 'Адрес:', bold: false }, { text: contactAddress || companyAddress, bold: true }], spaceAfter: 2 },
         { segments: [{ text: 'E-mail:', bold: false }, { text: contactEmail, bold: true }], spaceAfter: 2 },
         { segments: [{ text: 'Телефон:', bold: false }, { text: contactPhone, bold: true }], spaceAfter: 0 }
