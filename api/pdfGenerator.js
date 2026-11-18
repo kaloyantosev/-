@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
+import { embedSignature } from './signatureEmbed.js';
 
 export async function generateContractPdf(data, assetsDir = 'assets') {
   const {
@@ -36,24 +37,15 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
   const font = await pdfDoc.embedFont(fontRegularBytes, { subset: true, features: { liga: false, calt: false } });
   const fontBold = await pdfDoc.embedFont(fontBoldBytes, { subset: true, features: { liga: false, calt: false } });
 
-  // Embed merchant signature image
-  let sigImage = null;
-  if (signatureImageBase64) {
-    try {
-      const cleanB64 = signatureImageBase64.replace(/^data:image\/[a-z]+;base64,/, '').trim();
-      const sigImgBytes = Buffer.from(cleanB64, 'base64');
-      sigImage = await pdfDoc.embedPng(sigImgBytes);
-    } catch (e) {
-      console.warn('Could not embed custom signature, falling back:', e.message);
-    }
-  }
+  // Embed merchant signature image (PNG, JPEG, or SVG)
+  let sigImage = await embedSignature(pdfDoc, signatureImageBase64);
 
   // If no custom signature image provided, check fallback
   if (!sigImage) {
     const fallbackSigPath = 'temp_merchant_sig.png';
     if (fs.existsSync(fallbackSigPath)) {
       const fallbackSigBytes = fs.readFileSync(fallbackSigPath);
-      sigImage = await pdfDoc.embedPng(fallbackSigBytes);
+      sigImage = await embedSignature(pdfDoc, fallbackSigBytes.toString('base64'));
     }
   }
 
@@ -326,7 +318,7 @@ function stripPhoneAndEmailFromAddress(addr) {
   // Merchant Slot 1: Placed directly under "За Търговеца:", strictly without printed name
   if (sigImage) {
     const d1 = sigImage.scaleToFit(145, 24);
-    p9.drawImage(sigImage, {
+    sigImage.draw(p9, {
       x: 368.94,
       y: p9H - 408.0,
       width: d1.width,
@@ -363,7 +355,7 @@ function stripPhoneAndEmailFromAddress(addr) {
   // Draw Merchant Signature 2 directly under "За Търговеца:" aligned with Slot 1 & 3, strictly without printed name
   if (sigImage) {
     const d2 = sigImage.scaleToFit(145, 23);
-    p9.drawImage(sigImage, {
+    sigImage.draw(p9, {
       x: 368.94,
       y: p9H - 468.0,
       width: d2.width,
@@ -374,7 +366,7 @@ function stripPhoneAndEmailFromAddress(addr) {
   // Merchant Slot 3: Placed directly under "За Търговеца:", strictly without printed name
   if (sigImage) {
     const d3 = sigImage.scaleToFit(145, 24);
-    p9.drawImage(sigImage, {
+    sigImage.draw(p9, {
       x: 368.94,
       y: p9H - 558.0,
       width: d3.width,
@@ -430,7 +422,7 @@ function stripPhoneAndEmailFromAddress(addr) {
   // Merchant slot: Placed directly under "За Търговеца:", strictly without printed name
   if (sigImage) {
     const dApp = sigImage.scaleToFit(145, 24);
-    p10.drawImage(sigImage, {
+    sigImage.draw(p10, {
       x: 392.65,
       y: p10H - 569.67,
       width: dApp.width,

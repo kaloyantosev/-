@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
+import { embedSignature } from './signatureEmbed.js';
 
 export async function generateContractRoPdf(data, assetsDir = 'assets') {
   const {
@@ -44,23 +45,14 @@ export async function generateContractRoPdf(data, assetsDir = 'assets') {
   const calibri = await pdfDoc.embedFont(calibriBytes, { subset: true, features: { liga: false, calt: false } });
   const calibriBold = await pdfDoc.embedFont(calibriBoldBytes, { subset: true, features: { liga: false, calt: false } });
 
-  // Merchant signature
-  let sigImage = null;
-  if (signatureImageBase64) {
-    try {
-      const cleanB64 = signatureImageBase64.replace(/^data:image\/[a-z]+;base64,/, '').trim();
-      const sigImgBytes = Buffer.from(cleanB64, 'base64');
-      sigImage = await pdfDoc.embedPng(sigImgBytes);
-    } catch (e) {
-      console.warn('Could not embed custom signature:', e.message);
-    }
-  }
+  // Merchant signature (PNG, JPEG, or SVG)
+  let sigImage = await embedSignature(pdfDoc, signatureImageBase64);
 
   if (!sigImage) {
     const fallbackSigPath = 'temp_merchant_sig.png';
     if (fs.existsSync(fallbackSigPath)) {
       const fallbackSigBytes = fs.readFileSync(fallbackSigPath);
-      sigImage = await pdfDoc.embedPng(fallbackSigBytes);
+      sigImage = await embedSignature(pdfDoc, fallbackSigBytes.toString('base64'));
     }
   }
 
@@ -254,12 +246,12 @@ export async function generateContractRoPdf(data, assetsDir = 'assets') {
     const d1 = sigImage.scaleToFit(140, 26);
     const d2 = sigImage.scaleToFit(140, 24);
     // 1st signature block (under Contract)
-    p14.drawImage(sigImage, { x: colLeftX, y: p14H - 592, width: d1.width, height: d1.height });
-    p14.drawImage(sigImage, { x: colRightX, y: p14H - 578, width: d1.width, height: d1.height });
+    sigImage.draw(p14, { x: colLeftX, y: p14H - 592, width: d1.width, height: d1.height });
+    sigImage.draw(p14, { x: colRightX, y: p14H - 578, width: d1.width, height: d1.height });
 
     // 2nd signature block (General Terms and Conditions acceptance)
-    p14.drawImage(sigImage, { x: colLeftX, y: p14H - 720, width: d2.width, height: d2.height });
-    p14.drawImage(sigImage, { x: colRightX, y: p14H - 714, width: d1.width, height: d1.height });
+    sigImage.draw(p14, { x: colLeftX, y: p14H - 720, width: d2.width, height: d2.height });
+    sigImage.draw(p14, { x: colRightX, y: p14H - 714, width: d1.width, height: d1.height });
   }
 
   // ------------------------------------------
@@ -296,9 +288,9 @@ export async function generateContractRoPdf(data, assetsDir = 'assets') {
   if (sigImage) {
     const dAnn = sigImage.scaleToFit(155, 35);
     // Page 1: under "For the Merchant" (x=382.54, y0=600.62)
-    appP1.drawImage(sigImage, { x: 382.5, y: appP1H - 655, width: dAnn.width, height: dAnn.height });
+    sigImage.draw(appP1, { x: 382.5, y: appP1H - 655, width: dAnn.width, height: dAnn.height });
     // Page 2: under "Pentru Comerciant:" (x=382.54, y0=590.67)
-    appP2.drawImage(sigImage, { x: 382.5, y: appP2H - 645, width: dAnn.width, height: dAnn.height });
+    sigImage.draw(appP2, { x: 382.5, y: appP2H - 645, width: dAnn.width, height: dAnn.height });
   }
 
   const pdfBytes = await pdfDoc.save({ useObjectStreams: true });

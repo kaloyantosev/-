@@ -284,8 +284,8 @@
           <div class="sig-tab-content" id="sigContentUpload">
             <div class="upload-dropzone" id="sigDropzone">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <p class="dropzone-text">Изберете изображение на подпис (PNG, JPG)</p>
-              <input type="file" id="sigFileInput" accept="image/png, image/jpeg" style="display:none;">
+              <p class="dropzone-text">Изберете изображение на подпис (PNG, JPG, SVG)</p>
+              <input type="file" id="sigFileInput" accept="image/png, image/jpeg, image/svg+xml, .svg" style="display:none;">
               <button type="button" class="btn-subtle" onclick="document.getElementById('sigFileInput').click()">Изберете файл</button>
             </div>
             <div id="uploadPreviewWrapper" style="display:none; text-align:center; margin-top:10px;">
@@ -1039,6 +1039,7 @@
 
   <!-- PDF Generation Bundle (html2canvas + jsPDF) -->
   <script src="/assets/html2pdf.bundle.min.js"></script>
-  <script src="/app.js?v=20261022_3"></script>
+  <script src="/assets/sig-upload.js?v=20261118_1"></script>
+  <script src="/app.js?v=20261118_1"></script>
 </body>
 </html>

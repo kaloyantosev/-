@@ -474,7 +474,24 @@ function initPartnerPortal() {
     });
   });
 
-  if (sigFileInput) {
+  const sigDropzone = document.getElementById('sigDropzone');
+  if (sigFileInput && typeof window.irisBindSignatureUpload === 'function') {
+    window.irisBindSignatureUpload({
+      fileInput: sigFileInput,
+      dropzone: sigDropzone,
+      previewImg: uploadPreviewImg,
+      previewWrapper: uploadPreviewWrapper,
+      onLoaded: (normalizedDataUrl) => {
+        uploadedImgDataUrl = normalizedDataUrl;
+      },
+      onError: () => {
+        uploadedImgDataUrl = null;
+        if (sigFileInput) sigFileInput.value = '';
+        if (uploadPreviewWrapper) uploadPreviewWrapper.style.display = 'none';
+        showToast('Моля, качете валидно изображение на подпис (PNG, JPG или SVG).', 'error');
+      }
+    });
+  } else if (sigFileInput) {
     sigFileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {

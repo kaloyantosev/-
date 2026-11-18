@@ -743,8 +743,25 @@ function initRoPortal() {
     });
   });
 
-  // Upload Signature
-  if (sigFileInput) {
+  // Upload Signature (PNG, JPG, SVG)
+  const sigDropzone = document.getElementById('sigDropzone');
+  if (sigFileInput && typeof window.irisBindSignatureUpload === 'function') {
+    window.irisBindSignatureUpload({
+      fileInput: sigFileInput,
+      dropzone: sigDropzone,
+      previewImg: uploadPreviewImg,
+      previewWrapper: uploadPreviewWrapper,
+      onLoaded: (normalizedDataUrl) => {
+        uploadedImgDataUrl = normalizedDataUrl;
+      },
+      onError: () => {
+        uploadedImgDataUrl = null;
+        if (sigFileInput) sigFileInput.value = '';
+        if (uploadPreviewWrapper) uploadPreviewWrapper.style.display = 'none';
+        showToast('Vă rugăm să încărcați o imagine validă pentru semnătură (PNG, JPG sau SVG).', 'error');
+      }
+    });
+  } else if (sigFileInput) {
     sigFileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {

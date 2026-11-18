@@ -406,10 +406,10 @@
 
           <div class="sig-tab-content" id="sigContentUpload">
             <div class="upload-dropzone" id="sigDropzone">
-              <input type="file" id="sigFileInput" accept="image/png, image/jpeg, image/svg+xml" hidden>
+              <input type="file" id="sigFileInput" accept="image/png, image/jpeg, image/svg+xml, .svg" hidden>
               <label for="sigFileInput" class="upload-label">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                <span>Изберете изображение с подпис (PNG/JPG)</span>
+                <span>Изберете изображение с подпис (PNG, JPG, SVG)</span>
               </label>
             </div>
             <div id="uploadPreviewWrapper" style="display:none; text-align:center; margin-top:10px;">
@@ -599,6 +599,7 @@
     <div id="toastNotification" class="toast" style="display:none;"></div>
   </div>
 
-  <script src="/partner/app.js?v=20261117"></script>
+  <script src="/assets/sig-upload.js?v=20261118_1"></script>
+  <script src="/partner/app.js?v=20261118_1"></script>
 </body>
 </html>

@@ -1250,7 +1250,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  if (sigFileInput) {
+  const sigDropzone = document.getElementById('sigDropzone');
+  if (sigFileInput && typeof window.irisBindSignatureUpload === 'function') {
+    window.irisBindSignatureUpload({
+      fileInput: sigFileInput,
+      dropzone: sigDropzone,
+      previewImg: uploadPreviewImg,
+      previewWrapper: uploadPreviewWrapper,
+      onLoaded: (normalizedDataUrl) => {
+        uploadedImgDataUrl = normalizedDataUrl;
+        updateApplySignatureBtnState();
+      },
+      onError: () => {
+        uploadedImgDataUrl = null;
+        if (sigFileInput) sigFileInput.value = '';
+        if (uploadPreviewWrapper) uploadPreviewWrapper.style.display = 'none';
+        updateApplySignatureBtnState();
+        showToast('Моля, качете валидно изображение на подпис (PNG, JPG или SVG).', 'error');
+      }
+    });
+  } else if (sigFileInput) {
     sigFileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
@@ -1319,7 +1338,7 @@ document.addEventListener('DOMContentLoaded', () => {
           setTimeout(() => typedSigInput.classList.remove('shake-error'), 600);
         }
       } else if (currentSigMode === 'upload') {
-        errorMsg = 'Моля, качете файл с изображение на Вашия подпис (PNG или JPG).';
+        errorMsg = 'Моля, качете файл с изображение на Вашия подпис (PNG, JPG или SVG).';
         const dropzone = document.getElementById('sigDropzone');
         if (dropzone) {
           dropzone.classList.add('shake-error');
