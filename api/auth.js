@@ -3,7 +3,7 @@
  * IRIS Pay Document Portal
  * 
  * Credentials:
- *   Sales: sales@irisbgsf.com / 1!2@3№4$ (Requires 2FA sent to sales@irisbgsf.com)
+ *   Sales: sales@irisbgsf.com / 1!2@3#4$ (Requires 2FA sent to sales@irisbgsf.com)
  *   Admin: admin / q:?h+@N]52j5oh_
  * 
  * 8-Hour Remember 2FA Policy:
@@ -20,7 +20,7 @@ const SERVER_SALT = process.env.AUTH_SECRET || 'iris_pay_secure_salt_8f4b29a10c7
 
 // Valid credentials
 const VALID_SALES_EMAIL = 'sales@irisbgsf.com';
-const EXPECTED_SALES_HASH = crypto.createHmac('sha256', SERVER_SALT).update('1!2@3№4$').digest('hex');
+const EXPECTED_SALES_HASH = crypto.createHmac('sha256', SERVER_SALT).update('1!2@3#4$').digest('hex');
 
 const VALID_RO_SALES_EMAIL = 'andrei@irisbgsf.com';
 const EXPECTED_RO_SALES_HASH = crypto.createHmac('sha256', SERVER_SALT).update('4!3@2№1$').digest('hex');
@@ -638,7 +638,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // B. Check SALES credentials (Strictly requires sales@irisbgsf.com / 1!2@3№4$)
+    // B. Check SALES credentials (Strictly requires sales@irisbgsf.com / 1!2@3#4$)
     const isSalesUser = (inputUser === VALID_SALES_EMAIL);
     const givenSalesHash = crypto.createHmac('sha256', SERVER_SALT).update(inputPass).digest('hex');
     const isSalesPassValid = crypto.timingSafeEqual(
