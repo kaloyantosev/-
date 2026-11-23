@@ -20,6 +20,7 @@ import {
   recordPendingPartner,
   recordPendingContract,
   getPendingContractById,
+  updatePendingContractEmailMeta,
   deletePendingContract,
   findAffiliateBySlug,
   getCustomLink,
@@ -70,6 +71,268 @@ function resolveAssetsDir() {
   return candidates.find(d => fs.existsSync(path.join(d, 'contract_template.pdf'))) || path.join(process.cwd(), 'assets');
 }
 
+async function resolveSalesRecipientEmail(isPartner = false) {
+  let targetEmail = APPROVED_CONTRACT_RECIPIENT_EMAIL;
+  if (!isPartner) {
+    try {
+      const settings = await getSettings();
+      const candidate = settings?.contractRecipientEmail || process.env.CONTRACT_RECIPIENT_EMAIL || APPROVED_CONTRACT_RECIPIENT_EMAIL;
+      if (candidate && !String(candidate).toLowerCase().includes('kaloyan.tosev')) {
+        targetEmail = candidate;
+      }
+    } catch (e) {}
+  }
+  return targetEmail;
+}
+
+function resolveDashboardUrl(req) {
+  const proto = String(req.headers?.['x-forwarded-proto'] || 'https').split(',')[0].trim() || 'https';
+  const host = String(req.headers?.['x-forwarded-host'] || req.headers?.host || '').split(',')[0].trim();
+  if (host && !host.includes('localhost')) {
+    return `${proto}://${host}/dashboard`;
+  }
+  return 'https://dogovor-irispay.vercel.app/dashboard';
+}
+
+async function fetchResendMessageId(apiKey, emailId) {
+  if (!apiKey || !emailId) return null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt > 0) {
+      await new Promise(r => setTimeout(r, 300));
+    }
+    try {
+      const res = await fetch(`https://api.resend.com/emails/${encodeURIComponent(emailId)}`, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+      });
+      if (res.ok) {
+        const info = await res.json();
+        const rawId = info?.message_id || info?.messageId || null;
+        if (rawId) {
+          const s = String(rawId).trim();
+          return s.startsWith('<') ? s : `<${s}>`;
+        }
+      }
+    } catch (_) {}
+  }
+  return null;
+}
+
+async function sendViaResend({ targetEmail, contactEmail, subject, text, html, attachments = [], headers = null }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.log(`[Email Notification Prepared] -> To: ${targetEmail} | Subject: ${subject}`);
+    return {
+      success: true,
+      provider: 'ready_for_production',
+      targetEmail,
+      subject,
+      hasAttachment: attachments.length > 0,
+      messageId: null
+    };
+  }
+
+  const defaultFrom = (targetEmail && String(targetEmail).includes('@irisbgsf.com'))
+    ? 'IRIS Pay <sales@irisbgsf.com>'
+    : 'IRIS Pay <onboarding@resend.dev>';
+  const fromAddress = process.env.EMAIL_FROM || defaultFrom;
+  const resendPayload = {
+    from: fromAddress,
+    to: [targetEmail],
+    reply_to: (contactEmail && contactEmail !== '—') ? contactEmail : undefined,
+    subject,
+    text,
+    html
+  };
+  if (attachments.length > 0) {
+    resendPayload.attachments = attachments;
+  }
+  if (headers && Object.keys(headers).length > 0) {
+    resendPayload.headers = headers;
+  }
+
+  const resendRes = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(resendPayload)
+  });
+
+  console.log('Resend HTTP status:', resendRes.status, resendRes.statusText);
+  if (resendRes.ok) {
+    const resendData = await resendRes.json();
+    return {
+      success: true,
+      provider: 'resend',
+      id: resendData.id,
+      targetEmail,
+      subject,
+      hasAttachment: attachments.length > 0,
+      apiKey
+    };
+  }
+
+  const errData = await resendRes.json();
+  console.warn('Resend response status:', resendRes.status, errData);
+  return {
+    success: false,
+    provider: 'resend',
+    targetEmail,
+    error: errData.message || 'Resend error',
+    notice: 'За изпращане до sales@irisbgsf.com е необходимо домейнът irisbgsf.com да бъде верифициран в Resend.'
+  };
+}
+
+async function sendPendingContractAlertEmail({
+  targetEmail,
+  dashboardUrl,
+  contractKind,
+  companyName = '—',
+  companyEik = '—',
+  companyRepresentative = '—',
+  contactEmail = '—',
+  contactPhone = '—',
+  displayDate = '',
+  partnerDisplayName = null,
+  customCommission = null
+}) {
+  const cleanCompName = (companyName && companyName !== '—')
+    ? String(companyName).replace(/["'„“«»]/g, '').trim()
+    : 'Търговец';
+  const commSubjectPart = customCommission ? ` - Индивидуална комисионна: ${customCommission}` : '';
+  const isPartner = contractKind === 'partner';
+  const isFromPartner = contractKind === 'from_partner';
+
+  const kindLabel = isPartner
+    ? 'Партньорски договор (/partner)'
+    : isFromPartner
+      ? 'Договор с търговец (през партньор)'
+      : 'Договор с търговец (Без партньор / Директен)';
+
+  const subject = isPartner
+    ? `Нов подписан партньорски договор (${cleanCompName} - ЕИК ${companyEik || '—'})`
+    : isFromPartner
+      ? `Нов подписан договор (${cleanCompName}) от Партньор "${partnerDisplayName || 'Партньор'}"${commSubjectPart}`
+      : `Нов подписан договор (${cleanCompName}) — Без партньор${commSubjectPart}`;
+
+  const textBody = `
+Ново известие за подписан договор (очаква преглед и подпис от IRIS Pay):
+Вид договор: ${kindLabel}
+${partnerDisplayName ? `От партньор: ${partnerDisplayName}\n` : ''}Фирма: ${companyName}
+ЕИК: ${companyEik}
+Представляващ: ${companyRepresentative}
+Имейл за контакт: ${contactEmail}
+Телефон: ${contactPhone}
+Дата: ${displayDate}${customCommission ? `\nИндивидуална комисионна: ${customCommission}` : ''}
+
+Прегледайте и подпишете договора директно в Dashboard:
+${dashboardUrl}
+`.trim();
+
+  const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1e293b; background-color: #f8fafc; margin: 0; padding: 24px; }
+    .card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 10px rgba(15,23,42,0.06); }
+    .header { background: #1F3864; color: #ffffff; padding: 20px 24px; }
+    .badge { display: inline-block; background: #F59E0B; color: #0f172a; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 8px; }
+    .header h1 { margin: 0; font-size: 17px; font-weight: 700; color: #ffffff; line-height: 1.35; }
+    .content { padding: 24px; }
+    .info-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .info-table td { padding: 9px 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+    .info-table tr:last-child td { border-bottom: none; }
+    .info-table td.label { font-weight: 600; color: #64748b; width: 42%; }
+    .info-table td.val { font-weight: 600; color: #0f172a; }
+    .cta-wrap { text-align: center; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 18px; }
+    .cta-btn { display: inline-block; background: #059669; color: #ffffff !important; text-decoration: none; font-weight: 700; font-size: 14.5px; padding: 12px 24px; border-radius: 8px; }
+    .cta-link { display: block; margin-top: 10px; font-size: 12.5px; color: #2563eb; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div class="badge">Очаква подпис от IRIS Pay</div>
+      <h1>${subject}</h1>
+    </div>
+    <div class="content">
+      <table class="info-table">
+        <tr>
+          <td class="label">Вид договор:</td>
+          <td class="val" style="color:#1F3864;">${kindLabel}</td>
+        </tr>
+        ${partnerDisplayName ? `
+        <tr>
+          <td class="label">От партньор:</td>
+          <td class="val" style="color:#0D9488;font-weight:700;">${partnerDisplayName}</td>
+        </tr>
+        ` : ''}
+        <tr>
+          <td class="label">Фирма:</td>
+          <td class="val">${companyName}</td>
+        </tr>
+        <tr>
+          <td class="label">ЕИК:</td>
+          <td class="val">${companyEik}</td>
+        </tr>
+        <tr>
+          <td class="label">Представляващ:</td>
+          <td class="val">${companyRepresentative}</td>
+        </tr>
+        <tr>
+          <td class="label">Имейл за контакт:</td>
+          <td class="val"><a href="mailto:${contactEmail}" style="color:#2563eb;text-decoration:none;">${contactEmail}</a></td>
+        </tr>
+        <tr>
+          <td class="label">Телефон:</td>
+          <td class="val"><a href="tel:${contactPhone}" style="color:#2563eb;text-decoration:none;">${contactPhone}</a></td>
+        </tr>
+        <tr>
+          <td class="label">Дата:</td>
+          <td class="val">${displayDate}</td>
+        </tr>
+        ${customCommission ? `
+        <tr>
+          <td class="label">Индивидуална комисионна:</td>
+          <td class="val" style="color:#D97706;font-weight:700;">${customCommission}</td>
+        </tr>
+        ` : ''}
+      </table>
+
+      <div class="cta-wrap">
+        <a href="${dashboardUrl}" class="cta-btn">Отвори Dashboard за преглед и подписване →</a>
+        <a href="${dashboardUrl}" class="cta-link">${dashboardUrl}</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+`.trim();
+
+  const sendRes = await sendViaResend({
+    targetEmail,
+    contactEmail,
+    subject,
+    text: textBody,
+    html: htmlBody
+  });
+
+  let messageId = null;
+  if (sendRes.success && sendRes.id && sendRes.apiKey) {
+    messageId = await fetchResendMessageId(sendRes.apiKey, sendRes.id);
+  }
+
+  return {
+    ...sendRes,
+    subject,
+    messageId
+  };
+}
+
 async function generateAndSendContractEmail({
   isRo = false,
   isPartner = false,
@@ -92,13 +355,15 @@ async function generateAndSendContractEmail({
   customCommission = null,
   partnerTerms = null,
   partnerDisplayName = null,
-  fallbackPdfBase64 = null
+  fallbackPdfBase64 = null,
+  subjectOverride = null,
+  replyToMessageId = null
 }) {
   const cleanCompName = (companyName && companyName !== '—')
     ? String(companyName).replace(/["'„“«»]/g, '').trim()
     : (isRo ? 'Comerciant' : 'Търговец');
   const commSubjectPart = customCommission ? ` - Индивидуална комисионна: ${customCommission}` : '';
-  const emailSubject = isPartner
+  const defaultSubject = isPartner
     ? `Договор за партньорство (${cleanCompName} - ЕИК ${companyEik || '—'})`
     : isRo
       ? (partnerDisplayName
@@ -107,6 +372,7 @@ async function generateAndSendContractEmail({
       : (partnerDisplayName
           ? `Подписан договор (${cleanCompName}) от Партньор "${partnerDisplayName}"${commSubjectPart}`
           : `Подписан договор (${cleanCompName})${commSubjectPart}`);
+  const emailSubject = subjectOverride || defaultSubject;
 
   const partnerTextLine = partnerDisplayName ? `\nОт партньор: ${partnerDisplayName}` : '';
   const customCommTextLine = customCommission ? `\nИндивидуална комисионна (Приложение 1): ${customCommission}` : '';
@@ -269,74 +535,42 @@ ${isRo ? 'CUI / ЕИК' : 'ЕИК'}: ${companyEik}
     });
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  if (apiKey) {
-    const defaultFrom = (targetEmail && String(targetEmail).includes('@irisbgsf.com'))
-      ? 'IRIS Pay <sales@irisbgsf.com>'
-      : 'IRIS Pay <onboarding@resend.dev>';
-    const fromAddress = process.env.EMAIL_FROM || defaultFrom;
-    const resendPayload = {
-      from: fromAddress,
-      to: [targetEmail],
-      reply_to: (contactEmail && contactEmail !== '—') ? contactEmail : undefined,
-      subject: emailSubject,
-      text: textBody,
-      html: htmlBody
-    };
-    if (attachments.length > 0) {
-      resendPayload.attachments = attachments;
-    }
-
-    const resendRes = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(resendPayload)
-    });
-
-    console.log('Resend HTTP status:', resendRes.status, resendRes.statusText);
-    if (resendRes.ok) {
-      const resendData = await resendRes.json();
-      return {
-        success: true,
-        provider: 'resend',
-        id: resendData.id,
-        targetEmail,
-        subject: emailSubject,
-        hasAttachment: attachments.length > 0
-      };
-    }
-
-    const errData = await resendRes.json();
-    console.warn('Resend response status:', resendRes.status, errData);
-    return {
-      success: false,
-      provider: 'resend',
-      targetEmail,
-      error: errData.message || 'Resend error',
-      notice: 'За изпращане до sales@irisbgsf.com е необходимо домейнът irisbgsf.com да бъде верифициран в Resend.'
+  let headers = null;
+  if (replyToMessageId) {
+    const cleanRef = String(replyToMessageId).trim();
+    const normRef = cleanRef.startsWith('<') ? cleanRef : `<${cleanRef}>`;
+    headers = {
+      'In-Reply-To': normRef,
+      'References': normRef
     };
   }
 
-  console.log(`[Email Notification Prepared] -> To: ${targetEmail} | Subject: ${emailSubject}`);
-  return {
-    success: true,
-    provider: 'ready_for_production',
+  const sendResult = await sendViaResend({
     targetEmail,
+    contactEmail,
     subject: emailSubject,
-    data: {
-      companyEik,
-      companyName,
-      companyRepresentative,
-      contactEmail,
-      contactPhone,
-      contractDate: displayDate
-    },
-    hasAttachment: attachments.length > 0,
-    message: `Договорът е изпратен към ${targetEmail}.`
-  };
+    text: textBody,
+    html: htmlBody,
+    attachments,
+    headers
+  });
+
+  if (sendResult.provider === 'ready_for_production') {
+    return {
+      ...sendResult,
+      data: {
+        companyEik,
+        companyName,
+        companyRepresentative,
+        contactEmail,
+        contactPhone,
+        contractDate: displayDate
+      },
+      message: `Договорът е изпратен към ${targetEmail}.`
+    };
+  }
+
+  return sendResult;
 }
 
 function renderPodpis404Html() {
@@ -730,17 +964,11 @@ export default async function handler(req, res) {
         ? provState.signatureImageBase64
         : null;
 
-      // Production recipient: send approved BG contracts to sales@irisbgsf.com (or configured recipient)
-      let targetEmail = APPROVED_CONTRACT_RECIPIENT_EMAIL;
-      if (!isPartner) {
-        try {
-          const settings = await getSettings();
-          const candidate = settings?.contractRecipientEmail || process.env.CONTRACT_RECIPIENT_EMAIL || APPROVED_CONTRACT_RECIPIENT_EMAIL;
-          if (candidate && !String(candidate).toLowerCase().includes('kaloyan.tosev')) {
-            targetEmail = candidate;
-          }
-        } catch (e) {}
-      }
+      const targetEmail = await resolveSalesRecipientEmail(isPartner);
+      const replySubject = pending.notificationSubject
+        ? (String(pending.notificationSubject).startsWith('Re:') ? pending.notificationSubject : `Re: ${pending.notificationSubject}`)
+        : null;
+
       const sendResult = await generateAndSendContractEmail({
         isRo: false,
         isPartner,
@@ -761,7 +989,9 @@ export default async function handler(req, res) {
         includeProviderSignature: true,
         customCommission: pending.customCommission,
         partnerTerms: resolvedPartnerTerms,
-        partnerDisplayName: pending.partnerName
+        partnerDisplayName: pending.partnerName,
+        subjectOverride: replySubject,
+        replyToMessageId: pending.notificationMessageId || null
       });
 
       if (!sendResult.success) {
@@ -911,6 +1141,33 @@ export default async function handler(req, res) {
         partnerToken: data?.partnerToken || null,
         partnerTerms: resolvedPartnerTerms
       });
+
+      // Send lightweight notification to sales with dashboard link (no PDF attached yet)
+      try {
+        const alertRecipient = await resolveSalesRecipientEmail(isPartner);
+        const dashboardUrl = resolveDashboardUrl(req);
+        const alertRes = await sendPendingContractAlertEmail({
+          targetEmail: alertRecipient,
+          dashboardUrl,
+          contractKind,
+          companyName,
+          companyEik,
+          companyRepresentative,
+          contactEmail,
+          contactPhone,
+          displayDate,
+          partnerDisplayName,
+          customCommission
+        });
+        if (alertRes && (alertRes.messageId || alertRes.subject)) {
+          await updatePendingContractEmailMeta(pendingEntry.id, {
+            notificationMessageId: alertRes.messageId || null,
+            notificationSubject: alertRes.subject || null
+          });
+        }
+      } catch (alertErr) {
+        console.warn('[Pending Review] Could not dispatch sales alert email:', alertErr);
+      }
 
       console.log(`[Pending Review] Stored ${contractKind} contract "${companyName}" (${pendingEntry.id}) awaiting dashboard approval.`);
       return res.status(200).json({

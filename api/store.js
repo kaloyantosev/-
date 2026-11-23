@@ -1098,6 +1098,8 @@ export async function recordPendingContract(payload) {
     partnerName: payload.partnerName || null,
     partnerToken: payload.partnerToken || null,
     partnerTerms: payload.partnerTerms || null,
+    notificationMessageId: payload.notificationMessageId || null,
+    notificationSubject: payload.notificationSubject || null,
     createdAt: new Date().toISOString()
   };
 
@@ -1128,6 +1130,17 @@ export async function getPendingContractById(id) {
   if (!id) return null;
   const store = await loadStore();
   return (store.pendingContracts || []).find(c => c.id === id) || null;
+}
+
+export async function updatePendingContractEmailMeta(id, { notificationMessageId = null, notificationSubject = null } = {}) {
+  if (!id) return null;
+  const store = await loadStore();
+  const target = (store.pendingContracts || []).find(c => c.id === id);
+  if (!target) return null;
+  if (notificationMessageId) target.notificationMessageId = notificationMessageId;
+  if (notificationSubject) target.notificationSubject = notificationSubject;
+  await saveStore(store);
+  return target;
 }
 
 export async function deletePendingContract({ id }) {
