@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { rgb } from 'pdf-lib';
 
 function parseCssColor(raw) {
@@ -257,5 +259,64 @@ export async function embedSignature(pdfDoc, signatureInput) {
   } catch (err) {
     console.warn('[Signature Embed] Could not embed signature:', err.message);
     return null;
+  }
+}
+
+export async function resolveProviderSignature(pdfDoc, assetsDir, { providerSignatureBase64 = null, includeProviderSignature = false } = {}) {
+  if (providerSignatureBase64) {
+    return await embedSignature(pdfDoc, providerSignatureBase64);
+  }
+  if (!includeProviderSignature) return null;
+
+  const officialPngPath = path.join(assetsDir, 'provider_sig.png');
+  if (fs.existsSync(officialPngPath)) {
+    return await embedSignature(pdfDoc, fs.readFileSync(officialPngPath).toString('base64'));
+  }
+  const demoProvPath = path.join(assetsDir, 'provider_demo_sig.svg');
+  if (fs.existsSync(demoProvPath)) {
+    return await embedSignature(pdfDoc, fs.readFileSync(demoProvPath, 'utf-8'));
+  }
+  return null;
+}
+
+export async function embedSignatureNameFont(pdfDoc, assetsDir, fallbackFont) {
+  const gvPath = path.join(assetsDir, 'fonts', 'greatvibes.ttf');
+  if (fs.existsSync(gvPath)) {
+    try {
+      return await pdfDoc.embedFont(fs.readFileSync(gvPath), { subset: true, features: { liga: false, calt: false } });
+    } catch (e) {
+      console.warn('[Signature Font] Fallback from greatvibes.ttf:', e.message);
+    }
+  }
+  return fallbackFont;
+}
+
+export function drawProviderSignatureWithName(page, {
+  providerSigImage,
+  fontSig,
+  x,
+  sigTopY,
+  maxWidth = 120,
+  maxHeight = 32,
+  nameText = 'Dimitar Hristov',
+  fontSize = 16
+}) {
+  if (!providerSigImage) return;
+  const dims = providerSigImage.scaleToFit(maxWidth, maxHeight);
+  const sigBottomY = sigTopY - dims.height;
+  providerSigImage.draw(page, {
+    x,
+    y: sigBottomY,
+    width: dims.width,
+    height: dims.height
+  });
+  if (fontSig && nameText) {
+    page.drawText(nameText, {
+      x,
+      y: sigBottomY - fontSize - 2,
+      size: fontSize,
+      font: fontSig,
+      color: rgb(0, 0, 0)
+    });
   }
 }

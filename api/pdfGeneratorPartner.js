@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
-import { embedSignature } from './signatureEmbed.js';
+import { embedSignature, resolveProviderSignature, embedSignatureNameFont, drawProviderSignatureWithName } from './signatureEmbed.js';
 
 /**
  * Dynamic Vector PDF Generator for Partnership Agreement ("Договор за партньорска дейност") + Annex 1.
@@ -38,16 +38,12 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
   const font = await pdfDoc.embedFont(regularBytes, { subset: true, features: { liga: false, calt: false } });
   const fontBold = await pdfDoc.embedFont(boldBytes, { subset: true, features: { liga: false, calt: false } });
 
-  let resolvedProviderInput = providerSignatureBase64;
-  if (!resolvedProviderInput && includeProviderSignature) {
-    const demoProvPath = path.join(assetsDir, 'provider_demo_sig.svg');
-    if (fs.existsSync(demoProvPath)) {
-      resolvedProviderInput = fs.readFileSync(demoProvPath, 'utf-8');
-    }
-  }
-
   let sigImage = await embedSignature(pdfDoc, signatureImageBase64);
-  let providerSigImage = await embedSignature(pdfDoc, resolvedProviderInput);
+  let providerSigImage = await resolveProviderSignature(pdfDoc, assetsDir, {
+    providerSignatureBase64,
+    includeProviderSignature
+  });
+  const fontSig = providerSigImage ? await embedSignatureNameFont(pdfDoc, assetsDir, font) : font;
 
   const templatePath = path.join(assetsDir, 'partner_contract_template.pdf');
   if (fs.existsSync(templatePath)) {
@@ -61,7 +57,11 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
     const tplFontBold = await tplDoc.embedFont(calBldBytes, { subset: true, features: { liga: false, calt: false } });
 
     let tplSigImage = await embedSignature(tplDoc, signatureImageBase64);
-    let tplProviderSigImage = await embedSignature(tplDoc, resolvedProviderInput);
+    let tplProviderSigImage = await resolveProviderSignature(tplDoc, assetsDir, {
+      providerSignatureBase64,
+      includeProviderSignature
+    });
+    const tplFontSig = tplProviderSigImage ? await embedSignatureNameFont(tplDoc, assetsDir, tplFont) : tplFont;
 
     const wrapSimple = (text, f, size, maxW) => {
       const words = String(text || '').split(/\s+/).filter(Boolean);
@@ -228,12 +228,15 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
       ]);
 
       if (tplProviderSigImage) {
-        const dProv = tplProviderSigImage.scaleToFit(160, 46);
-        tplProviderSigImage.draw(p7, {
+        drawProviderSignatureWithName(p7, {
+          providerSigImage: tplProviderSigImage,
+          fontSig: tplFontSig,
           x: 70.9,
-          y: p7H - 674 - dProv.height,
-          width: dProv.width,
-          height: dProv.height
+          sigTopY: p7H - 674,
+          maxWidth: 130,
+          maxHeight: 34,
+          nameText: 'Dimitar Hristov',
+          fontSize: 16
         });
       }
 
@@ -388,12 +391,15 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
     annexPage.drawText('За Компанията:', { x: AP_ML, y: sigY, size: 11, font: tplFontBold, color: rgb(0, 0, 0) });
     annexPage.drawText('За Изпълнителя:', { x: 354, y: sigY, size: 11, font: tplFontBold, color: rgb(0, 0, 0) });
     if (tplProviderSigImage) {
-      const dProv = tplProviderSigImage.scaleToFit(160, 46);
-      tplProviderSigImage.draw(annexPage, {
+      drawProviderSignatureWithName(annexPage, {
+        providerSigImage: tplProviderSigImage,
+        fontSig: tplFontSig,
         x: AP_ML,
-        y: sigY - 10 - dProv.height,
-        width: dProv.width,
-        height: dProv.height
+        sigTopY: sigY - 8,
+        maxWidth: 130,
+        maxHeight: 34,
+        nameText: 'Dimitar Hristov',
+        fontSize: 16
       });
     }
     if (tplSigImage) {
@@ -405,8 +411,8 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
         height: dSig.height
       });
     }
-    annexPage.drawLine({ start: { x: AP_ML, y: sigY - 60 }, end: { x: AP_ML + 150, y: sigY - 60 }, thickness: 0.7, color: rgb(0.3, 0.3, 0.3) });
-    annexPage.drawLine({ start: { x: 354, y: sigY - 60 }, end: { x: 354 + 150, y: sigY - 60 }, thickness: 0.7, color: rgb(0.3, 0.3, 0.3) });
+    annexPage.drawLine({ start: { x: AP_ML, y: sigY - 68 }, end: { x: AP_ML + 150, y: sigY - 68 }, thickness: 0.7, color: rgb(0.3, 0.3, 0.3) });
+    annexPage.drawLine({ start: { x: 354, y: sigY - 68 }, end: { x: 354 + 150, y: sigY - 68 }, thickness: 0.7, color: rgb(0.3, 0.3, 0.3) });
 
     return await tplDoc.save({ useObjectStreams: true });
   }
@@ -560,12 +566,15 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
     page.drawText(labelRight, { x: xRight, y: yLabel, size: 11, font: fontBold, color: rgb(0, 0, 0) });
 
     if (providerSigImage) {
-      const dProv = providerSigImage.scaleToFit(150, 40);
-      providerSigImage.draw(page, {
+      drawProviderSignatureWithName(page, {
+        providerSigImage,
+        fontSig,
         x: xLeft,
-        y: yLabel - 48,
-        width: dProv.width,
-        height: dProv.height
+        sigTopY: yLabel - 8,
+        maxWidth: 130,
+        maxHeight: 34,
+        nameText: 'Dimitar Hristov',
+        fontSize: 16
       });
     }
 
@@ -580,19 +589,19 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
     }
 
     page.drawLine({
-      start: { x: xLeft, y: yLabel - 52 },
-      end: { x: xLeft + 150, y: yLabel - 52 },
+      start: { x: xLeft, y: yLabel - 68 },
+      end: { x: xLeft + 150, y: yLabel - 68 },
       thickness: 0.7,
       color: rgb(0.3, 0.3, 0.3)
     });
     page.drawLine({
-      start: { x: xRight, y: yLabel - 52 },
-      end: { x: xRight + 150, y: yLabel - 52 },
+      start: { x: xRight, y: yLabel - 68 },
+      end: { x: xRight + 150, y: yLabel - 68 },
       thickness: 0.7,
       color: rgb(0.3, 0.3, 0.3)
     });
 
-    cursorY += 76;
+    cursorY += 84;
   }
 
   const cleanDate = String(contractDate || '').trim() || new Date().toLocaleDateString('bg-BG');

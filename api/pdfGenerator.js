@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
-import { embedSignature } from './signatureEmbed.js';
+import { embedSignature, resolveProviderSignature, embedSignatureNameFont, drawProviderSignatureWithName } from './signatureEmbed.js';
 
 export async function generateContractPdf(data, assetsDir = 'assets') {
   const {
@@ -51,16 +51,14 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
     }
   }
 
-  // Embed provider (IRIS Pay) signature when counter-signing from dashboard
-  let providerSigImage = null;
-  if (providerSignatureBase64) {
-    providerSigImage = await embedSignature(pdfDoc, providerSignatureBase64);
-  } else if (includeProviderSignature) {
-    const demoProvPath = path.join(assetsDir, 'provider_demo_sig.svg');
-    if (fs.existsSync(demoProvPath)) {
-      providerSigImage = await embedSignature(pdfDoc, fs.readFileSync(demoProvPath, 'utf-8'));
-    }
-  }
+  // Embed provider (IRIS Pay) signature & signature script font when counter-signing from dashboard
+  const providerSigImage = await resolveProviderSignature(pdfDoc, assetsDir, {
+    providerSignatureBase64,
+    includeProviderSignature
+  });
+  const fontSig = providerSigImage
+    ? await embedSignatureNameFont(pdfDoc, assetsDir, font)
+    : font;
 
   const pages = pdfDoc.getPages();
 
@@ -326,14 +324,17 @@ function stripPhoneAndEmailFromAddress(addr) {
   const p9 = pages[8];
   const p9H = p9.getHeight();
 
-  // Provider slot ("За Доставчика:")
+  // Provider slot ("За Доставчика:") with "Dimitar Hristov" underneath
   if (providerSigImage) {
-    const dp1 = providerSigImage.scaleToFit(145, 24);
-    providerSigImage.draw(p9, {
+    drawProviderSignatureWithName(p9, {
+      providerSigImage,
+      fontSig,
       x: 75.0,
-      y: p9H - 408.0,
-      width: dp1.width,
-      height: dp1.height
+      sigTopY: p9H - 386.0,
+      maxWidth: 120,
+      maxHeight: 32,
+      nameText: 'Dimitar Hristov',
+      fontSize: 16
     });
   }
 
@@ -439,14 +440,17 @@ function stripPhoneAndEmailFromAddress(addr) {
     });
   }
 
-  // Provider slot ("За Доставчика")
+  // Provider slot ("За Доставчика") with "Dimitar Hristov" underneath
   if (providerSigImage) {
-    const dpApp = providerSigImage.scaleToFit(145, 24);
-    providerSigImage.draw(p10, {
+    drawProviderSignatureWithName(p10, {
+      providerSigImage,
+      fontSig,
       x: 96.55,
-      y: p10H - 569.67,
-      width: dpApp.width,
-      height: dpApp.height
+      sigTopY: p10H - 546.0,
+      maxWidth: 120,
+      maxHeight: 32,
+      nameText: 'Dimitar Hristov',
+      fontSize: 16
     });
   }
 
