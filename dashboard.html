@@ -1209,7 +1209,7 @@
         <!-- Populated dynamically -->
       </div>
       <div class="modal-footer" style="justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <span style="font-size: 12px; color: #64748b;">
+        <span id="reviewModalFooterNote" style="font-size: 12px; color: #64748b;">
           След потвърждение договорът се подписва от IRIS Pay и се изпраща към <strong>kaloyan.tosev@gmail.com</strong>.
         </span>
         <div style="display: flex; gap: 10px;">
@@ -1394,6 +1394,7 @@
         const data = await res.json();
         if (data.success) {
           if (data.role) currentUserRole = data.role;
+          hasOfficialProviderSignature = Boolean(data.hasOfficialProviderSignature);
           currentAffiliates = data.affiliates || [];
           lastSummaryData = data.summary || null;
           renderSummary(data.summary, month, fromDate, toDate);
@@ -2046,6 +2047,7 @@
 
     let currentPendingContractsMap = new Map();
     let activeReviewContractId = null;
+    let hasOfficialProviderSignature = false;
 
     function closeReviewModal() {
       if (reviewContractModal) reviewContractModal.style.display = 'none';
@@ -2180,6 +2182,14 @@
           </div>
         </div>
       `;
+
+      const footerNoteEl = document.getElementById('reviewModalFooterNote');
+      if (footerNoteEl) {
+        const sigTypeText = hasOfficialProviderSignature
+          ? '<strong style="color:#047857;">официалния запазен подпис на IRIS Pay</strong>'
+          : 'демо подписа на IRIS Pay';
+        footerNoteEl.innerHTML = `След потвърждение договорът се подписва с ${sigTypeText} и се изпраща към <strong>kaloyan.tosev@gmail.com</strong>.`;
+      }
 
       if (btnConfirmAndSignContract) {
         btnConfirmAndSignContract.disabled = false;

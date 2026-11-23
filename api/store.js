@@ -1063,3 +1063,34 @@ export async function deletePendingContract({ id }) {
   }
   return { deleted: before - store.pendingContracts.length };
 }
+
+/**
+ * Official IRIS Pay Provider Signature (one-time capture via /podpis)
+ */
+export async function getProviderSignatureState() {
+  const store = await loadStore();
+  return {
+    locked: Boolean(store.providerSignatureLocked),
+    signatureImageBase64: store.providerSignatureBase64 || null,
+    createdAt: store.providerSignatureCreatedAt || null
+  };
+}
+
+export async function saveProviderSignature({ signatureImageBase64 }) {
+  const store = await loadStore();
+  if (store.providerSignatureLocked) {
+    throw new Error('Официалният подпис вече е запазен и тази страница не е активна.');
+  }
+  const clean = String(signatureImageBase64 || '').trim();
+  if (!clean || !clean.startsWith('data:image/')) {
+    throw new Error('Невалиден формат на подписа.');
+  }
+  store.providerSignatureBase64 = clean;
+  store.providerSignatureLocked = true;
+  store.providerSignatureCreatedAt = new Date().toISOString();
+  await saveStore(store);
+  return {
+    locked: true,
+    createdAt: store.providerSignatureCreatedAt
+  };
+}

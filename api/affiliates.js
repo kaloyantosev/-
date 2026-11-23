@@ -18,7 +18,8 @@ import {
   getPendingPartners,
   deletePendingPartner,
   getPendingContracts,
-  deletePendingContract
+  deletePendingContract,
+  getProviderSignatureState
 } from './store.js';
 
 export default async function handler(req, res) {
@@ -119,6 +120,7 @@ export default async function handler(req, res) {
       const isRo = String(country || 'bg').toLowerCase() === 'ro';
       const pendingPartners = isRo ? [] : await getPendingPartners();
       const pendingContracts = isRo ? [] : await getPendingContracts();
+      const provState = isRo ? { locked: false } : await getProviderSignatureState();
 
       return res.status(200).json({
         success: true,
@@ -126,6 +128,7 @@ export default async function handler(req, res) {
         affiliates,
         pendingPartners,
         pendingContracts,
+        hasOfficialProviderSignature: Boolean(provState?.locked && provState?.signatureImageBase64),
         user: session.user,
         role: session.role,
         country

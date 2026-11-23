@@ -25,7 +25,9 @@ import {
   getCustomLink,
   useCustomLink,
   getPartnerLink,
-  getSettings
+  getSettings,
+  getProviderSignatureState,
+  saveProviderSignature
 } from './store.js';
 
 const DEMO_APPROVED_RECIPIENT_EMAIL = 'kaloyan.tosev@gmail.com';
@@ -337,13 +339,324 @@ ${isRo ? 'CUI / ЕИК' : 'ЕИК'}: ${companyEik}
   };
 }
 
+function renderPodpis404Html() {
+  return `<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 — Страницата не съществува</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: #f1f5f9; color: #0f172a; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .box { max-width: 440px; width: 100%; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 36px 28px; text-align: center; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06); }
+    .code { font-size: 48px; font-weight: 800; color: #cbd5e1; line-height: 1; margin-bottom: 12px; }
+    h1 { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+    p { font-size: 14px; color: #64748b; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="code">404</div>
+    <h1>Страницата не съществува</h1>
+    <p>Този еднократен под-сайт вече не е активен или е бил използван.</p>
+  </div>
+</body>
+</html>`;
+}
+
+function renderPodpisPageHtml() {
+  return `<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IRIS Pay | Официален подпис</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #f1f5f9; color: #0f172a; min-height: 100vh; display: flex; flex-direction: column; }
+    .portal-header { background: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 14px 24px; box-shadow: 0 1px 3px rgba(15,23,42,0.04); }
+    .header-inner { max-width: 780px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .brand-group { display: flex; align-items: center; gap: 14px; }
+    .brand-logo { height: 32px; width: auto; display: block; }
+    .header-divider { width: 1px; height: 26px; background: #e2e8f0; }
+    .header-title { font-size: 16px; font-weight: 700; color: #1F3864; }
+    .header-subtitle { font-size: 12px; color: #64748b; }
+    .once-badge { font-size: 11.5px; font-weight: 700; color: #0f766e; background: #f0fdfa; border: 1px solid #99f6e4; padding: 5px 11px; border-radius: 999px; white-space: nowrap; }
+    main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 28px 16px; }
+    .sign-card { max-width: 680px; width: 100%; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 28px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06); }
+    .card-title { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
+    .card-desc { font-size: 13.5px; color: #64748b; line-height: 1.55; margin-bottom: 20px; }
+    .canvas-wrapper { position: relative; background: #ffffff; border: 2px dashed #cbd5e1; border-radius: 12px; overflow: hidden; height: 240px; transition: border-color 0.15s ease; }
+    .canvas-wrapper:hover { border-color: #94a3b8; }
+    .canvas-wrapper.shake-error { border-color: #ef4444; animation: shake 0.35s ease; }
+    @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+    #providerSigCanvas { width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; }
+    .canvas-hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; font-size: 14px; color: #94a3b8; font-weight: 500; text-align: center; padding: 16px; }
+    .actions-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+    .btn-redraw { background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px 22px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s ease; }
+    .btn-redraw:hover:not(:disabled) { background: #f1f5f9; border-color: #94a3b8; }
+    .btn-send { flex: 1; min-width: 200px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #ffffff; border: none; border-radius: 10px; padding: 13px 24px; font-size: 15px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); transition: all 0.15s ease; }
+    .btn-send:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(37, 99, 235, 0.32); }
+    .btn-send:disabled, .btn-redraw:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #ffffff; padding: 11px 20px; border-radius: 10px; font-size: 13.5px; font-weight: 600; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: none; z-index: 9999; }
+    .toast.error { background: #dc2626; }
+    .toast.success { background: #059669; }
+    .done-box { text-align: center; padding: 12px 4px; }
+    .done-icon { width: 56px; height: 56px; border-radius: 50%; background: #ecfdf5; color: #059669; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; margin-bottom: 14px; border: 1px solid #a7f3d0; }
+    .done-preview { margin: 18px auto 0; max-width: 280px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 12px; }
+    .done-preview img { max-height: 70px; max-width: 100%; display: block; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <header class="portal-header">
+    <div class="header-inner">
+      <div class="brand-group">
+        <img src="/assets/iris-logo.svg" alt="IRIS Pay" class="brand-logo">
+        <div class="header-divider"></div>
+        <div>
+          <div class="header-title">Официален подпис — IRIS Pay</div>
+          <div class="header-subtitle">За автоматично полагане върху договори</div>
+        </div>
+      </div>
+      <span class="once-badge">Еднократен линк</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="sign-card" id="signCard">
+      <h1 class="card-title">Положете Вашия подпис</h1>
+      <p class="card-desc">
+        Начертайте подписа си в полето по-долу. След натискане на <strong>„Изпрати“</strong>, подписът се запазва в системата за всички договори и тази страница автоматично спира да съществува.
+      </p>
+
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <canvas id="providerSigCanvas" width="760" height="280"></canvas>
+        <div class="canvas-hint" id="canvasHint">Начертайте Вашия подпис тук с мишка, тъчпад или пръст</div>
+      </div>
+
+      <div class="actions-row">
+        <button type="button" class="btn-redraw" id="btnRedrawSig">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          Преправи
+        </button>
+        <button type="button" class="btn-send" id="btnSendProviderSig">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Изпрати
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toastEl"></div>
+
+  <script>
+    (function () {
+      const canvas = document.getElementById('providerSigCanvas');
+      const wrapper = document.getElementById('canvasWrapper');
+      const hint = document.getElementById('canvasHint');
+      const btnRedraw = document.getElementById('btnRedrawSig');
+      const btnSend = document.getElementById('btnSendProviderSig');
+      const signCard = document.getElementById('signCard');
+      const toastEl = document.getElementById('toastEl');
+      const ctx = canvas.getContext('2d');
+
+      let isDrawing = false;
+      let hasDrawn = false;
+
+      ctx.lineWidth = 3.2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#000000';
+
+      function showToast(msg, type) {
+        toastEl.textContent = msg;
+        toastEl.className = 'toast ' + (type || '');
+        toastEl.style.display = 'block';
+        setTimeout(() => { toastEl.style.display = 'none'; }, 3600);
+      }
+
+      function getCoords(e) {
+        const rect = canvas.getBoundingClientRect();
+        const sx = canvas.width / rect.width;
+        const sy = canvas.height / rect.height;
+        const point = (e.touches && e.touches[0]) ? e.touches[0] : e;
+        return {
+          x: (point.clientX - rect.left) * sx,
+          y: (point.clientY - rect.top) * sy
+        };
+      }
+
+      function startDraw(e) {
+        if (e.cancelable) e.preventDefault();
+        isDrawing = true;
+        hasDrawn = true;
+        hint.style.display = 'none';
+        const c = getCoords(e);
+        ctx.beginPath();
+        ctx.moveTo(c.x, c.y);
+        ctx.arc(c.x, c.y, 1.6, 0, Math.PI * 2);
+        ctx.fillStyle = '#000000';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(c.x, c.y);
+      }
+
+      function moveDraw(e) {
+        if (!isDrawing) return;
+        if (e.cancelable) e.preventDefault();
+        hasDrawn = true;
+        const c = getCoords(e);
+        ctx.lineTo(c.x, c.y);
+        ctx.stroke();
+      }
+
+      function stopDraw() {
+        isDrawing = false;
+      }
+
+      canvas.addEventListener('mousedown', startDraw);
+      canvas.addEventListener('mousemove', moveDraw);
+      window.addEventListener('mouseup', stopDraw);
+      canvas.addEventListener('touchstart', startDraw, { passive: false });
+      canvas.addEventListener('touchmove', moveDraw, { passive: false });
+      window.addEventListener('touchend', stopDraw);
+
+      btnRedraw.addEventListener('click', () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hasDrawn = false;
+        hint.style.display = 'flex';
+      });
+
+      function exportTrimmedSignaturePng() {
+        const w = canvas.width;
+        const h = canvas.height;
+        const imgData = ctx.getImageData(0, 0, w, h).data;
+        let minX = w, minY = h, maxX = 0, maxY = 0;
+        let found = false;
+
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            const alpha = imgData[(y * w + x) * 4 + 3];
+            if (alpha > 8) {
+              found = true;
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
+          }
+        }
+
+        if (!found) return null;
+
+        const pad = 12;
+        const sx = Math.max(0, minX - pad);
+        const sy = Math.max(0, minY - pad);
+        const sw = Math.min(w - sx, (maxX - minX + 1) + pad * 2);
+        const sh = Math.min(h - sy, (maxY - minY + 1) + pad * 2);
+
+        const out = document.createElement('canvas');
+        out.width = sw;
+        out.height = sh;
+        const octx = out.getContext('2d');
+        octx.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+        return out.toDataURL('image/png');
+      }
+
+      btnSend.addEventListener('click', async () => {
+        const trimmedPng = hasDrawn ? exportTrimmedSignaturePng() : null;
+        if (!trimmedPng) {
+          wrapper.classList.add('shake-error');
+          setTimeout(() => wrapper.classList.remove('shake-error'), 400);
+          showToast('Моля, начертайте подпис преди да изпратите.', 'error');
+          return;
+        }
+
+        btnSend.disabled = true;
+        btnRedraw.disabled = true;
+        btnSend.textContent = 'Запазване...';
+
+        try {
+          const resp = await fetch('/api/send-contract?action=saveProviderSignature', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'saveProviderSignature',
+              signatureImageBase64: trimmedPng
+            })
+          });
+          const resData = await resp.json();
+
+          if (resp.ok && resData.success) {
+            signCard.innerHTML =
+              '<div class="done-box">' +
+                '<div class="done-icon">✓</div>' +
+                '<h1 class="card-title">Подписът е запазен успешно!</h1>' +
+                '<p class="card-desc" style="margin-bottom:0;">Официалният подпис на IRIS Pay вече е запомнен в системата и ще се поставя автоматично върху одобрените договори. Този временен под-сайт вече не съществува.</p>' +
+                '<div class="done-preview"><img src="' + trimmedPng + '" alt="Запазен подпис"></div>' +
+              '</div>';
+            showToast('Подписът е запазен!', 'success');
+          } else {
+            btnSend.disabled = false;
+            btnRedraw.disabled = false;
+            btnSend.textContent = 'Изпрати';
+            showToast(resData.error || 'Грешка при запазване на подписа.', 'error');
+          }
+        } catch (err) {
+          btnSend.disabled = false;
+          btnRedraw.disabled = false;
+          btnSend.textContent = 'Изпрати';
+          showToast('Мрежова грешка при изпращане.', 'error');
+        }
+      });
+    })();
+  </script>
+</body>
+</html>`;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // Handle GET requests (one-time /podpis page + authenticated signature retrieval)
+  if (req.method === 'GET') {
+    const action = req.query?.action;
+    if (action === 'podpisPage') {
+      const provState = await getProviderSignatureState();
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      if (provState.locked) {
+        return res.status(404).send(renderPodpis404Html());
+      }
+      return res.status(200).send(renderPodpisPageHtml());
+    }
+
+    if (action === 'getProviderSignature') {
+      const session = verifySession(req);
+      if (!session) {
+        return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+      }
+      const provState = await getProviderSignatureState();
+      return res.status(200).json({
+        success: true,
+        locked: provState.locked,
+        createdAt: provState.createdAt,
+        signatureImageBase64: provState.signatureImageBase64
+      });
+    }
+
+    return res.status(405).json({ error: 'Method Not Allowed.' });
   }
 
   if (req.method !== 'POST') {
@@ -353,6 +666,30 @@ export default async function handler(req, res) {
   try {
     const data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     const action = req.query?.action || data?.action || null;
+
+    // =========================================================================
+    // FLOW 0: One-Time Official IRIS Pay Signature Capture (/podpis)
+    // =========================================================================
+    if (action === 'saveProviderSignature') {
+      const currentProvState = await getProviderSignatureState();
+      if (currentProvState.locked) {
+        return res.status(404).json({ error: 'Страницата не съществува. Официалният подпис вече е запазен.' });
+      }
+
+      const sigDataUrl = data?.signatureImageBase64;
+      if (!sigDataUrl || typeof sigDataUrl !== 'string' || !sigDataUrl.startsWith('data:image/')) {
+        return res.status(400).json({ error: 'Моля, начертайте валиден подпис.' });
+      }
+
+      const saved = await saveProviderSignature({ signatureImageBase64: sigDataUrl });
+      console.log('[Provider Signature] One-time official signature captured and locked at', saved.createdAt);
+      return res.status(200).json({
+        success: true,
+        locked: true,
+        createdAt: saved.createdAt,
+        message: 'Официалният подпис на IRIS Pay беше запазен успешно.'
+      });
+    }
 
     // =========================================================================
     // FLOW 1: Dashboard Review Confirmation -> Counter-Sign & Send Final Email
@@ -387,7 +724,13 @@ export default async function handler(req, res) {
         } catch (ptErr) {}
       }
 
-      // Demo phase: always send approved BG contracts once to kaloyan.tosev@gmail.com with provider demo signature
+      // Use saved official IRIS Pay signature if submitted via /podpis; otherwise fallback to demo SVG
+      const provState = await getProviderSignatureState();
+      const savedProviderSig = (provState?.locked && provState?.signatureImageBase64)
+        ? provState.signatureImageBase64
+        : null;
+
+      // Demo phase: send approved BG contracts once to kaloyan.tosev@gmail.com
       const targetEmail = DEMO_APPROVED_RECIPIENT_EMAIL;
       const sendResult = await generateAndSendContractEmail({
         isRo: false,
@@ -405,6 +748,7 @@ export default async function handler(req, res) {
         contactPhone: pending.contactPhone,
         displayDate,
         signatureImageBase64: pending.signatureImageBase64,
+        providerSignatureBase64: savedProviderSig,
         includeProviderSignature: true,
         customCommission: pending.customCommission,
         partnerTerms: resolvedPartnerTerms,

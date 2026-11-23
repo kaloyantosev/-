@@ -141,6 +141,18 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (pathname === '/podpis' || pathname === '/podpis/') {
+    try {
+      req.query = { ...req.query, action: 'podpisPage' };
+      const module = await import('./api/send-contract.js');
+      await module.default(req, res);
+    } catch (err) {
+      res.statusCode = 500;
+      res.end('Internal Server Error');
+    }
+    return;
+  }
+
   if (pathname === '/login' || pathname === '/login/') {
     serveFile(path.join(__dirname, 'login.html'), res);
     return;

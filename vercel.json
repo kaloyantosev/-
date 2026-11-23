@@ -28,6 +28,10 @@
       "dest": "/partner/index.html"
     },
     {
+      "src": "/podpis/?$",
+      "dest": "/api/send-contract?action=podpisPage"
+    },
+    {
       "src": "/login",
       "dest": "/login.html"
     },
