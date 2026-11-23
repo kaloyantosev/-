@@ -280,12 +280,12 @@ export async function resolveProviderSignature(pdfDoc, assetsDir, { providerSign
 }
 
 export async function embedSignatureNameFont(pdfDoc, assetsDir, fallbackFont) {
-  const gvPath = path.join(assetsDir, 'fonts', 'greatvibes.ttf');
-  if (fs.existsSync(gvPath)) {
+  const pfPath = path.join(assetsDir, 'fonts', 'playfair-semibold-italic.ttf');
+  if (fs.existsSync(pfPath)) {
     try {
-      return await pdfDoc.embedFont(fs.readFileSync(gvPath), { subset: true, features: { liga: false, calt: false } });
+      return await pdfDoc.embedFont(fs.readFileSync(pfPath), { subset: true, features: { liga: false, calt: false } });
     } catch (e) {
-      console.warn('[Signature Font] Fallback from greatvibes.ttf:', e.message);
+      console.warn('[Signature Font] Fallback from playfair-semibold-italic.ttf:', e.message);
     }
   }
   return fallbackFont;
@@ -299,7 +299,7 @@ export function drawProviderSignatureWithName(page, {
   maxWidth = 120,
   maxHeight = 32,
   nameText = 'Dimitar Hristov',
-  fontSize = 16
+  fontSize = 12.5
 }) {
   if (!providerSigImage) return;
   const dims = providerSigImage.scaleToFit(maxWidth, maxHeight);

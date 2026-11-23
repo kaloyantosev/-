@@ -334,7 +334,7 @@ function stripPhoneAndEmailFromAddress(addr) {
       maxWidth: 120,
       maxHeight: 32,
       nameText: 'Dimitar Hristov',
-      fontSize: 16
+      fontSize: 12.5
     });
   }
 
@@ -450,7 +450,7 @@ function stripPhoneAndEmailFromAddress(addr) {
       maxWidth: 120,
       maxHeight: 32,
       nameText: 'Dimitar Hristov',
-      fontSize: 16
+      fontSize: 12.5
     });
   }
 

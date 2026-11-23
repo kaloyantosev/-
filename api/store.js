@@ -200,6 +200,48 @@ function ensureStoreArrays(st) {
     }
     st.demoContractSeeded = true;
   }
+
+  if (!st.demoPartnerContractSeeded) {
+    const demoPartnerSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 80" fill="none" stroke="#000000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M 16 56 C 28 20, 44 22, 52 50 C 60 28, 76 18, 86 48 C 96 60, 114 26, 134 30 C 148 33, 152 52, 174 42 C 194 33, 212 18, 240 28"/><path d="M 32 65 Q 130 58 232 63" stroke-width="1.5"/></svg>';
+    const demoPartnerEntry = {
+      id: 'pc_demo_partner_1',
+      isDemo: true,
+      contractKind: 'partner',
+      companyName: '„ДЕМО ПАРТНЬОР КОНСУЛТ“ ООД',
+      companyEik: '207891234',
+      companyAddress: 'гр. Пловдив 4000, ул. Княз Александър I № 22, ет. 2',
+      companyRepresentative: 'Мария Николова Димитрова',
+      bankName: '',
+      bankIban: '',
+      website: '',
+      contactAddress: 'гр. Пловдив 4000, ул. Княз Александър I № 22, офис 4',
+      contactEmail: 'partner-demo@consult.bg',
+      contactPhone: '+359 887 654 321',
+      contractDate: '23.11.2026 г.',
+      signedByClient: true,
+      signatureImageBase64: 'data:image/svg+xml;base64,' + Buffer.from(demoPartnerSvg, 'utf-8').toString('base64'),
+      customCommission: null,
+      customToken: null,
+      affiliateRef: null,
+      partnerName: null,
+      partnerToken: null,
+      partnerTerms: {
+        months: 12,
+        includeOneTime: true,
+        includePercent: true,
+        tiers: [
+          { label: 'До 10 търговеца', oneTime: '50', percent: '5' },
+          { label: 'От 11 до 50 търговеца', oneTime: '75', percent: '7' },
+          { label: 'Над 50 търговеца', oneTime: '100', percent: '10' }
+        ]
+      },
+      createdAt: new Date().toISOString()
+    };
+    if (!st.pendingContracts.some(pc => pc.id === demoPartnerEntry.id)) {
+      st.pendingContracts.unshift(demoPartnerEntry);
+    }
+    st.demoPartnerContractSeeded = true;
+  }
   if (!st.settings || typeof st.settings !== 'object') {
     st.settings = {
       standardCommission: '0.49%',
@@ -1028,6 +1070,7 @@ export async function recordPendingContract(payload) {
 
   store.pendingContracts.unshift(entry);
   store.demoContractSeeded = true;
+  store.demoPartnerContractSeeded = true;
 
   if (entry.contractKind === 'partner' && entry.partnerToken) {
     const pl = (store.partnerLinks || []).find(l => l.token === String(entry.partnerToken).trim());
@@ -1058,6 +1101,7 @@ export async function deletePendingContract({ id }) {
   const before = (store.pendingContracts || []).length;
   store.pendingContracts = (store.pendingContracts || []).filter(c => c.id !== id);
   store.demoContractSeeded = true;
+  store.demoPartnerContractSeeded = true;
   if (store.pendingContracts.length !== before) {
     await saveStore(store);
   }

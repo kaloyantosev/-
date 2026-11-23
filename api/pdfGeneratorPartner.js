@@ -236,7 +236,7 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
           maxWidth: 130,
           maxHeight: 34,
           nameText: 'Dimitar Hristov',
-          fontSize: 16
+          fontSize: 12.5
         });
       }
 
@@ -399,7 +399,7 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
         maxWidth: 130,
         maxHeight: 34,
         nameText: 'Dimitar Hristov',
-        fontSize: 16
+        fontSize: 12.5
       });
     }
     if (tplSigImage) {
@@ -574,7 +574,7 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
         maxWidth: 130,
         maxHeight: 34,
         nameText: 'Dimitar Hristov',
-        fontSize: 16
+        fontSize: 12.5
       });
     }
 
