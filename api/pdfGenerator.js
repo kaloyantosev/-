@@ -18,6 +18,8 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
     contactPhone = '0888 123 456',
     contractDate = '16.10.2026 г.',
     signatureImageBase64 = null,
+    providerSignatureBase64 = null,
+    includeProviderSignature = false,
     customCommission = null
   } = data || {};
 
@@ -46,6 +48,17 @@ export async function generateContractPdf(data, assetsDir = 'assets') {
     if (fs.existsSync(fallbackSigPath)) {
       const fallbackSigBytes = fs.readFileSync(fallbackSigPath);
       sigImage = await embedSignature(pdfDoc, fallbackSigBytes.toString('base64'));
+    }
+  }
+
+  // Embed provider (IRIS Pay) signature when counter-signing from dashboard
+  let providerSigImage = null;
+  if (providerSignatureBase64) {
+    providerSigImage = await embedSignature(pdfDoc, providerSignatureBase64);
+  } else if (includeProviderSignature) {
+    const demoProvPath = path.join(assetsDir, 'provider_demo_sig.svg');
+    if (fs.existsSync(demoProvPath)) {
+      providerSigImage = await embedSignature(pdfDoc, fs.readFileSync(demoProvPath, 'utf-8'));
     }
   }
 
@@ -313,7 +326,16 @@ function stripPhoneAndEmailFromAddress(addr) {
   const p9 = pages[8];
   const p9H = p9.getHeight();
 
-  // Provider slot remains strictly blank (provider signs after receiving the merchant contract)
+  // Provider slot ("За Доставчика:")
+  if (providerSigImage) {
+    const dp1 = providerSigImage.scaleToFit(145, 24);
+    providerSigImage.draw(p9, {
+      x: 75.0,
+      y: p9H - 408.0,
+      width: dp1.width,
+      height: dp1.height
+    });
+  }
 
   // Merchant Slot 1: Placed directly under "За Търговеца:", strictly without printed name
   if (sigImage) {
@@ -417,7 +439,16 @@ function stripPhoneAndEmailFromAddress(addr) {
     });
   }
 
-  // Provider slot remains strictly blank (provider signs after receiving the merchant contract)
+  // Provider slot ("За Доставчика")
+  if (providerSigImage) {
+    const dpApp = providerSigImage.scaleToFit(145, 24);
+    providerSigImage.draw(p10, {
+      x: 96.55,
+      y: p10H - 569.67,
+      width: dpApp.width,
+      height: dpApp.height
+    });
+  }
 
   // Merchant slot: Placed directly under "За Търговеца:", strictly without printed name
   if (sigImage) {

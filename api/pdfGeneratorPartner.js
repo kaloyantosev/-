@@ -19,6 +19,8 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
     contactPhone = '—',
     contractDate = '',
     signatureImageBase64 = null,
+    providerSignatureBase64 = null,
+    includeProviderSignature = false,
     partnerTerms = null
   } = data || {};
 
@@ -36,7 +38,16 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
   const font = await pdfDoc.embedFont(regularBytes, { subset: true, features: { liga: false, calt: false } });
   const fontBold = await pdfDoc.embedFont(boldBytes, { subset: true, features: { liga: false, calt: false } });
 
+  let resolvedProviderInput = providerSignatureBase64;
+  if (!resolvedProviderInput && includeProviderSignature) {
+    const demoProvPath = path.join(assetsDir, 'provider_demo_sig.svg');
+    if (fs.existsSync(demoProvPath)) {
+      resolvedProviderInput = fs.readFileSync(demoProvPath, 'utf-8');
+    }
+  }
+
   let sigImage = await embedSignature(pdfDoc, signatureImageBase64);
+  let providerSigImage = await embedSignature(pdfDoc, resolvedProviderInput);
 
   const templatePath = path.join(assetsDir, 'partner_contract_template.pdf');
   if (fs.existsSync(templatePath)) {
@@ -50,6 +61,7 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
     const tplFontBold = await tplDoc.embedFont(calBldBytes, { subset: true, features: { liga: false, calt: false } });
 
     let tplSigImage = await embedSignature(tplDoc, signatureImageBase64);
+    let tplProviderSigImage = await embedSignature(tplDoc, resolvedProviderInput);
 
     const wrapSimple = (text, f, size, maxW) => {
       const words = String(text || '').split(/\s+/).filter(Boolean);
@@ -215,6 +227,16 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
         { segments: [{ text: 'Телефон:', bold: false }, { text: contactPhone, bold: true }], spaceAfter: 0 }
       ]);
 
+      if (tplProviderSigImage) {
+        const dProv = tplProviderSigImage.scaleToFit(160, 46);
+        tplProviderSigImage.draw(p7, {
+          x: 70.9,
+          y: p7H - 674 - dProv.height,
+          width: dProv.width,
+          height: dProv.height
+        });
+      }
+
       if (tplSigImage) {
         const dSig = tplSigImage.scaleToFit(160, 46);
         tplSigImage.draw(p7, {
@@ -365,6 +387,15 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
     const sigY = AP_H - apY;
     annexPage.drawText('За Компанията:', { x: AP_ML, y: sigY, size: 11, font: tplFontBold, color: rgb(0, 0, 0) });
     annexPage.drawText('За Изпълнителя:', { x: 354, y: sigY, size: 11, font: tplFontBold, color: rgb(0, 0, 0) });
+    if (tplProviderSigImage) {
+      const dProv = tplProviderSigImage.scaleToFit(160, 46);
+      tplProviderSigImage.draw(annexPage, {
+        x: AP_ML,
+        y: sigY - 10 - dProv.height,
+        width: dProv.width,
+        height: dProv.height
+      });
+    }
     if (tplSigImage) {
       const dSig = tplSigImage.scaleToFit(160, 46);
       tplSigImage.draw(annexPage, {
@@ -527,6 +558,16 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
 
     page.drawText(labelLeft, { x: xLeft, y: yLabel, size: 11, font: fontBold, color: rgb(0, 0, 0) });
     page.drawText(labelRight, { x: xRight, y: yLabel, size: 11, font: fontBold, color: rgb(0, 0, 0) });
+
+    if (providerSigImage) {
+      const dProv = providerSigImage.scaleToFit(150, 40);
+      providerSigImage.draw(page, {
+        x: xLeft,
+        y: yLabel - 48,
+        width: dProv.width,
+        height: dProv.height
+      });
+    }
 
     if (sigImage) {
       const dSig = sigImage.scaleToFit(150, 40);

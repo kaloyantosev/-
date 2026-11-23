@@ -9,7 +9,17 @@
  */
 
 import { verifySession } from './auth.js';
-import { getAffiliatesData, createAffiliate, getDashboardSummary, deleteContract, deleteAffiliate, getPendingPartners, deletePendingPartner } from './store.js';
+import {
+  getAffiliatesData,
+  createAffiliate,
+  getDashboardSummary,
+  deleteContract,
+  deleteAffiliate,
+  getPendingPartners,
+  deletePendingPartner,
+  getPendingContracts,
+  deletePendingContract
+} from './store.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -39,6 +49,19 @@ export default async function handler(req, res) {
       if (!id) return res.status(400).json({ error: 'Липсва ID на партньора.' });
       await deletePendingPartner({ id });
       return res.status(200).json({ success: true, message: 'Известието за новия партньор беше премахнато.' });
+    } catch (err) {
+      return res.status(400).json({ error: err.message || 'Грешка при изтриване.' });
+    }
+  }
+
+  // 1c. Dismiss/delete a pending contract awaiting signature (allowed for any authenticated dashboard user)
+  if (action === 'dismissPendingContract') {
+    try {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+      const id = req.query?.id || body?.id;
+      if (!id) return res.status(400).json({ error: 'Липсва ID на договора.' });
+      await deletePendingContract({ id });
+      return res.status(200).json({ success: true, message: 'Чакащият договор беше премахнат.' });
     } catch (err) {
       return res.status(400).json({ error: err.message || 'Грешка при изтриване.' });
     }
@@ -93,13 +116,16 @@ export default async function handler(req, res) {
 
       const affiliates = await getAffiliatesData({ month, fromDate, toDate, search, country });
       const summary = await getDashboardSummary({ month, fromDate, toDate, country });
-      const pendingPartners = await getPendingPartners();
+      const isRo = String(country || 'bg').toLowerCase() === 'ro';
+      const pendingPartners = isRo ? [] : await getPendingPartners();
+      const pendingContracts = isRo ? [] : await getPendingContracts();
 
       return res.status(200).json({
         success: true,
         summary,
         affiliates,
         pendingPartners,
+        pendingContracts,
         user: session.user,
         role: session.role,
         country

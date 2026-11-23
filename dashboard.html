@@ -774,7 +774,7 @@
       </div>
     </section>
 
-    <!-- Pending Partner Agreements Tabs -->
+    <!-- Pending Signed Contracts & Partner Notifications Bar -->
     <style>
       .pending-partners-bar {
         display: flex;
@@ -785,32 +785,74 @@
       .pending-partner-tab {
         display: inline-flex;
         align-items: center;
+        flex-wrap: wrap;
         gap: 10px;
         background: #ffffff;
         border: 1px solid #cbd5e1;
         border-left: 4px solid #2563eb;
         border-radius: 10px;
-        padding: 8px 12px;
+        padding: 9px 12px;
         box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
         font-size: 13.5px;
         color: #0f172a;
       }
+      .pending-partner-tab.kind-partner {
+        border-left-color: #f97316;
+      }
+      .pending-partner-tab.kind-from_partner {
+        border-left-color: #0d9488;
+      }
+      .pending-kind-pill {
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+      .pending-kind-pill.kind-partner {
+        background: #fff7ed;
+        color: #c2410c;
+      }
+      .pending-kind-pill.kind-from_partner {
+        background: #f0fdfa;
+        color: #0f766e;
+      }
+      .pending-demo-pill {
+        font-size: 10.5px;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 999px;
+        background: #fef3c7;
+        color: #b45309;
+        border: 1px solid #fde68a;
+      }
       .pending-partner-label {
         font-weight: 600;
       }
-      .btn-pending-create {
+      .btn-pending-create,
+      .btn-pending-sign {
         background: #2563eb;
         color: #ffffff;
         border: none;
         border-radius: 7px;
-        padding: 6px 12px;
+        padding: 6px 13px;
         font-size: 12.5px;
         font-weight: 600;
         cursor: pointer;
         transition: background 0.15s ease;
       }
-      .btn-pending-create:hover {
+      .btn-pending-create:hover,
+      .btn-pending-sign:hover {
         background: #1d4ed8;
+      }
+      .btn-pending-sign {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      }
+      .btn-pending-sign:hover {
+        background: linear-gradient(135deg, #047857 0%, #065f46 100%);
       }
       .btn-pending-dismiss {
         background: #fee2e2;
@@ -831,6 +873,56 @@
       .btn-pending-dismiss:hover {
         background: #dc2626;
         color: #ffffff;
+      }
+      .review-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 14px;
+      }
+      @media (max-width: 640px) {
+        .review-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .review-field {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 9px 12px;
+      }
+      .review-field.full-width {
+        grid-column: 1 / -1;
+      }
+      .review-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-bottom: 3px;
+      }
+      .review-value {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: #0f172a;
+        word-break: break-word;
+      }
+      .review-sig-box {
+        margin-top: 6px;
+        background: #ffffff;
+        border: 1px dashed #cbd5e1;
+        border-radius: 6px;
+        padding: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 180px;
+        min-height: 54px;
+      }
+      .review-sig-box img {
+        max-height: 52px;
+        max-width: 240px;
+        display: block;
       }
     </style>
     <div id="pendingPartnersContainer" class="pending-partners-bar" style="display:none;"></div>
@@ -1106,6 +1198,30 @@
     </div>
   </div>
 
+  <!-- Modal: Review Signed Contract Details & Confirm IRIS Counter-Signature -->
+  <div id="reviewContractModal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 720px; max-height: 92vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <h3 id="reviewModalTitle">Преглед и подписване на договор</h3>
+        <button class="btn-close-modal" id="btnCloseReviewModal">&times;</button>
+      </div>
+      <div class="modal-body" id="reviewModalBody" style="overflow-y: auto; padding: 20px 24px;">
+        <!-- Populated dynamically -->
+      </div>
+      <div class="modal-footer" style="justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <span style="font-size: 12px; color: #64748b;">
+          След потвърждение договорът се подписва от IRIS Pay и се изпраща към <strong>kaloyan.tosev@gmail.com</strong>.
+        </span>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn-cancel" id="btnCancelReviewModal">Затвори</button>
+          <button type="button" class="btn-create-link" id="btnConfirmAndSignContract" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">
+            ✓ Информацията е вярна
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div id="toastNotification" class="toast"></div>
 
@@ -1281,7 +1397,7 @@
           currentAffiliates = data.affiliates || [];
           lastSummaryData = data.summary || null;
           renderSummary(data.summary, month, fromDate, toDate);
-          renderPendingPartners(data.pendingPartners || []);
+          renderPendingNotifications(data.pendingContracts || [], data.pendingPartners || []);
           renderTable(data.affiliates);
           populateMonthsDropdown(data.summary?.monthsList || []);
         } else {
@@ -1920,23 +2036,271 @@
     if (btnRefreshPartnerLinks) btnRefreshPartnerLinks.addEventListener('click', loadPartnerLinks);
     loadPartnerLinks();
 
-    // Create Modal Logic
-    function renderPendingPartners(list) {
+    // Pending Contracts Review Modal & Pending Notifications Logic
+    const reviewContractModal = document.getElementById('reviewContractModal');
+    const reviewModalTitle = document.getElementById('reviewModalTitle');
+    const reviewModalBody = document.getElementById('reviewModalBody');
+    const btnCloseReviewModal = document.getElementById('btnCloseReviewModal');
+    const btnCancelReviewModal = document.getElementById('btnCancelReviewModal');
+    const btnConfirmAndSignContract = document.getElementById('btnConfirmAndSignContract');
+
+    let currentPendingContractsMap = new Map();
+    let activeReviewContractId = null;
+
+    function closeReviewModal() {
+      if (reviewContractModal) reviewContractModal.style.display = 'none';
+      activeReviewContractId = null;
+    }
+    if (btnCloseReviewModal) btnCloseReviewModal.addEventListener('click', closeReviewModal);
+    if (btnCancelReviewModal) btnCancelReviewModal.addEventListener('click', closeReviewModal);
+
+    function formatContractKindLabel(c) {
+      if (c.contractKind === 'partner') return 'Партньорски договор';
+      if (c.contractKind === 'from_partner') {
+        const pLabel = c.partnerName || c.affiliateRef || '';
+        return pLabel ? `Договор от партньор „${pLabel}“` : 'Договор от партньор';
+      }
+      return 'Договор без партньор';
+    }
+
+    function openReviewContractModal(contractId) {
+      const c = currentPendingContractsMap.get(contractId);
+      if (!c || !reviewContractModal || !reviewModalBody) return;
+      activeReviewContractId = contractId;
+
+      const isPartner = c.contractKind === 'partner';
+      const kindLabel = formatContractKindLabel(c);
+      if (reviewModalTitle) {
+        reviewModalTitle.textContent = `Преглед и подписване — ${c.companyName || 'Договор'}`;
+      }
+
+      const signedStatusBadge = c.signedByClient
+        ? '<span style="display:inline-block; background:#ECFDF5; color:#047857; border:1px solid #A7F3D0; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:700;">✓ Подписан от клиента</span>'
+        : '<span style="display:inline-block; background:#FEF2F2; color:#B91C1C; border:1px solid #FECACA; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:700;">✕ Неподписан</span>';
+
+      const createdTimeStr = c.createdAt
+        ? new Date(c.createdAt).toLocaleString('bg-BG', { dateStyle: 'short', timeStyle: 'short' })
+        : '—';
+
+      let partnerTermsHtml = '';
+      if (isPartner && c.partnerTerms) {
+        const pt = c.partnerTerms;
+        const tiersStr = Array.isArray(pt.tiers)
+          ? pt.tiers.map(t => {
+              const parts = [];
+              if (pt.includeOneTime !== false) parts.push(`${t.oneTime} EUR еднократно`);
+              if (pt.includePercent !== false) parts.push(`${t.percent}%`);
+              return `${escapeHtml(t.label)}: <strong>${escapeHtml(parts.join(' + '))}</strong>`;
+            }).join('<br>')
+          : 'Стандартни условия';
+        partnerTermsHtml = `
+          <div class="review-field full-width">
+            <div class="review-label">Условия за възнаграждение (Приложение 1 • ${escapeHtml(pt.months || 12)} месеца)</div>
+            <div class="review-value" style="font-weight:500;">${tiersStr}</div>
+          </div>
+        `;
+      }
+
+      const merchantFieldsHtml = !isPartner ? `
+        <div class="review-field">
+          <div class="review-label">Обслужваща банка</div>
+          <div class="review-value">${escapeHtml(c.bankName || '—')}</div>
+        </div>
+        <div class="review-field">
+          <div class="review-label">IBAN сметка</div>
+          <div class="review-value" style="font-family:monospace;">${escapeHtml(c.bankIban || '—')}</div>
+        </div>
+        <div class="review-field full-width">
+          <div class="review-label">Сайтове / Уебсайт</div>
+          <div class="review-value">${escapeHtml(c.website || 'Няма посочен')}</div>
+        </div>
+        ${c.customCommission ? `
+        <div class="review-field full-width">
+          <div class="review-label">Комисионна (Приложение 1)</div>
+          <div class="review-value" style="color:#0D9488;">${escapeHtml(c.customCommission)}</div>
+        </div>
+        ` : ''}
+      ` : '';
+
+      const sigPreviewHtml = c.signatureImageBase64
+        ? `<div class="review-sig-box"><img src="${escapeHtml(c.signatureImageBase64)}" alt="Клиентски подпис"></div>`
+        : '<div style="font-size:12px; color:#64748b; margin-top:4px;">Няма прикачено изображение на подпис</div>';
+
+      reviewModalBody.innerHTML = `
+        <div class="review-grid">
+          <div class="review-field full-width" style="background:#EFF6FF; border-color:#BFDBFE;">
+            <div class="review-label">Вид договор</div>
+            <div class="review-value">${escapeHtml(kindLabel)} ${c.isDemo ? '<span class="pending-demo-pill" style="margin-left:6px;">ДЕМО ТЕСТ</span>' : ''}</div>
+          </div>
+
+          <div class="review-field">
+            <div class="review-label">Фирма (Наименование)</div>
+            <div class="review-value">${escapeHtml(c.companyName || '—')}</div>
+          </div>
+          <div class="review-field">
+            <div class="review-label">ЕИК / БУЛСТАТ</div>
+            <div class="review-value">${escapeHtml(c.companyEik || '—')}</div>
+          </div>
+
+          <div class="review-field full-width">
+            <div class="review-label">Седалище и адрес на управление</div>
+            <div class="review-value">${escapeHtml(c.companyAddress || '—')}</div>
+          </div>
+
+          <div class="review-field">
+            <div class="review-label">Имена на представляващ</div>
+            <div class="review-value">${escapeHtml(c.companyRepresentative || '—')}</div>
+          </div>
+          <div class="review-field">
+            <div class="review-label">Телефон за връзка</div>
+            <div class="review-value">${escapeHtml(c.contactPhone || '—')}</div>
+          </div>
+
+          <div class="review-field">
+            <div class="review-label">E-mail за контакт</div>
+            <div class="review-value">${escapeHtml(c.contactEmail || '—')}</div>
+          </div>
+          <div class="review-field">
+            <div class="review-label">Дата на договора (Изпратен на)</div>
+            <div class="review-value">${escapeHtml(c.contractDate || '—')} <span style="font-size:12px; color:#64748b; font-weight:500;">(${escapeHtml(createdTimeStr)})</span></div>
+          </div>
+
+          <div class="review-field full-width">
+            <div class="review-label">Адрес за кореспонденция</div>
+            <div class="review-value">${escapeHtml(c.contactAddress || c.companyAddress || '—')}</div>
+          </div>
+
+          ${merchantFieldsHtml}
+          ${partnerTermsHtml}
+
+          <div class="review-field full-width">
+            <div class="review-label">Статус на подпис</div>
+            <div class="review-value" style="margin-top:4px;">${signedStatusBadge}</div>
+            ${sigPreviewHtml}
+          </div>
+        </div>
+      `;
+
+      if (btnConfirmAndSignContract) {
+        btnConfirmAndSignContract.disabled = false;
+        btnConfirmAndSignContract.textContent = '✓ Информацията е вярна';
+      }
+      reviewContractModal.style.display = 'flex';
+    }
+
+    if (btnConfirmAndSignContract) {
+      btnConfirmAndSignContract.addEventListener('click', async () => {
+        if (!activeReviewContractId) return;
+        btnConfirmAndSignContract.disabled = true;
+        btnConfirmAndSignContract.textContent = 'Подписване и изпращане...';
+
+        try {
+          const resp = await fetch('/api/send-contract?action=approveContract', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              action: 'approveContract',
+              pendingId: activeReviewContractId
+            })
+          });
+          const resData = await resp.json();
+          if (resp.ok && resData.success) {
+            closeReviewModal();
+            showToast(resData.message || 'Договорът е подписан и изпратен успешно!', 'success');
+            await loadAffiliatesData();
+            await loadCustomLinksData();
+            await loadPartnerLinks();
+          } else {
+            btnConfirmAndSignContract.disabled = false;
+            btnConfirmAndSignContract.textContent = '✓ Информацията е вярна';
+            showToast(resData.error || 'Грешка при подписване и изпращане.', 'error');
+          }
+        } catch (err) {
+          btnConfirmAndSignContract.disabled = false;
+          btnConfirmAndSignContract.textContent = '✓ Информацията е вярна';
+          showToast('Мрежова грешка при изпращане.', 'error');
+        }
+      });
+    }
+
+    function renderPendingNotifications(pendingContracts, pendingPartners) {
       const container = document.getElementById('pendingPartnersContainer');
       if (!container) return;
-      if (!Array.isArray(list) || list.length === 0) {
+
+      const contractsList = Array.isArray(pendingContracts) ? pendingContracts : [];
+      const partnersList = Array.isArray(pendingPartners) ? pendingPartners : [];
+
+      currentPendingContractsMap = new Map();
+      contractsList.forEach(c => currentPendingContractsMap.set(c.id, c));
+
+      if (contractsList.length === 0 && partnersList.length === 0) {
         container.style.display = 'none';
         container.innerHTML = '';
         return;
       }
+
       container.style.display = 'flex';
-      container.innerHTML = list.map(p => `
-        <div class="pending-partner-tab" data-pending-id="${escapeHtml(p.id)}">
-          <span class="pending-partner-label">Нов партньор - "${escapeHtml(p.companyName)}"</span>
+
+      const contractsHtml = contractsList.map(c => {
+        const kindClass = `kind-${escapeHtml(c.contractKind || 'direct')}`;
+        const kindBadge = formatContractKindLabel(c);
+        const demoPill = c.isDemo ? '<span class="pending-demo-pill">ДЕМО</span>' : '';
+        return `
+          <div class="pending-partner-tab ${kindClass}" data-pending-contract-id="${escapeHtml(c.id)}">
+            <span class="pending-kind-pill ${kindClass}">${escapeHtml(kindBadge)}</span>
+            ${demoPill}
+            <span class="pending-partner-label">${escapeHtml(c.companyName)} (ЕИК ${escapeHtml(c.companyEik || '—')})</span>
+            <button type="button" class="btn-pending-sign" data-contract-id="${escapeHtml(c.id)}">Подпиши</button>
+            <button type="button" class="btn-pending-dismiss btn-dismiss-contract" title="Изтрий известието" data-dismiss-contract-id="${escapeHtml(c.id)}">&times;</button>
+          </div>
+        `;
+      }).join('');
+
+      const partnersHtml = partnersList.map(p => `
+        <div class="pending-partner-tab kind-partner" data-pending-id="${escapeHtml(p.id)}">
+          <span class="pending-kind-pill kind-partner">Нов партньор</span>
+          <span class="pending-partner-label">${escapeHtml(p.companyName)}</span>
           <button type="button" class="btn-pending-create" data-company="${escapeHtml(p.companyName)}">Създай Affiliate Link</button>
-          <button type="button" class="btn-pending-dismiss" title="Изтрий следата от договора" data-dismiss-id="${escapeHtml(p.id)}">&times;</button>
+          <button type="button" class="btn-pending-dismiss btn-dismiss-partner" title="Изтрий следата от договора" data-dismiss-id="${escapeHtml(p.id)}">&times;</button>
         </div>
       `).join('');
+
+      container.innerHTML = contractsHtml + partnersHtml;
+
+      container.querySelectorAll('.btn-pending-sign').forEach(btn => {
+        btn.addEventListener('click', () => {
+          openReviewContractModal(btn.dataset.contractId);
+        });
+      });
+
+      container.querySelectorAll('.btn-dismiss-contract').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.dismissContractId;
+          if (!id) return;
+          btn.disabled = true;
+          try {
+            const resp = await fetch(`/api/affiliates?action=dismissPendingContract&id=${encodeURIComponent(id)}`, {
+              method: 'DELETE',
+              headers: getAuthHeaders()
+            });
+            if (resp.ok) {
+              const tab = container.querySelector(`.pending-partner-tab[data-pending-contract-id="${CSS.escape(id)}"]`);
+              if (tab) tab.remove();
+              currentPendingContractsMap.delete(id);
+              if (!container.querySelector('.pending-partner-tab')) {
+                container.style.display = 'none';
+              }
+              showToast('Известието за договора беше премахнато.', 'info');
+            } else {
+              btn.disabled = false;
+              showToast('Грешка при изтриване.', 'error');
+            }
+          } catch (e) {
+            btn.disabled = false;
+            showToast('Грешка при свързване със сървъра.', 'error');
+          }
+        });
+      });
 
       container.querySelectorAll('.btn-pending-create').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1950,7 +2314,7 @@
         });
       });
 
-      container.querySelectorAll('.btn-pending-dismiss').forEach(btn => {
+      container.querySelectorAll('.btn-dismiss-partner').forEach(btn => {
         btn.addEventListener('click', async () => {
           const id = btn.dataset.dismissId;
           if (!id) return;
@@ -2358,6 +2722,7 @@
       if (e.target === createModal) closeCreateModal();
       if (e.target === customFeeModal) closeCustomFeeModal();
       if (e.target === detailsModal) detailsModal.style.display = 'none';
+      if (e.target === reviewContractModal) closeReviewModal();
     });
 
     // Initial Load

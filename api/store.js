@@ -165,7 +165,41 @@ function ensureStoreArrays(st) {
   if (!Array.isArray(st.contracts)) st.contracts = [];
   if (!Array.isArray(st.customLinks)) st.customLinks = [];
   if (!Array.isArray(st.pendingPartners)) st.pendingPartners = [];
+  if (!Array.isArray(st.pendingContracts)) st.pendingContracts = [];
   if (!Array.isArray(st.partnerLinks)) st.partnerLinks = [];
+
+  if (!st.demoContractSeeded) {
+    const demoClientSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 80" fill="none" stroke="#000000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M 20 52 C 36 18, 52 60, 74 28 C 88 12, 98 56, 126 30 C 148 16, 168 54, 198 32 C 216 20, 228 42, 242 28"/><path d="M 28 64 Q 130 56 230 62" stroke-width="1.6"/></svg>';
+    const demoEntry = {
+      id: 'pc_demo_test_1',
+      isDemo: true,
+      contractKind: 'direct',
+      companyName: '„ДЕМО ТЕХ СОЛЮШЪНС“ ООД',
+      companyEik: '206543210',
+      companyAddress: 'гр. София 1000, бул. Витоша № 100, ет. 4',
+      companyRepresentative: 'Георги Иванов Петров',
+      bankName: 'УниКредит Булбанк АД',
+      bankIban: 'BG18UNCR70001598765432',
+      website: 'https://demo-tech.bg',
+      contactAddress: 'гр. София 1000, ул. Граф Игнатиев № 15, офис 3',
+      contactEmail: 'demo@techsolutions.bg',
+      contactPhone: '+359 888 123 456',
+      contractDate: '23.11.2026 г.',
+      signedByClient: true,
+      signatureImageBase64: 'data:image/svg+xml;base64,' + Buffer.from(demoClientSvg, 'utf-8').toString('base64'),
+      customCommission: '0.49%',
+      customToken: null,
+      affiliateRef: null,
+      partnerName: null,
+      partnerToken: null,
+      partnerTerms: null,
+      createdAt: new Date().toISOString()
+    };
+    if (!st.pendingContracts.some(pc => pc.id === demoEntry.id)) {
+      st.pendingContracts.unshift(demoEntry);
+    }
+    st.demoContractSeeded = true;
+  }
   if (!st.settings || typeof st.settings !== 'object') {
     st.settings = {
       standardCommission: '0.49%',
@@ -958,4 +992,74 @@ export async function findAffiliateBySlug({ slug, country = 'bg' }) {
       a.active !== false;
   });
   return aff ? { slug: aff.slug, name: aff.name, country: aff.country || 'bg' } : null;
+}
+
+/**
+ * Record a newly submitted Bulgarian contract (merchant direct, merchant from partner, or partner agreement)
+ * awaiting IRIS review and counter-signature in the Bulgarian dashboard.
+ */
+export async function recordPendingContract(payload) {
+  const store = await loadStore();
+  const entry = {
+    id: `pc_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    isDemo: false,
+    contractKind: payload.contractKind || 'direct', // 'partner' | 'from_partner' | 'direct'
+    companyName: String(payload.companyName || '—').trim(),
+    companyEik: String(payload.companyEik || '—').trim(),
+    companyAddress: String(payload.companyAddress || '').trim(),
+    companyRepresentative: String(payload.companyRepresentative || '—').trim(),
+    bankName: String(payload.bankName || '').trim(),
+    bankIban: String(payload.bankIban || '').trim(),
+    website: String(payload.website || '').trim(),
+    contactAddress: String(payload.contactAddress || '').trim(),
+    contactEmail: String(payload.contactEmail || '—').trim(),
+    contactPhone: String(payload.contactPhone || '—').trim(),
+    contractDate: String(payload.contractDate || '').trim(),
+    signedByClient: Boolean(payload.signatureImageBase64),
+    signatureImageBase64: payload.signatureImageBase64 || null,
+    customCommission: payload.customCommission || null,
+    customToken: payload.customToken || null,
+    affiliateRef: payload.affiliateRef || null,
+    partnerName: payload.partnerName || null,
+    partnerToken: payload.partnerToken || null,
+    partnerTerms: payload.partnerTerms || null,
+    createdAt: new Date().toISOString()
+  };
+
+  store.pendingContracts.unshift(entry);
+  store.demoContractSeeded = true;
+
+  if (entry.contractKind === 'partner' && entry.partnerToken) {
+    const pl = (store.partnerLinks || []).find(l => l.token === String(entry.partnerToken).trim());
+    if (pl) {
+      pl.used = true;
+      pl.usedByCompanyName = entry.companyName;
+      pl.usedAt = new Date().toISOString();
+    }
+  }
+
+  await saveStore(store);
+  return entry;
+}
+
+export async function getPendingContracts() {
+  const store = await loadStore();
+  return (store.pendingContracts || []).slice();
+}
+
+export async function getPendingContractById(id) {
+  if (!id) return null;
+  const store = await loadStore();
+  return (store.pendingContracts || []).find(c => c.id === id) || null;
+}
+
+export async function deletePendingContract({ id }) {
+  const store = await loadStore();
+  const before = (store.pendingContracts || []).length;
+  store.pendingContracts = (store.pendingContracts || []).filter(c => c.id !== id);
+  store.demoContractSeeded = true;
+  if (store.pendingContracts.length !== before) {
+    await saveStore(store);
+  }
+  return { deleted: before - store.pendingContracts.length };
 }
