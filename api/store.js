@@ -242,6 +242,39 @@ function ensureStoreArrays(st) {
     }
     st.demoPartnerContractSeeded = true;
   }
+
+  if (!st.demoClientV2Seeded) {
+    const demoClientV2Svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 80" fill="none" stroke="#000000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M 18 52 C 32 18, 48 60, 70 28 C 86 14, 96 54, 124 30 C 144 16, 166 52, 196 32 C 214 20, 228 42, 242 28"/><path d="M 30 64 Q 130 56 232 62" stroke-width="1.6"/></svg>';
+    const demoClientV2Entry = {
+      id: 'pc_demo_client_v2',
+      isDemo: true,
+      contractKind: 'direct',
+      companyName: '„ДЕМО КЛИЕНТ БЪЛГАРИЯ“ ЕООД',
+      companyEik: '208112233',
+      companyAddress: 'гр. София 1407, бул. Черни връх № 47, ет. 2',
+      companyRepresentative: 'Иван Стоянов Георгиев',
+      bankName: 'Банка ДСК АД',
+      bankIban: 'BG33STSA93000012345678',
+      website: 'https://demo-client.bg',
+      contactAddress: 'гр. София 1407, бул. Черни връх № 47, офис 5',
+      contactEmail: 'client-demo@example.bg',
+      contactPhone: '+359 889 777 888',
+      contractDate: '23.11.2026 г.',
+      signedByClient: true,
+      signatureImageBase64: 'data:image/svg+xml;base64,' + Buffer.from(demoClientV2Svg, 'utf-8').toString('base64'),
+      customCommission: '0.49%',
+      customToken: null,
+      affiliateRef: null,
+      partnerName: null,
+      partnerToken: null,
+      partnerTerms: null,
+      createdAt: new Date().toISOString()
+    };
+    if (!st.pendingContracts.some(pc => pc.id === demoClientV2Entry.id)) {
+      st.pendingContracts.unshift(demoClientV2Entry);
+    }
+    st.demoClientV2Seeded = true;
+  }
   if (!st.settings || typeof st.settings !== 'object') {
     st.settings = {
       standardCommission: '0.49%',
@@ -1071,6 +1104,7 @@ export async function recordPendingContract(payload) {
   store.pendingContracts.unshift(entry);
   store.demoContractSeeded = true;
   store.demoPartnerContractSeeded = true;
+  store.demoClientV2Seeded = true;
 
   if (entry.contractKind === 'partner' && entry.partnerToken) {
     const pl = (store.partnerLinks || []).find(l => l.token === String(entry.partnerToken).trim());
@@ -1102,6 +1136,7 @@ export async function deletePendingContract({ id }) {
   store.pendingContracts = (store.pendingContracts || []).filter(c => c.id !== id);
   store.demoContractSeeded = true;
   store.demoPartnerContractSeeded = true;
+  store.demoClientV2Seeded = true;
   if (store.pendingContracts.length !== before) {
     await saveStore(store);
   }

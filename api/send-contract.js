@@ -30,7 +30,7 @@ import {
   saveProviderSignature
 } from './store.js';
 
-const DEMO_APPROVED_RECIPIENT_EMAIL = 'kaloyan.tosev@gmail.com';
+const APPROVED_CONTRACT_RECIPIENT_EMAIL = 'sales@irisbgsf.com';
 
 export const config = {
   api: {
@@ -730,8 +730,17 @@ export default async function handler(req, res) {
         ? provState.signatureImageBase64
         : null;
 
-      // Demo phase: send approved BG contracts once to kaloyan.tosev@gmail.com
-      const targetEmail = DEMO_APPROVED_RECIPIENT_EMAIL;
+      // Production recipient: send approved BG contracts to sales@irisbgsf.com (or configured recipient)
+      let targetEmail = APPROVED_CONTRACT_RECIPIENT_EMAIL;
+      if (!isPartner) {
+        try {
+          const settings = await getSettings();
+          const candidate = settings?.contractRecipientEmail || process.env.CONTRACT_RECIPIENT_EMAIL || APPROVED_CONTRACT_RECIPIENT_EMAIL;
+          if (candidate && !String(candidate).toLowerCase().includes('kaloyan.tosev')) {
+            targetEmail = candidate;
+          }
+        } catch (e) {}
+      }
       const sendResult = await generateAndSendContractEmail({
         isRo: false,
         isPartner,

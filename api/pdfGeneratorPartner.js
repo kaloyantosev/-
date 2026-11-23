@@ -411,8 +411,6 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
         height: dSig.height
       });
     }
-    annexPage.drawLine({ start: { x: AP_ML, y: sigY - 68 }, end: { x: AP_ML + 150, y: sigY - 68 }, thickness: 0.7, color: rgb(0.3, 0.3, 0.3) });
-    annexPage.drawLine({ start: { x: 354, y: sigY - 68 }, end: { x: 354 + 150, y: sigY - 68 }, thickness: 0.7, color: rgb(0.3, 0.3, 0.3) });
 
     return await tplDoc.save({ useObjectStreams: true });
   }
@@ -587,19 +585,6 @@ export async function generateContractPartnerPdf(data, assetsDir = 'assets') {
         height: dSig.height
       });
     }
-
-    page.drawLine({
-      start: { x: xLeft, y: yLabel - 68 },
-      end: { x: xLeft + 150, y: yLabel - 68 },
-      thickness: 0.7,
-      color: rgb(0.3, 0.3, 0.3)
-    });
-    page.drawLine({
-      start: { x: xRight, y: yLabel - 68 },
-      end: { x: xRight + 150, y: yLabel - 68 },
-      thickness: 0.7,
-      color: rgb(0.3, 0.3, 0.3)
-    });
 
     cursorY += 84;
   }
