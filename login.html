@@ -265,12 +265,13 @@
 
       <!-- STEP 1: EMAIL & PASSWORD -->
       <div id="step1Wrapper">
-        <form id="loginForm" autocomplete="off">
+        <form id="loginForm" method="post" action="/login" autocomplete="on">
           <div class="form-group">
             <label class="form-label" for="username">Имейл адрес</label>
             <div class="input-wrapper">
               <input 
-                type="email" 
+                type="text" 
+                inputmode="email"
                 id="username" 
                 name="username" 
                 class="form-input" 
@@ -278,7 +279,8 @@
                 required 
                 autofocus 
                 spellcheck="false"
-                autocomplete="email"
+                autocapitalize="none"
+                autocomplete="username"
               >
             </div>
           </div>
@@ -354,14 +356,33 @@
   </div>
 
   <script>
-    // 1. Always show the login form when visiting /login; clear any previous session tokens
-    try {
-      localStorage.removeItem('iris_auth_token');
-      localStorage.removeItem('iris_admin_token');
-      sessionStorage.removeItem('iris_auth_token');
-      sessionStorage.removeItem('iris_admin_token');
-      fetch('/api/auth?action=logout', { method: 'POST' }).catch(() => {});
-    } catch (_) {}
+    // 1. Auto-redirect to dashboard if already authenticated (valid 8-hour session via localStorage or HttpOnly cookie)
+    (async function checkExistingSession() {
+      try {
+        const existingToken = localStorage.getItem('iris_auth_token') || sessionStorage.getItem('iris_auth_token') || '';
+        const headers = existingToken ? { 'Authorization': 'Bearer ' + existingToken } : {};
+        const res = await fetch('/api/auth?action=check', {
+          headers,
+          credentials: 'same-origin'
+        });
+        const data = await res.json();
+        if (data && data.authenticated) {
+          if (data.user === 'andrei@irisbgsf.com') {
+            window.location.replace('/ro/dashboard');
+          } else if (data.user === 'admin') {
+            window.location.replace('/admin');
+          } else {
+            window.location.replace('/dashboard');
+          }
+          return;
+        }
+        // Session expired or not logged in: clean up any stale tokens
+        localStorage.removeItem('iris_auth_token');
+        localStorage.removeItem('iris_admin_token');
+        sessionStorage.removeItem('iris_auth_token');
+        sessionStorage.removeItem('iris_admin_token');
+      } catch (_) {}
+    })();
 
     // 2. Elements
     const loginForm = document.getElementById('loginForm');
@@ -506,13 +527,16 @@
             return;
           }
 
-          // Direct login (2FA bypassed for 8 hours or Admin)
+          // Direct login (8-hour persistent session)
           if (data.token) {
-            localStorage.removeItem('iris_auth_token');
-            localStorage.removeItem('iris_admin_token');
+            localStorage.setItem('iris_auth_token', data.token);
             sessionStorage.setItem('iris_auth_token', data.token);
             if (data.role === 'admin') {
+              localStorage.setItem('iris_admin_token', data.token);
               sessionStorage.setItem('iris_admin_token', data.token);
+            } else {
+              localStorage.removeItem('iris_admin_token');
+              sessionStorage.removeItem('iris_admin_token');
             }
           }
           showAlert('Входът е успешен! Пренасочване...', true);
@@ -560,11 +584,14 @@
 
         if (res.ok && data.success) {
           if (data.token) {
-            localStorage.removeItem('iris_auth_token');
-            localStorage.removeItem('iris_admin_token');
+            localStorage.setItem('iris_auth_token', data.token);
             sessionStorage.setItem('iris_auth_token', data.token);
             if (data.role === 'admin') {
+              localStorage.setItem('iris_admin_token', data.token);
               sessionStorage.setItem('iris_admin_token', data.token);
+            } else {
+              localStorage.removeItem('iris_admin_token');
+              sessionStorage.removeItem('iris_admin_token');
             }
           }
           if (data.trustToken) {

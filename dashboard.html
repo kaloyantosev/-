@@ -1228,9 +1228,6 @@
   <script>
     // 1. Session verification & Token handling (8-hour persistent session)
     const token = localStorage.getItem('iris_auth_token') || sessionStorage.getItem('iris_auth_token');
-    if (!token) {
-      window.location.replace('/login');
-    }
 
     function getAuthHeaders() {
       const headers = { 'Content-Type': 'application/json' };
@@ -1241,9 +1238,11 @@
     let currentUserRole = 'sales'; // Default to sales role (no delete permissions)
 
     async function checkAuth() {
-      if (!token) return;
       try {
-        const res = await fetch('/api/auth?action=check', { headers: getAuthHeaders() });
+        const res = await fetch('/api/auth?action=check', {
+          headers: getAuthHeaders(),
+          credentials: 'same-origin'
+        });
         const data = await res.json();
         if (!data || !data.authenticated) {
           localStorage.removeItem('iris_auth_token');
@@ -2443,13 +2442,16 @@
       try {
         await fetch('/api/auth?action=logout', {
           method: 'POST',
-          headers: getAuthHeaders()
+          headers: getAuthHeaders(),
+          credentials: 'same-origin'
         });
       } catch (e) {
         // Ignore
       }
       localStorage.removeItem('iris_auth_token');
+      localStorage.removeItem('iris_admin_token');
       sessionStorage.removeItem('iris_auth_token');
+      sessionStorage.removeItem('iris_admin_token');
       window.location.replace('/login');
     });
 

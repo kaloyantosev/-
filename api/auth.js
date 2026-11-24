@@ -37,7 +37,7 @@ const rateLimitMap = new Map();
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 const ATTEMPTS_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const SESSION_TTL_MS = 8 * 60 * 60 * 1000; // 8 hours persistent authenticated session
 const TRUST_2FA_TTL_MS = 8 * 60 * 60 * 1000; // 8 hours (No 2FA code required for 8 hours once verified)
 
 function getClientIp(req) {

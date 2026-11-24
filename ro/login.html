@@ -291,17 +291,20 @@
 
       <!-- STEP 1: Email and Password -->
       <div id="step1Wrapper">
-        <form id="loginForm" autocomplete="on">
+        <form id="loginForm" method="post" action="/ro/login" autocomplete="on">
           <div class="form-group">
             <label class="form-label" for="emailInput">Adresă de e-mail</label>
             <input 
-              type="email" 
+              type="text" 
+              inputmode="email"
               id="emailInput" 
+              name="username"
               class="form-input" 
               placeholder="andrei@irisbgsf.com" 
               required 
-              autocomplete="email"
-              value="andrei@irisbgsf.com"
+              autocapitalize="none"
+              spellcheck="false"
+              autocomplete="username"
             >
           </div>
 
@@ -310,6 +313,7 @@
             <input 
               type="password" 
               id="passwordInput" 
+              name="password"
               class="form-input" 
               placeholder="••••••••••••" 
               required 
@@ -368,14 +372,40 @@
   </div>
 
   <script>
-    // 1. Always show the login form when visiting /ro/login; clear any previous session tokens
-    try {
-      localStorage.removeItem('iris_auth_token');
-      localStorage.removeItem('iris_admin_token');
-      sessionStorage.removeItem('iris_auth_token');
-      sessionStorage.removeItem('iris_admin_token');
-      fetch('/api/auth?action=logout', { method: 'POST' }).catch(() => {});
-    } catch (_) {}
+    // 1. Auto-redirect only if user already has a valid 8-hour authenticated session
+    (async function checkExistingSession() {
+      const existingToken = localStorage.getItem('iris_auth_token') || sessionStorage.getItem('iris_auth_token');
+      try {
+        const headers = {};
+        if (existingToken) headers['Authorization'] = 'Bearer ' + existingToken;
+        const res = await fetch('/api/auth?action=check', {
+          headers,
+          credentials: 'same-origin'
+        });
+        const data = await res.json();
+        if (data && data.authenticated) {
+          if (existingToken) {
+            localStorage.setItem('iris_auth_token', existingToken);
+            sessionStorage.setItem('iris_auth_token', existingToken);
+          }
+          if (data.role === 'admin' || data.user === 'admin') {
+            window.location.replace('/admin');
+          } else if (data.user === 'andrei@irisbgsf.com') {
+            window.location.replace('/ro/dashboard');
+          } else {
+            window.location.replace('/ro/dashboard');
+          }
+          return;
+        }
+      } catch (_) {}
+
+      try {
+        localStorage.removeItem('iris_auth_token');
+        localStorage.removeItem('iris_admin_token');
+        sessionStorage.removeItem('iris_auth_token');
+        sessionStorage.removeItem('iris_admin_token');
+      } catch (_) {}
+    })();
 
     // Elements
     const loginForm = document.getElementById('loginForm');
@@ -485,11 +515,14 @@
             twoFaCode.focus();
           } else if (data.token || data.authenticated) {
             if (data.token) {
-              localStorage.removeItem('iris_auth_token');
-              localStorage.removeItem('iris_admin_token');
+              localStorage.setItem('iris_auth_token', data.token);
               sessionStorage.setItem('iris_auth_token', data.token);
               if (data.role === 'admin') {
+                localStorage.setItem('iris_admin_token', data.token);
                 sessionStorage.setItem('iris_admin_token', data.token);
+              } else {
+                localStorage.removeItem('iris_admin_token');
+                sessionStorage.removeItem('iris_admin_token');
               }
             }
             showAlert('Autentificare reușită! Se redirecționează...', true);
@@ -539,11 +572,14 @@
 
         if (res.ok && data.success) {
           if (data.token) {
-            localStorage.removeItem('iris_auth_token');
-            localStorage.removeItem('iris_admin_token');
+            localStorage.setItem('iris_auth_token', data.token);
             sessionStorage.setItem('iris_auth_token', data.token);
             if (data.role === 'admin') {
+              localStorage.setItem('iris_admin_token', data.token);
               sessionStorage.setItem('iris_admin_token', data.token);
+            } else {
+              localStorage.removeItem('iris_admin_token');
+              sessionStorage.removeItem('iris_admin_token');
             }
           }
           if (data.trustToken) {
