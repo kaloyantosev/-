@@ -338,6 +338,44 @@ export async function saveStore(data) {
 }
 
 /**
+ * Keep contract snapshots compact while retaining all data needed to regenerate PDFs on demand
+ */
+function sanitizeContractSnapshot(snapshot) {
+  if (!snapshot || typeof snapshot !== 'object') return null;
+  return {
+    contractKind: snapshot.contractKind || (snapshot.isPartner ? 'partner' : 'direct'),
+    isRo: Boolean(snapshot.isRo),
+    isPartner: Boolean(snapshot.isPartner || snapshot.contractKind === 'partner'),
+    companyName: String(snapshot.companyName || '').trim(),
+    companyEik: String(snapshot.companyEik || '').trim(),
+    companyAddress: String(snapshot.companyAddress || '').trim(),
+    companyRepresentative: String(snapshot.companyRepresentative || '').trim(),
+    companyRepresentativePin: String(snapshot.companyRepresentativePin || '').trim(),
+    bankName: String(snapshot.bankName || '').trim(),
+    bankIban: String(snapshot.bankIban || '').trim(),
+    website: String(snapshot.website || '').trim(),
+    contactAddress: String(snapshot.contactAddress || '').trim(),
+    contactEmail: String(snapshot.contactEmail || '').trim(),
+    contactPhone: String(snapshot.contactPhone || '').trim(),
+    contractDate: String(snapshot.contractDate || '').trim(),
+    signatureImageBase64: snapshot.signatureImageBase64 || null,
+    includeProviderSignature: Boolean(snapshot.includeProviderSignature),
+    customCommission: snapshot.customCommission || null,
+    partnerTerms: snapshot.partnerTerms || null,
+    partnerName: snapshot.partnerName || null
+  };
+}
+
+function toPublicContractItem(c) {
+  if (!c || typeof c !== 'object') return c;
+  const { contractData, ...rest } = c;
+  return {
+    ...rest,
+    hasContractData: Boolean(contractData)
+  };
+}
+
+/**
  * Clean & normalize a slug
  */
 export function sanitizeSlug(input) {
@@ -426,7 +464,7 @@ export async function getAffiliatesData({ month = '', fromDate = '', toDate = ''
       contractCount: affContracts.length,
       totalContractCount: totalAllTime,
       lastContractDate: latestContract ? latestContract.date : null,
-      contracts: affContracts
+      contracts: affContracts.map(toPublicContractItem)
     };
   }).filter(aff => {
     if (!searchLower) return true;
@@ -494,11 +532,12 @@ export async function createAffiliate({ name, slug, country = 'bg' }) {
 /**
  * Record a contract attribution
  */
-export async function recordContractAttribution({ affiliateSlug, companyName, companyEik, commission = null, country = 'bg' }) {
+export async function recordContractAttribution({ affiliateSlug, companyName, companyEik, commission = null, country = 'bg', contractData = null }) {
   const store = await loadStore();
   const targetCountry = String(country || 'bg').toLowerCase();
   const defaultComm = targetCountry === 'ro' ? '0.25%' : '0.49%';
   const cleanComm = commission ? formatCommissionText(commission) : defaultComm;
+  const cleanSnapshot = sanitizeContractSnapshot(contractData);
 
   const createDirectContract = async (logReason) => {
     const newContract = {
@@ -508,7 +547,8 @@ export async function recordContractAttribution({ affiliateSlug, companyName, co
       companyEik: String(companyEik || '—').trim(),
       commission: cleanComm,
       country: targetCountry,
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
+      ...(cleanSnapshot ? { contractData: cleanSnapshot } : {})
     };
     store.contracts.push(newContract);
     await saveStore(store);
@@ -544,7 +584,8 @@ export async function recordContractAttribution({ affiliateSlug, companyName, co
     companyEik: String(companyEik || '—').trim(),
     commission: cleanComm,
     country: targetCountry,
-    date: new Date().toISOString()
+    date: new Date().toISOString(),
+    ...(cleanSnapshot ? { contractData: cleanSnapshot } : {})
   };
 
   store.contracts.push(newContract);
@@ -728,7 +769,7 @@ export async function getDashboardSummary({ month = '', fromDate = '', toDate = 
     periodContracts,
     directContractsCount,
     directContractsAllTime,
-    directContractsList: directContractsInPeriod,
+    directContractsList: directContractsInPeriod.map(toPublicContractItem),
     topPartner,
     monthsList,
     cloudStatus,
@@ -936,20 +977,27 @@ export async function getAllContracts(arg = null) {
       return targetCountry === 'ro' ? c.country === 'ro' : c.country !== 'ro';
     })
     .slice()
-    .map(c => ({
+    .map(c => toPublicContractItem({
       ...c,
       partnerName: c.affiliateSlug ? (affMap.get(c.affiliateSlug.toLowerCase()) || c.affiliateSlug) : null
     }))
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 
+export async function getContractById(id) {
+  if (!id) return null;
+  const store = await loadStore();
+  return (store.contracts || []).find(c => c.id === id) || null;
+}
+
 /**
  * Record a newly signed partner agreement (/partner) as a pending partner tab in dashboard
  */
-export async function recordPendingPartner({ companyName, companyEik = '', contactEmail = '', contactPhone = '', partnerToken = null }) {
+export async function recordPendingPartner({ companyName, companyEik = '', contactEmail = '', contactPhone = '', partnerToken = null, contractSnapshot = null }) {
   const store = await loadStore();
   const cleanCompany = String(companyName || 'Нов партньор').trim();
   const cleanToken = partnerToken ? String(partnerToken).trim() : null;
+  const cleanSnapshot = sanitizeContractSnapshot(contractSnapshot);
   const entry = {
     id: `pp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
     companyName: cleanCompany,
@@ -957,6 +1005,7 @@ export async function recordPendingPartner({ companyName, companyEik = '', conta
     contactEmail: String(contactEmail || '').trim(),
     contactPhone: String(contactPhone || '').trim(),
     partnerToken: cleanToken,
+    ...(cleanSnapshot ? { contractSnapshot: cleanSnapshot } : {}),
     createdAt: new Date().toISOString()
   };
   store.pendingPartners.unshift(entry);
@@ -979,7 +1028,16 @@ export async function recordPendingPartner({ companyName, companyEik = '', conta
  */
 export async function getPendingPartners() {
   const store = await loadStore();
-  return (store.pendingPartners || []).slice();
+  return (store.pendingPartners || []).map(({ contractSnapshot, ...rest }) => ({
+    ...rest,
+    hasContractSnapshot: Boolean(contractSnapshot)
+  }));
+}
+
+export async function getPendingPartnerById(id) {
+  if (!id) return null;
+  const store = await loadStore();
+  return (store.pendingPartners || []).find(p => p.id === id) || null;
 }
 
 /**

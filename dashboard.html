@@ -672,6 +672,32 @@
       opacity: 0.6;
       cursor: not-allowed;
     }
+
+    .btn-download-contract {
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      color: #1D4ED8;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .btn-download-contract:hover {
+      background: #2563EB;
+      color: #FFFFFF;
+      border-color: #2563EB;
+    }
+
+    .btn-download-contract:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -873,6 +899,29 @@
       .btn-pending-dismiss:hover {
         background: #dc2626;
         color: #ffffff;
+      }
+      .btn-pending-download {
+        background: #eff6ff;
+        color: #1d4ed8;
+        border: 1px solid #bfdbfe;
+        border-radius: 6px;
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+        flex-shrink: 0;
+      }
+      .btn-pending-download:hover {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: #2563eb;
+      }
+      .btn-pending-download:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
       }
       .review-grid {
         display: grid;
@@ -1602,6 +1651,135 @@
       });
     }
 
+    const DOWNLOAD_ICON_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+
+    async function triggerContractDownload(queryParamsObj, btnEl, fallbackFilename = 'Договор.pdf') {
+      const prevHtml = btnEl ? btnEl.innerHTML : '';
+      if (btnEl) {
+        btnEl.disabled = true;
+        btnEl.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke-dasharray="40" stroke-dashoffset="12"/></svg>`;
+      }
+      try {
+        const qs = new URLSearchParams({ action: 'downloadContract', ...queryParamsObj }).toString();
+        const resp = await fetch(`/api/send-contract?${qs}`, {
+          headers: getAuthHeaders(),
+          credentials: 'same-origin'
+        });
+        if (!resp.ok) {
+          let errMsg = 'Грешка при изтегляне на договора.';
+          try {
+            const errJson = await resp.json();
+            if (errJson?.error) errMsg = errJson.error;
+          } catch (_) {}
+          showToast(errMsg, 'error');
+          return;
+        }
+
+        let filename = fallbackFilename;
+        const disp = resp.headers.get('Content-Disposition') || '';
+        const utf8Match = disp.match(/filename\*=UTF-8''([^;]+)/i);
+        const asciiMatch = disp.match(/filename="([^"]+)"/i);
+        if (utf8Match && utf8Match[1]) {
+          try { filename = decodeURIComponent(utf8Match[1]); } catch (_) {}
+        } else if (asciiMatch && asciiMatch[1]) {
+          filename = asciiMatch[1];
+        }
+
+        const blob = await resp.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 2500);
+        showToast(`Договорът е изтеглен.`, 'success');
+      } catch (err) {
+        console.error('Contract download error:', err);
+        showToast('Мрежова грешка при изтегляне на договора.', 'error');
+      } finally {
+        if (btnEl) {
+          btnEl.disabled = false;
+          btnEl.innerHTML = prevHtml || DOWNLOAD_ICON_SVG;
+        }
+      }
+    }
+
+    function renderContractDetailItem(c, confirmSuffix, onDeleted) {
+      const item = document.createElement('div');
+      item.className = 'details-item';
+      const deleteBtnHtml = (currentUserRole === 'admin') ? `
+        <button class="btn-delete-contract" data-id="${escapeHtml(c.id)}" data-company="${escapeHtml(c.companyName)}" title="Изтрий договор">
+          Изтрий
+        </button>
+      ` : '';
+
+      item.innerHTML = `
+        <div>
+          <div style="font-weight: 600; color: var(--primary);">${escapeHtml(c.companyName)}</div>
+          <div style="font-size: 11.5px; color: var(--text-muted);">ЕИК: ${escapeHtml(c.companyEik)}</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-weight: 700; font-size: 11.5px; color: #1F3864; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 4px; white-space: nowrap;" title="Договорена комисионна">
+            ${escapeHtml(c.commission || '0.49%')}
+          </span>
+          <div style="text-align: right; font-size: 12px; color: var(--primary-light); font-weight: 600;">
+            ${formatDateBG(c.date)}
+          </div>
+          <button type="button" class="btn-download-contract" data-contract-id="${escapeHtml(c.id)}" title="Изтегли договора (PDF)" aria-label="Изтегли договора">
+            ${DOWNLOAD_ICON_SVG}
+          </button>
+          ${deleteBtnHtml}
+        </div>
+      `;
+
+      const dlBtn = item.querySelector('.btn-download-contract');
+      if (dlBtn) {
+        dlBtn.addEventListener('click', () => {
+          const safeComp = String(c.companyName || 'Търговец').replace(/["'„“«»<>:/\\|?*]/g, '').trim() || 'Търговец';
+          triggerContractDownload({ contractId: c.id }, dlBtn, `Договор (${safeComp}).pdf`);
+        });
+      }
+
+      const deleteBtn = item.querySelector('.btn-delete-contract');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', async (e) => {
+          const contractId = e.currentTarget.dataset.id;
+          const company = e.currentTarget.dataset.company;
+          const confirmed = confirm(`Сигурни ли сте, че искате да изтриете договора за „${company}“?\n\n${confirmSuffix}`);
+          if (!confirmed) return;
+
+          deleteBtn.disabled = true;
+          deleteBtn.textContent = 'Изтриване...';
+
+          try {
+            const res = await fetch(`/api/affiliates?contractId=${encodeURIComponent(contractId)}`, {
+              method: 'DELETE',
+              headers: getAuthHeaders()
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+              showToast(`Договорът за „${company}“ беше изтрит.`);
+              await loadAffiliatesData();
+              onDeleted();
+            } else {
+              alert(data.error || 'Грешка при изтриване на договора.');
+              deleteBtn.disabled = false;
+              deleteBtn.innerHTML = 'Изтрий';
+            }
+          } catch (err) {
+            console.error('Delete contract error:', err);
+            alert('Мрежова грешка при изтриване на договора.');
+            deleteBtn.disabled = false;
+            deleteBtn.innerHTML = 'Изтрий';
+          }
+        });
+      }
+
+      return item;
+    }
+
     // Details Modal Logic
     function openDetailsModal(slug, name) {
       const aff = currentAffiliates.find(a => a.slug === slug);
@@ -1656,66 +1834,9 @@
         `;
       } else {
         contracts.forEach(c => {
-          const item = document.createElement('div');
-          item.className = 'details-item';
-          const deleteBtnHtml = (currentUserRole === 'admin') ? `
-            <button class="btn-delete-contract" data-id="${escapeHtml(c.id)}" data-company="${escapeHtml(c.companyName)}" title="Изтрий договор">
-              Изтрий
-            </button>
-          ` : '';
-
-          item.innerHTML = `
-            <div>
-              <div style="font-weight: 600; color: var(--primary);">${escapeHtml(c.companyName)}</div>
-              <div style="font-size: 11.5px; color: var(--text-muted);">ЕИК: ${escapeHtml(c.companyEik)}</div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-weight: 700; font-size: 11.5px; color: #1F3864; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 4px; white-space: nowrap;" title="Договорена комисионна">
-                ${escapeHtml(c.commission || '0.49%')}
-              </span>
-              <div style="text-align: right; font-size: 12px; color: var(--primary-light); font-weight: 600;">
-                ${formatDateBG(c.date)}
-              </div>
-              ${deleteBtnHtml}
-            </div>
-          `;
-
-          const deleteBtn = item.querySelector('.btn-delete-contract');
-          if (deleteBtn) {
-            deleteBtn.addEventListener('click', async (e) => {
-              const contractId = e.currentTarget.dataset.id;
-              const company = e.currentTarget.dataset.company;
-              const confirmed = confirm(`Сигурни ли сте, че искате да изтриете договора за „${company}“?\n\nТова действие ще намали брояча на партньора с 1.`);
-              if (!confirmed) return;
-
-              deleteBtn.disabled = true;
-              deleteBtn.textContent = 'Изтриване...';
-
-              try {
-                const res = await fetch(`/api/affiliates?contractId=${encodeURIComponent(contractId)}`, {
-                  method: 'DELETE',
-                  headers: getAuthHeaders()
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                  showToast(`Договорът за „${company}“ беше изтрит.`);
-                  await loadAffiliatesData();
-                  openDetailsModal(slug, name);
-                } else {
-                  alert(data.error || 'Грешка при изтриване на договора.');
-                  deleteBtn.disabled = false;
-                  deleteBtn.innerHTML = 'Изтрий';
-                }
-              } catch (err) {
-                console.error('Delete contract error:', err);
-                alert('Мрежова грешка при изтриване на договора.');
-                deleteBtn.disabled = false;
-                deleteBtn.innerHTML = 'Изтрий';
-              }
-            });
-          }
-
-          detailsContractsList.appendChild(item);
+          detailsContractsList.appendChild(
+            renderContractDetailItem(c, 'Това действие ще намали брояча на партньора с 1.', () => openDetailsModal(slug, name))
+          );
         });
       }
 
@@ -1741,66 +1862,9 @@
         `;
       } else {
         contracts.forEach(c => {
-          const item = document.createElement('div');
-          item.className = 'details-item';
-          const deleteBtnHtml = (currentUserRole === 'admin') ? `
-            <button class="btn-delete-contract" data-id="${escapeHtml(c.id)}" data-company="${escapeHtml(c.companyName)}" title="Изтрий договор">
-              Изтрий
-            </button>
-          ` : '';
-
-          item.innerHTML = `
-            <div>
-              <div style="font-weight: 600; color: var(--primary);">${escapeHtml(c.companyName)}</div>
-              <div style="font-size: 11.5px; color: var(--text-muted);">ЕИК: ${escapeHtml(c.companyEik)}</div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-weight: 700; font-size: 11.5px; color: #1F3864; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 4px; white-space: nowrap;" title="Договорена комисионна">
-                ${escapeHtml(c.commission || '0.49%')}
-              </span>
-              <div style="text-align: right; font-size: 12px; color: var(--primary-light); font-weight: 600;">
-                ${formatDateBG(c.date)}
-              </div>
-              ${deleteBtnHtml}
-            </div>
-          `;
-
-          const deleteBtn = item.querySelector('.btn-delete-contract');
-          if (deleteBtn) {
-            deleteBtn.addEventListener('click', async (e) => {
-              const contractId = e.currentTarget.dataset.id;
-              const company = e.currentTarget.dataset.company;
-              const confirmed = confirm(`Сигурни ли сте, че искате да изтриете договора за „${company}“?\n\nТова действие ще намали общия брой договори.`);
-              if (!confirmed) return;
-
-              deleteBtn.disabled = true;
-              deleteBtn.textContent = 'Изтриване...';
-
-              try {
-                const res = await fetch(`/api/affiliates?contractId=${encodeURIComponent(contractId)}`, {
-                  method: 'DELETE',
-                  headers: getAuthHeaders()
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                  showToast(`Договорът за „${company}“ беше изтрит.`);
-                  await loadAffiliatesData();
-                  openDirectContractsModal();
-                } else {
-                  alert(data.error || 'Грешка при изтриване на договора.');
-                  deleteBtn.disabled = false;
-                  deleteBtn.innerHTML = 'Изтрий';
-                }
-              } catch (err) {
-                console.error('Delete contract error:', err);
-                alert('Мрежова грешка при изтриване на договора.');
-                deleteBtn.disabled = false;
-                deleteBtn.innerHTML = 'Изтрий';
-              }
-            });
-          }
-
-          detailsContractsList.appendChild(item);
+          detailsContractsList.appendChild(
+            renderContractDetailItem(c, 'Това действие ще намали общия брой договори.', () => openDirectContractsModal())
+          );
         });
       }
 
@@ -2260,6 +2324,7 @@
             ${demoPill}
             <span class="pending-partner-label">${escapeHtml(c.companyName)} (ЕИК ${escapeHtml(c.companyEik || '—')})</span>
             <button type="button" class="btn-pending-sign" data-contract-id="${escapeHtml(c.id)}">Подпиши</button>
+            <button type="button" class="btn-pending-download" data-download-pending-id="${escapeHtml(c.id)}" data-company="${escapeHtml(c.companyName)}" title="Изтегли договора (PDF)" aria-label="Изтегли договора">${DOWNLOAD_ICON_SVG}</button>
             <button type="button" class="btn-pending-dismiss btn-dismiss-contract" title="Изтрий известието" data-dismiss-contract-id="${escapeHtml(c.id)}">&times;</button>
           </div>
         `;
@@ -2270,6 +2335,7 @@
           <span class="pending-kind-pill kind-partner">Нов партньор</span>
           <span class="pending-partner-label">${escapeHtml(p.companyName)}</span>
           <button type="button" class="btn-pending-create" data-company="${escapeHtml(p.companyName)}">Създай Affiliate Link</button>
+          <button type="button" class="btn-pending-download" data-download-pending-partner-id="${escapeHtml(p.id)}" data-company="${escapeHtml(p.companyName)}" title="Изтегли договора (PDF)" aria-label="Изтегли договора">${DOWNLOAD_ICON_SVG}</button>
           <button type="button" class="btn-pending-dismiss btn-dismiss-partner" title="Изтрий следата от договора" data-dismiss-id="${escapeHtml(p.id)}">&times;</button>
         </div>
       `).join('');
@@ -2279,6 +2345,17 @@
       container.querySelectorAll('.btn-pending-sign').forEach(btn => {
         btn.addEventListener('click', () => {
           openReviewContractModal(btn.dataset.contractId);
+        });
+      });
+
+      container.querySelectorAll('.btn-pending-download').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const pendingId = btn.dataset.downloadPendingId;
+          const pendingPartnerId = btn.dataset.downloadPendingPartnerId;
+          const comp = String(btn.dataset.company || 'Договор').replace(/["'„“«»<>:/\\|?*]/g, '').trim() || 'Договор';
+          const fallbackName = pendingPartnerId ? `Dogovor_Partniorstvo_${comp}.pdf` : `Договор (${comp}).pdf`;
+          const qsObj = pendingId ? { pendingId } : { pendingPartnerId };
+          triggerContractDownload(qsObj, btn, fallbackName);
         });
       });
 

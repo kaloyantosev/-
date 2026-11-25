@@ -22,6 +22,8 @@ import {
   getPendingContractById,
   updatePendingContractEmailMeta,
   deletePendingContract,
+  getPendingPartnerById,
+  getContractById,
   findAffiliateBySlug,
   getCustomLink,
   useCustomLink,
@@ -333,6 +335,64 @@ ${dashboardUrl}
   };
 }
 
+function buildContractPdfFilename({ isRo = false, isPartner = false, companyName = '—' }) {
+  const safeCompName = (companyName && companyName !== '—')
+    ? String(companyName).replace(/["'„“«»<>:\/\\|?*]/g, '').trim()
+    : (isRo ? 'Comerciant' : 'Търговец');
+  if (isPartner) return `Dogovor_Partniorstvo_${safeCompName}.pdf`;
+  if (isRo) return `Contract_IRISPay_RO_${safeCompName}.pdf`;
+  return `Договор (${safeCompName}).pdf`;
+}
+
+async function buildContractPdfBytes({
+  isRo = false,
+  isPartner = false,
+  companyName = '—',
+  companyEik = '—',
+  companyAddress = '',
+  companyRepresentative = '—',
+  companyRepresentativePin = '',
+  bankName = '',
+  bankIban = '',
+  website = '',
+  contactAddress = '',
+  contactEmail = '—',
+  contactPhone = '—',
+  displayDate = '',
+  signatureImageBase64 = null,
+  includeProviderSignature = false,
+  providerSignatureBase64 = null,
+  customCommission = null,
+  partnerTerms = null
+}) {
+  const assetsDir = resolveAssetsDir();
+  const pdfParams = {
+    companyName: (companyName && companyName !== '—') ? companyName : '',
+    companyEik: (companyEik && companyEik !== '—') ? companyEik : '',
+    companyAddress: companyAddress || '',
+    companyRepresentative: (companyRepresentative && companyRepresentative !== '—') ? companyRepresentative : '',
+    companyRepresentativePin: companyRepresentativePin || '',
+    bankName: bankName || '',
+    bankIban: bankIban || '',
+    website: website || '',
+    contactAddress: contactAddress || companyAddress || '',
+    contactEmail: (contactEmail && contactEmail !== '—') ? contactEmail : '',
+    contactPhone: (contactPhone && contactPhone !== '—') ? contactPhone : '',
+    contractDate: displayDate,
+    signatureImageBase64,
+    providerSignatureBase64,
+    includeProviderSignature,
+    customCommission,
+    partnerTerms
+  };
+
+  return isPartner
+    ? await generateContractPartnerPdf(pdfParams, assetsDir)
+    : isRo
+      ? await generateContractRoPdf(pdfParams, assetsDir)
+      : await generateContractPdf(pdfParams, assetsDir);
+}
+
 async function generateAndSendContractEmail({
   isRo = false,
   isPartner = false,
@@ -463,32 +523,27 @@ ${isRo ? 'CUI / ЕИК' : 'ЕИК'}: ${companyEik}
   // Generate pristine vector PDF
   let finalPdfBase64 = null;
   try {
-    const assetsDir = resolveAssetsDir();
-    const pdfParams = {
-      companyName: (companyName && companyName !== '—') ? companyName : '',
-      companyEik: (companyEik && companyEik !== '—') ? companyEik : '',
-      companyAddress: companyAddress || '',
-      companyRepresentative: (companyRepresentative && companyRepresentative !== '—') ? companyRepresentative : '',
-      companyRepresentativePin: companyRepresentativePin || '',
-      bankName: bankName || '',
-      bankIban: bankIban || '',
-      website: website || '',
-      contactAddress: contactAddress || companyAddress || '',
-      contactEmail: (contactEmail && contactEmail !== '—') ? contactEmail : '',
-      contactPhone: (contactPhone && contactPhone !== '—') ? contactPhone : '',
-      contractDate: displayDate,
+    const generatedBytes = await buildContractPdfBytes({
+      isRo,
+      isPartner,
+      companyName,
+      companyEik,
+      companyAddress,
+      companyRepresentative,
+      companyRepresentativePin,
+      bankName,
+      bankIban,
+      website,
+      contactAddress,
+      contactEmail,
+      contactPhone,
+      displayDate,
       signatureImageBase64,
       providerSignatureBase64,
       includeProviderSignature,
       customCommission,
       partnerTerms
-    };
-
-    const generatedBytes = isPartner
-      ? await generateContractPartnerPdf(pdfParams, assetsDir)
-      : isRo
-        ? await generateContractRoPdf(pdfParams, assetsDir)
-        : await generateContractPdf(pdfParams, assetsDir);
+    });
 
     if (generatedBytes && generatedBytes.length > 0) {
       finalPdfBase64 = Buffer.from(generatedBytes).toString('base64');
@@ -519,14 +574,7 @@ ${isRo ? 'CUI / ЕИК' : 'ЕИК'}: ${companyEik}
 
   const attachments = [];
   if (finalPdfBase64 && finalPdfBase64.length > 50) {
-    const safeCompName = (companyName && companyName !== '—')
-      ? String(companyName).replace(/["'„“«»<>:\/\\|?*]/g, '').trim()
-      : (isRo ? 'Comerciant' : 'Търговец');
-    const pdfFilename = isPartner
-      ? `Dogovor_Partniorstvo_${safeCompName}.pdf`
-      : isRo
-        ? `Contract_IRISPay_RO_${safeCompName}.pdf`
-        : `Договор (${safeCompName}).pdf`;
+    const pdfFilename = buildContractPdfFilename({ isRo, isPartner, companyName });
 
     attachments.push({
       filename: pdfFilename,
@@ -890,6 +938,156 @@ export default async function handler(req, res) {
       });
     }
 
+    if (action === 'downloadContract') {
+      const session = verifySession(req);
+      if (!session) {
+        return res.status(401).json({ error: 'Unauthorized', code: 'UNAUTHORIZED' });
+      }
+
+      const pendingId = req.query?.pendingId || null;
+      const pendingPartnerId = req.query?.pendingPartnerId || null;
+      const contractId = req.query?.contractId || null;
+
+      let pdfSpec = null;
+
+      if (pendingId) {
+        const pending = await getPendingContractById(pendingId);
+        if (!pending) {
+          return res.status(404).json({ error: 'Договорът не е намерен.' });
+        }
+        const isPartner = pending.contractKind === 'partner';
+        let resolvedPartnerTerms = pending.partnerTerms || null;
+        if (isPartner && pending.partnerToken && !resolvedPartnerTerms) {
+          try {
+            const foundLink = await getPartnerLink(pending.partnerToken);
+            if (foundLink) resolvedPartnerTerms = foundLink;
+          } catch (_) {}
+        }
+        pdfSpec = {
+          isRo: false,
+          isPartner,
+          companyName: pending.companyName,
+          companyEik: pending.companyEik,
+          companyAddress: pending.companyAddress,
+          companyRepresentative: pending.companyRepresentative,
+          bankName: pending.bankName,
+          bankIban: pending.bankIban,
+          website: pending.website,
+          contactAddress: pending.contactAddress || pending.companyAddress,
+          contactEmail: pending.contactEmail,
+          contactPhone: pending.contactPhone,
+          displayDate: formatBulgarianDate(pending.contractDate),
+          signatureImageBase64: pending.signatureImageBase64 || null,
+          includeProviderSignature: false,
+          providerSignatureBase64: null,
+          customCommission: pending.customCommission || null,
+          partnerTerms: resolvedPartnerTerms
+        };
+      } else if (pendingPartnerId) {
+        const pp = await getPendingPartnerById(pendingPartnerId);
+        if (!pp) {
+          return res.status(404).json({ error: 'Партньорският договор не е намерен.' });
+        }
+        const snap = pp.contractSnapshot || {};
+        let resolvedPartnerTerms = snap.partnerTerms || null;
+        if (pp.partnerToken && !resolvedPartnerTerms) {
+          try {
+            const foundLink = await getPartnerLink(pp.partnerToken);
+            if (foundLink) resolvedPartnerTerms = foundLink;
+          } catch (_) {}
+        }
+        const provState = await getProviderSignatureState();
+        const savedProviderSig = (provState?.locked && provState?.signatureImageBase64)
+          ? provState.signatureImageBase64
+          : null;
+        pdfSpec = {
+          isRo: false,
+          isPartner: true,
+          companyName: snap.companyName || pp.companyName,
+          companyEik: snap.companyEik || pp.companyEik,
+          companyAddress: snap.companyAddress || '',
+          companyRepresentative: snap.companyRepresentative || '—',
+          bankName: snap.bankName || '',
+          bankIban: snap.bankIban || '',
+          website: snap.website || '',
+          contactAddress: snap.contactAddress || snap.companyAddress || '',
+          contactEmail: snap.contactEmail || pp.contactEmail || '—',
+          contactPhone: snap.contactPhone || pp.contactPhone || '—',
+          displayDate: snap.contractDate || formatBulgarianDate(pp.createdAt),
+          signatureImageBase64: snap.signatureImageBase64 || null,
+          includeProviderSignature: true,
+          providerSignatureBase64: savedProviderSig,
+          customCommission: snap.customCommission || null,
+          partnerTerms: resolvedPartnerTerms
+        };
+      } else if (contractId) {
+        const contract = await getContractById(contractId);
+        if (!contract) {
+          return res.status(404).json({ error: 'Подписаният договор не е намерен.' });
+        }
+        const snap = contract.contractData || {};
+        const isRo = snap.isRo !== undefined ? Boolean(snap.isRo) : contract.country === 'ro';
+        const isPartner = Boolean(snap.isPartner || snap.contractKind === 'partner');
+        const includeProviderSignature = snap.includeProviderSignature !== undefined
+          ? Boolean(snap.includeProviderSignature)
+          : !isRo;
+
+        let savedProviderSig = null;
+        if (includeProviderSignature) {
+          const provState = await getProviderSignatureState();
+          if (provState?.locked && provState?.signatureImageBase64) {
+            savedProviderSig = provState.signatureImageBase64;
+          }
+        }
+
+        pdfSpec = {
+          isRo,
+          isPartner,
+          companyName: snap.companyName || contract.companyName,
+          companyEik: snap.companyEik || contract.companyEik,
+          companyAddress: snap.companyAddress || '',
+          companyRepresentative: snap.companyRepresentative || '—',
+          companyRepresentativePin: snap.companyRepresentativePin || '',
+          bankName: snap.bankName || '',
+          bankIban: snap.bankIban || '',
+          website: snap.website || '',
+          contactAddress: snap.contactAddress || snap.companyAddress || '',
+          contactEmail: snap.contactEmail || '—',
+          contactPhone: snap.contactPhone || '—',
+          displayDate: snap.contractDate || (isRo
+            ? String(contract.date || '').slice(0, 10)
+            : formatBulgarianDate(contract.date)),
+          signatureImageBase64: snap.signatureImageBase64 || null,
+          includeProviderSignature,
+          providerSignatureBase64: savedProviderSig,
+          customCommission: snap.customCommission || contract.commission || null,
+          partnerTerms: snap.partnerTerms || null
+        };
+      } else {
+        return res.status(400).json({ error: 'Липсва ID на договора за изтегляне.' });
+      }
+
+      try {
+        const pdfBytes = await buildContractPdfBytes(pdfSpec);
+        const pdfFilename = buildContractPdfFilename(pdfSpec);
+        const asciiFilename = pdfFilename
+          .replace(/[^\x20-\x7E]/g, '_')
+          .replace(/["\\]/g, '')
+          .trim() || 'contract.pdf';
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(pdfFilename)}`
+        );
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        return res.status(200).send(Buffer.from(pdfBytes));
+      } catch (dlErr) {
+        console.error('[Download Contract] Error generating PDF:', dlErr);
+        return res.status(500).json({ error: 'Грешка при генериране на PDF договора.' });
+      }
+    }
+
     return res.status(405).json({ error: 'Method Not Allowed.' });
   }
 
@@ -1003,7 +1201,29 @@ export default async function handler(req, res) {
 
       // Post-sign actions:
       // - For /partner contracts: create pendingPartner notification so manager can create affiliate link/commission
-      // - For real merchant contracts: record attribution in affiliates/contracts stats
+      // - For real merchant contracts: record attribution in affiliates/contracts stats (including snapshot for downloads)
+      const signedSnapshot = {
+        contractKind: pending.contractKind || (isPartner ? 'partner' : 'direct'),
+        isPartner,
+        isRo: false,
+        companyName: pending.companyName,
+        companyEik: pending.companyEik,
+        companyAddress: pending.companyAddress,
+        companyRepresentative: pending.companyRepresentative,
+        bankName: pending.bankName,
+        bankIban: pending.bankIban,
+        website: pending.website,
+        contactAddress: pending.contactAddress || pending.companyAddress,
+        contactEmail: pending.contactEmail,
+        contactPhone: pending.contactPhone,
+        contractDate: displayDate,
+        signatureImageBase64: pending.signatureImageBase64,
+        includeProviderSignature: true,
+        customCommission: pending.customCommission,
+        partnerTerms: resolvedPartnerTerms,
+        partnerName: pending.partnerName
+      };
+
       let createdPendingPartner = null;
       if (isPartner) {
         try {
@@ -1012,7 +1232,8 @@ export default async function handler(req, res) {
             companyEik: pending.companyEik,
             contactEmail: pending.contactEmail,
             contactPhone: pending.contactPhone,
-            partnerToken: pending.partnerToken || null
+            partnerToken: pending.partnerToken || null,
+            contractSnapshot: signedSnapshot
           });
         } catch (ppErr) {
           console.warn('Could not record post-sign pending partner:', ppErr);
@@ -1024,7 +1245,8 @@ export default async function handler(req, res) {
             companyName: pending.companyName,
             companyEik: pending.companyEik,
             commission: pending.customCommission,
-            country: 'bg'
+            country: 'bg',
+            contractData: signedSnapshot
           });
         } catch (attErr) {
           console.warn('Could not record approved contract attribution:', attErr);
@@ -1180,6 +1402,7 @@ export default async function handler(req, res) {
     }
 
     // Romanian flow (/ro): unchanged direct attribution + immediate email dispatch
+    const roDisplayDate = String(contractDate || '').trim() || new Date().toISOString().slice(0, 10);
     let attribution = null;
     try {
       attribution = await recordContractAttribution({
@@ -1187,7 +1410,28 @@ export default async function handler(req, res) {
         companyName,
         companyEik,
         commission: customCommission,
-        country: targetCountry
+        country: targetCountry,
+        contractData: {
+          contractKind: refCode ? 'from_partner' : 'direct',
+          isPartner: false,
+          isRo: true,
+          companyName,
+          companyEik,
+          companyAddress,
+          companyRepresentative,
+          companyRepresentativePin,
+          bankName,
+          bankIban,
+          website,
+          contactAddress,
+          contactEmail,
+          contactPhone,
+          contractDate: roDisplayDate,
+          signatureImageBase64,
+          includeProviderSignature: false,
+          customCommission,
+          partnerName: partnerDisplayName
+        }
       });
       if (attribution && attribution.partnerName) {
         partnerDisplayName = attribution.partnerName;
