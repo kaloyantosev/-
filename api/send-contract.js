@@ -3,11 +3,12 @@
  * Endpoint: /api/send-contract
  *
  * Flows:
- * - Bulgarian contracts (/, /:slug, /c/:token, /partner):
+ * - Bulgarian merchant contracts (/, /:slug, /c/:token):
  *   1. Client submission stores full contract data + signature in pendingContracts (appears on BG /dashboard).
  *   2. Dashboard reviewer clicks "Подпиши" -> inspects all details -> clicks "Информацията е вярна".
  *   3. Server counter-signs PDF with IRIS provider signature and emails final PDF once.
- *      (Demo recipient set to kaloyan.tosev@gmail.com)
+ * - Bulgarian partner agreements (/partner):
+ *   1. Immediately emails signed Partner PDF attachment to sales@irisbgsf.com and adds "Нов партньор" tab in BG /dashboard.
  * - Romanian contracts (/ro): retain direct submission & email dispatch.
  */
 
@@ -996,10 +997,16 @@ export default async function handler(req, res) {
             if (foundLink) resolvedPartnerTerms = foundLink;
           } catch (_) {}
         }
-        const provState = await getProviderSignatureState();
-        const savedProviderSig = (provState?.locked && provState?.signatureImageBase64)
-          ? provState.signatureImageBase64
-          : null;
+        const includeProviderSignature = snap.includeProviderSignature !== undefined
+          ? Boolean(snap.includeProviderSignature)
+          : true;
+        let savedProviderSig = null;
+        if (includeProviderSignature) {
+          const provState = await getProviderSignatureState();
+          if (provState?.locked && provState?.signatureImageBase64) {
+            savedProviderSig = provState.signatureImageBase64;
+          }
+        }
         pdfSpec = {
           isRo: false,
           isPartner: true,
@@ -1015,7 +1022,7 @@ export default async function handler(req, res) {
           contactPhone: snap.contactPhone || pp.contactPhone || '—',
           displayDate: snap.contractDate || formatBulgarianDate(pp.createdAt),
           signatureImageBase64: snap.signatureImageBase64 || null,
-          includeProviderSignature: true,
+          includeProviderSignature,
           providerSignatureBase64: savedProviderSig,
           customCommission: snap.customCommission || null,
           partnerTerms: resolvedPartnerTerms
@@ -1309,17 +1316,10 @@ export default async function handler(req, res) {
     const refCode = affiliateRef || data.ref || data.affiliate || validatedCustomLink?.partnerSlug || null;
     let partnerDisplayName = validatedCustomLink?.partnerName || null;
 
-    if (!isRo) {
-      // Bulgarian contracts (partner, from partner, or direct) wait in dashboard for review & IRIS signature before emailing
-      if (!isPartner && refCode && !partnerDisplayName) {
-        try {
-          const foundAff = await findAffiliateBySlug({ slug: refCode, country: 'bg' });
-          if (foundAff?.name) partnerDisplayName = foundAff.name;
-        } catch (affErr) {}
-      }
-
+    if (!isRo && isPartner) {
+      // Partner agreements (/partner): immediately send PDF attachment to sales@irisbgsf.com & add pendingPartner tab
       let resolvedPartnerTerms = data?.partnerTerms || null;
-      if (isPartner && data?.partnerToken) {
+      if (data?.partnerToken) {
         try {
           const foundLink = await getPartnerLink(data.partnerToken);
           if (foundLink) resolvedPartnerTerms = foundLink;
@@ -1327,7 +1327,72 @@ export default async function handler(req, res) {
       }
 
       const displayDate = formatBulgarianDate(contractDate);
-      const contractKind = isPartner ? 'partner' : (refCode ? 'from_partner' : 'direct');
+      const targetEmail = await resolveSalesRecipientEmail(true);
+
+      try {
+        await recordPendingPartner({
+          companyName,
+          companyEik,
+          contactEmail,
+          contactPhone,
+          partnerToken: data?.partnerToken || null,
+          contractSnapshot: {
+            contractKind: 'partner',
+            isPartner: true,
+            isRo: false,
+            companyName,
+            companyEik,
+            companyAddress,
+            companyRepresentative,
+            website,
+            contactAddress: contactAddress || companyAddress,
+            contactEmail,
+            contactPhone,
+            contractDate: displayDate,
+            signatureImageBase64,
+            includeProviderSignature: false,
+            customCommission: null,
+            partnerTerms: resolvedPartnerTerms,
+            partnerName: null
+          }
+        });
+      } catch (ppErr) {
+        console.warn('Could not record pending partner:', ppErr);
+      }
+
+      const partnerSendResult = await generateAndSendContractEmail({
+        isRo: false,
+        isPartner: true,
+        targetEmail,
+        companyName,
+        companyEik,
+        companyAddress,
+        companyRepresentative,
+        website,
+        contactAddress: contactAddress || companyAddress,
+        contactEmail,
+        contactPhone,
+        displayDate,
+        signatureImageBase64,
+        includeProviderSignature: false,
+        partnerTerms: resolvedPartnerTerms,
+        fallbackPdfBase64: pdfBase64
+      });
+
+      return res.status(200).json(partnerSendResult);
+    }
+
+    if (!isRo) {
+      // Bulgarian merchant contracts (from partner or direct) wait in dashboard for review & IRIS signature before emailing
+      if (refCode && !partnerDisplayName) {
+        try {
+          const foundAff = await findAffiliateBySlug({ slug: refCode, country: 'bg' });
+          if (foundAff?.name) partnerDisplayName = foundAff.name;
+        } catch (affErr) {}
+      }
+
+      const displayDate = formatBulgarianDate(contractDate);
+      const contractKind = refCode ? 'from_partner' : 'direct';
 
       if (validatedCustomLink) {
         try {
@@ -1360,13 +1425,13 @@ export default async function handler(req, res) {
         customToken: validatedCustomLink?.token || null,
         affiliateRef: refCode,
         partnerName: partnerDisplayName,
-        partnerToken: data?.partnerToken || null,
-        partnerTerms: resolvedPartnerTerms
+        partnerToken: null,
+        partnerTerms: null
       });
 
       // Send lightweight notification to sales with dashboard link (no PDF attached yet)
       try {
-        const alertRecipient = await resolveSalesRecipientEmail(isPartner);
+        const alertRecipient = await resolveSalesRecipientEmail(false);
         const dashboardUrl = resolveDashboardUrl(req);
         const alertRes = await sendPendingContractAlertEmail({
           targetEmail: alertRecipient,
