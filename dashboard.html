@@ -859,6 +859,7 @@
         font-weight: 600;
       }
       .btn-pending-create,
+      .btn-pending-review,
       .btn-pending-sign {
         background: #2563eb;
         color: #ffffff;
@@ -871,6 +872,7 @@
         transition: background 0.15s ease;
       }
       .btn-pending-create:hover,
+      .btn-pending-review:hover,
       .btn-pending-sign:hover {
         background: #1d4ed8;
       }
@@ -2110,7 +2112,19 @@
 
     let currentPendingContractsMap = new Map();
     let activeReviewContractId = null;
+    let pendingPartnerContractIdToDismiss = null;
     let hasOfficialProviderSignature = false;
+
+    function openCreateAffiliateModalForPartner(companyName, sourcePendingContractId = null) {
+      createAffiliateForm.reset();
+      newPartnerName.value = companyName || '';
+      newPartnerSlug.value = '';
+      newPartnerSlug.dataset.userEdited = 'true';
+      pendingPartnerContractIdToDismiss = sourcePendingContractId || null;
+      updatePreviewUrl();
+      createModal.style.display = 'flex';
+      newPartnerSlug.focus();
+    }
 
     function closeReviewModal() {
       if (reviewContractModal) reviewContractModal.style.display = 'none';
@@ -2136,7 +2150,9 @@
       const isPartner = c.contractKind === 'partner';
       const kindLabel = formatContractKindLabel(c);
       if (reviewModalTitle) {
-        reviewModalTitle.textContent = `Преглед и подписване — ${c.companyName || 'Договор'}`;
+        reviewModalTitle.textContent = isPartner
+          ? `Преглед на информацията — ${c.companyName || 'Договор'}`
+          : `Преглед и подписване — ${c.companyName || 'Договор'}`;
       }
 
       const signedStatusBadge = c.signedByClient
@@ -2248,15 +2264,27 @@
 
       const footerNoteEl = document.getElementById('reviewModalFooterNote');
       if (footerNoteEl) {
-        const sigTypeText = hasOfficialProviderSignature
-          ? '<strong style="color:#047857;">официалния подпис на IRIS Pay (Dimitar Hristov)</strong>'
-          : 'официалния подпис на IRIS Pay (Dimitar Hristov)';
-        footerNoteEl.innerHTML = `След потвърждение договорът се подписва с ${sigTypeText} и се изпраща към <strong>sales@irisbgsf.com</strong>.`;
+        if (isPartner) {
+          footerNoteEl.style.display = 'none';
+          footerNoteEl.innerHTML = '';
+        } else {
+          footerNoteEl.style.display = '';
+          const sigTypeText = hasOfficialProviderSignature
+            ? '<strong style="color:#047857;">официалния подпис на IRIS Pay (Dimitar Hristov)</strong>'
+            : 'официалния подпис на IRIS Pay (Dimitar Hristov)';
+          footerNoteEl.innerHTML = `След потвърждение договорът се подписва с ${sigTypeText} и се изпраща към <strong>sales@irisbgsf.com</strong>.`;
+        }
       }
 
       if (btnConfirmAndSignContract) {
         btnConfirmAndSignContract.disabled = false;
-        btnConfirmAndSignContract.textContent = '✓ Информацията е вярна';
+        if (isPartner) {
+          btnConfirmAndSignContract.textContent = 'Създай комисионна';
+          btnConfirmAndSignContract.style.background = 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)';
+        } else {
+          btnConfirmAndSignContract.textContent = '✓ Информацията е вярна';
+          btnConfirmAndSignContract.style.background = 'linear-gradient(135deg, #059669 0%, #047857 100%)';
+        }
       }
       reviewContractModal.style.display = 'flex';
     }
@@ -2264,6 +2292,15 @@
     if (btnConfirmAndSignContract) {
       btnConfirmAndSignContract.addEventListener('click', async () => {
         if (!activeReviewContractId) return;
+        const activeContract = currentPendingContractsMap.get(activeReviewContractId);
+        if (activeContract && activeContract.contractKind === 'partner') {
+          const compName = activeContract.companyName || '';
+          const srcContractId = activeContract.id;
+          closeReviewModal();
+          openCreateAffiliateModalForPartner(compName, srcContractId);
+          return;
+        }
+
         btnConfirmAndSignContract.disabled = true;
         btnConfirmAndSignContract.textContent = 'Подписване и изпращане...';
 
@@ -2318,12 +2355,16 @@
         const kindClass = `kind-${escapeHtml(c.contractKind || 'direct')}`;
         const kindBadge = formatContractKindLabel(c);
         const demoPill = c.isDemo ? '<span class="pending-demo-pill">ДЕМО</span>' : '';
+        const isPartnerContract = c.contractKind === 'partner';
+        const actionBtnHtml = isPartnerContract
+          ? `<button type="button" class="btn-pending-review" data-contract-id="${escapeHtml(c.id)}">Преглед</button>`
+          : `<button type="button" class="btn-pending-sign" data-contract-id="${escapeHtml(c.id)}">Подпиши</button>`;
         return `
           <div class="pending-partner-tab ${kindClass}" data-pending-contract-id="${escapeHtml(c.id)}">
             <span class="pending-kind-pill ${kindClass}">${escapeHtml(kindBadge)}</span>
             ${demoPill}
             <span class="pending-partner-label">${escapeHtml(c.companyName)} (ЕИК ${escapeHtml(c.companyEik || '—')})</span>
-            <button type="button" class="btn-pending-sign" data-contract-id="${escapeHtml(c.id)}">Подпиши</button>
+            ${actionBtnHtml}
             <button type="button" class="btn-pending-download" data-download-pending-id="${escapeHtml(c.id)}" data-company="${escapeHtml(c.companyName)}" title="Изтегли договора (PDF)" aria-label="Изтегли договора">${DOWNLOAD_ICON_SVG}</button>
             <button type="button" class="btn-pending-dismiss btn-dismiss-contract" title="Изтрий известието" data-dismiss-contract-id="${escapeHtml(c.id)}">&times;</button>
           </div>
@@ -2342,7 +2383,7 @@
 
       container.innerHTML = contractsHtml + partnersHtml;
 
-      container.querySelectorAll('.btn-pending-sign').forEach(btn => {
+      container.querySelectorAll('.btn-pending-sign, .btn-pending-review').forEach(btn => {
         btn.addEventListener('click', () => {
           openReviewContractModal(btn.dataset.contractId);
         });
@@ -2390,13 +2431,7 @@
 
       container.querySelectorAll('.btn-pending-create').forEach(btn => {
         btn.addEventListener('click', () => {
-          createAffiliateForm.reset();
-          newPartnerName.value = btn.dataset.company || '';
-          newPartnerSlug.value = '';
-          newPartnerSlug.dataset.userEdited = 'true';
-          updatePreviewUrl();
-          createModal.style.display = 'flex';
-          newPartnerSlug.focus();
+          openCreateAffiliateModalForPartner(btn.dataset.company || '', null);
         });
       });
 
@@ -2430,6 +2465,7 @@
     }
 
     btnOpenCreateModal.addEventListener('click', () => {
+      pendingPartnerContractIdToDismiss = null;
       createAffiliateForm.reset();
       delete newPartnerSlug.dataset.userEdited;
       updatePreviewUrl();
@@ -2439,6 +2475,7 @@
 
     function closeCreateModal() {
       createModal.style.display = 'none';
+      pendingPartnerContractIdToDismiss = null;
     }
 
     btnCloseCreateModal.addEventListener('click', closeCreateModal);
@@ -2464,6 +2501,16 @@
 
         const data = await res.json();
         if (res.ok && data.success) {
+          const contractIdToDismiss = pendingPartnerContractIdToDismiss;
+          if (contractIdToDismiss) {
+            try {
+              await fetch(`/api/affiliates?action=dismissPendingContract&id=${encodeURIComponent(contractIdToDismiss)}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+              });
+            } catch (_) {}
+          }
+
           const fullUrl = getFullAffiliateUrl(data.affiliate.slug);
           await copyTextDirectly(fullUrl);
           showToast(`Линкът е създаден и копиран: ${fullUrl}`);
